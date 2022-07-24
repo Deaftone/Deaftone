@@ -13,9 +13,9 @@ pub struct Model {
     pub artist_name: String,
     pub year: i32,
     #[sea_orm(column_name = "createdAt")]
-    pub created_at: DateTime,
+    pub created_at: String,
     #[sea_orm(column_name = "updatedAt")]
-    pub updated_at: DateTime,
+    pub updated_at: String,
     #[sea_orm(column_name = "artistId")]
     pub artist_id: Option<String>,
 }

@@ -7,6 +7,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
+    #[sea_orm(unique)]
     pub path: String,
     pub title: String,
     pub disk: Option<i32>,
@@ -28,9 +29,9 @@ pub struct Model {
     #[sea_orm(column_name = "musicBrainzTrackId")]
     pub music_brainz_track_id: Option<String>,
     #[sea_orm(column_name = "createdAt")]
-    pub created_at: DateTime,
+    pub created_at: String,
     #[sea_orm(column_name = "updatedAt")]
-    pub updated_at: DateTime,
+    pub updated_at: String,
     #[sea_orm(column_name = "albumId")]
     pub album_id: Option<String>,
 }

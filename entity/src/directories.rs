@@ -10,9 +10,9 @@ pub struct Model {
     pub path: String,
     pub mtime: Vec<u8>,
     #[sea_orm(column_name = "createdAt")]
-    pub created_at: DateTime,
+    pub created_at: String,
     #[sea_orm(column_name = "updatedAt")]
-    pub updated_at: DateTime,
+    pub updated_at: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
