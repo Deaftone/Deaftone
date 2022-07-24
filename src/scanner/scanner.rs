@@ -1,4 +1,4 @@
-use std::time::SystemTime;
+use std::{borrow::Borrow, time::SystemTime};
 
 use chrono::{DateTime, Utc};
 use entity;
@@ -41,7 +41,7 @@ pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
                 id: Set(Uuid::new_v4().to_string()),
                 path: Set(path.clone()),
                 mtime: Set(mtime.naive_utc()),
-                created_at: Set(init_time.clone()),
+                created_at: Set(init_time.to_owned()),
                 updated_at: Set(init_time),
             };
 
@@ -80,7 +80,7 @@ pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
                 music_brainz_recording_id: NotSet,
                 music_brainz_artist_id: NotSet,
                 music_brainz_track_id: NotSet,
-                created_at: Set(init_time.clone()),
+                created_at: Set(init_time.to_owned()),
                 updated_at: Set(init_time),
                 album_id: NotSet,
             };
