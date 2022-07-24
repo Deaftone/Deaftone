@@ -5,13 +5,14 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::{
     ActiveModelTrait, ActiveValue::NotSet, ConnectOptions, Database, DatabaseConnection, Set,
 };
-use std::fs;
+use std::{env, fs};
 use std::{net::SocketAddr, time::Duration};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
 #[tokio::main]
-async fn main() {
+async fn main() -> anyhow::Result<()> {
+    env::set_var("RUST_LOG", "info");
     if fs::metadata("./deaftone.sqlite").is_err() {
         fs::File::create("./deaftone.sqlite").expect("Created file");
     }
@@ -24,8 +25,8 @@ async fn main() {
         .idle_timeout(Duration::from_secs(8))
         .max_lifetime(Duration::from_secs(8));
 
-    let db = Database::connect(opt).await.unwrap();
-    Migrator::up(&db, None).await.unwrap();
+    let db = Database::connect(opt).await?;
+    Migrator::up(&db, None).await?;
 
     // Setup tracing logger
     tracing_subscriber::registry()
@@ -47,8 +48,9 @@ async fn main() {
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
-        .await
-        .unwrap();
+        .await?;
+
+    Ok(())
 }
 
 async fn handler(Extension(ref pool): Extension<DatabaseConnection>) -> Html<&'static str> {
