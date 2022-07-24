@@ -3,8 +3,7 @@ use entity;
 use metaflac::Tag;
 use migration::OnConflict;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait,
-    QueryFilter, Set,
+    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait, Set,
 };
 use uuid::Uuid;
 use walkdir::WalkDir;
