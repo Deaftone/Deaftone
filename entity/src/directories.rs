@@ -7,8 +7,9 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
+    #[sea_orm(unique)]
     pub path: String,
-    pub mtime: Vec<u8>,
+    pub mtime: DateTime,
     #[sea_orm(column_name = "createdAt")]
     pub created_at: String,
     #[sea_orm(column_name = "updatedAt")]
