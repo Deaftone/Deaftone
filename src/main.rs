@@ -1,10 +1,7 @@
 use axum::{response::Html, routing::get, Extension, Router};
 
-
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{
-    ConnectOptions, Database, DatabaseConnection,
-};
+use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::{env, fs};
 use std::{net::SocketAddr, time::Duration};
 use tower_http::trace::TraceLayer;
@@ -24,15 +21,11 @@ async fn main() -> anyhow::Result<()> {
         .min_connections(5)
         .connect_timeout(Duration::from_secs(8))
         .idle_timeout(Duration::from_secs(8))
-        .max_lifetime(Duration::from_secs(8));
+        .max_lifetime(Duration::from_secs(8))
+        .sqlx_logging(false);
 
     let db = Database::connect(opt).await?;
     Migrator::up(&db, None).await?;
-
-    use std::time::Instant;
-    let before = Instant::now();
-    scanner::scanner::walk(&db).await.unwrap();
-    println!("Elapsed time: {:.2?}", before.elapsed());
 
     // Setup tracing logger
     tracing_subscriber::registry()
@@ -42,6 +35,11 @@ async fn main() -> anyhow::Result<()> {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
+
+    use std::time::Instant;
+    let before = Instant::now();
+    scanner::scanner::walk(&db).await.unwrap();
+    println!("Elapsed time: {:.2?}", before.elapsed());
 
     // build our application with a route
     let app = Router::new()
