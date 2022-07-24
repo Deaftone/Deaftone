@@ -10,6 +10,7 @@ use std::{net::SocketAddr, time::Duration};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use uuid::Uuid;
+mod scanner;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env::set_var("RUST_LOG", "info");
@@ -27,6 +28,11 @@ async fn main() -> anyhow::Result<()> {
 
     let db = Database::connect(opt).await?;
     Migrator::up(&db, None).await?;
+
+    use std::time::Instant;
+    let before = Instant::now();
+    scanner::scanner::walk(&db).await.unwrap();
+    println!("Elapsed time: {:.2?}", before.elapsed());
 
     // Setup tracing logger
     tracing_subscriber::registry()
