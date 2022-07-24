@@ -20,14 +20,13 @@ macro_rules! skip_fail {
 pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
     tracing::info!("Starting scan");
 
-    let current_dir = "G:\\aa";
+    let current_dir = "H:\\Music";
     for entry in WalkDir::new(current_dir)
         .follow_links(true)
         .into_iter()
         .filter_map(|e| e.ok())
     {
         let f_name = entry.file_name().to_string_lossy();
-
         if f_name.ends_with(".flac") {
             let metadata = skip_fail!(tag_helper::get_metadata(
                 entry.path().to_string_lossy().to_string()
