@@ -2,9 +2,7 @@ use chrono::Utc;
 use entity;
 use metaflac::Tag;
 use migration::OnConflict;
-use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait, Set,
-};
+use sea_orm::{ActiveValue::NotSet, DatabaseConnection, EntityTrait, Set};
 use uuid::Uuid;
 use walkdir::WalkDir;
 
@@ -17,7 +15,7 @@ pub struct AudioMetadata {
     pub year: i32,
     pub track: u32,
     pub artists: Vec<String>,
-    pub path: std::path::PathBuf,
+    pub path: String,
     pub lossless: bool,
 }
 
@@ -38,7 +36,7 @@ pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
                 .comments
                 .get("YEAR")
                 .and_then(|d| d[0].parse::<i32>().ok());
-
+            let id = Uuid::new_v4();
             let metadata = AudioMetadata {
                 name: vorbis.title().map(|v| v[0].clone()).unwrap(),
                 number: vorbis.track().unwrap(),
@@ -50,14 +48,13 @@ pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
                 year: year.unwrap_or(0),
                 track: vorbis.track().unwrap(),
                 artists: vorbis.artist().unwrap().to_owned(),
-                path: entry.path().to_owned(),
+                path: entry.path().to_string_lossy().to_string(),
                 lossless: true,
             };
-            let path = entry.path().to_string_lossy().to_string();
-            let id = Uuid::new_v4();
+
             let song = entity::songs::ActiveModel {
                 id: Set(id.to_string()),
-                path: Set(path),
+                path: Set(metadata.path),
                 title: Set(metadata.name),
                 disk: NotSet,
                 artist: Set(metadata.album_artist),
@@ -75,9 +72,6 @@ pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
                 updated_at: Set(Utc::now().naive_local().to_string()),
                 album_id: NotSet,
             };
-            /*      .insert(db)
-            .await
-            .expect("Failed to insert"); */
 
             entity::songs::Entity::insert(song)
                 .on_conflict(
