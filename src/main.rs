@@ -1,15 +1,15 @@
 use axum::{response::Html, routing::get, Extension, Router};
-use chrono::Utc;
-use entity;
+
+
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ConnectOptions, Database, DatabaseConnection, Set,
+    ConnectOptions, Database, DatabaseConnection,
 };
 use std::{env, fs};
 use std::{net::SocketAddr, time::Duration};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use uuid::Uuid;
+
 mod scanner;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -59,7 +59,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn handler(Extension(ref pool): Extension<DatabaseConnection>) -> Html<&'static str> {
+async fn handler(Extension(ref _pool): Extension<DatabaseConnection>) -> Html<&'static str> {
     /*     let id = Uuid::new_v4();
     entity::artists::ActiveModel {
         id: Set(id.to_string().to_owned()),
