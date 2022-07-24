@@ -38,8 +38,9 @@ async fn main() -> anyhow::Result<()> {
 
     use std::time::Instant;
     let before = Instant::now();
+
     scanner::scanner::walk(&db).await.unwrap();
-    println!("Elapsed time: {:.2?}", before.elapsed());
+    tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
     // build our application with a route
     let app = Router::new()
