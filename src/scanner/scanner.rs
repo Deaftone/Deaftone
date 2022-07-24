@@ -1,6 +1,7 @@
 use chrono::Utc;
 use entity;
 use metaflac::Tag;
+use migration::OnConflict;
 use sea_orm::{
     ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait,
     QueryFilter, Set,
@@ -71,21 +72,24 @@ pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
                 music_brainz_recording_id: NotSet,
                 music_brainz_artist_id: NotSet,
                 music_brainz_track_id: NotSet,
-                created_at: Set(Utc::now().naive_local()),
-                updated_at: Set(Utc::now().naive_local()),
+                created_at: Set(Utc::now().naive_local().to_string()),
+                updated_at: Set(Utc::now().naive_local().to_string()),
                 album_id: NotSet,
             };
             /*      .insert(db)
             .await
             .expect("Failed to insert"); */
 
-            let _song = entity::songs::Entity::find()
-                .filter(entity::songs::Column::Path.contains(&entry.path().to_string_lossy().to_string()))
-                .all(db)
+            entity::songs::Entity::insert(song)
+                .on_conflict(
+                    // on conflict do nothing
+                    OnConflict::column(entity::songs::Column::Path)
+                        .do_nothing()
+                        .to_owned(),
+                )
+                .exec(db)
                 .await
-                .expect("Failed to find song")
-
-                
+                .expect("Failed to insert song");
         }
     }
 

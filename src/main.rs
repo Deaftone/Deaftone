@@ -60,7 +60,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 async fn handler(Extension(ref pool): Extension<DatabaseConnection>) -> Html<&'static str> {
-    let id = Uuid::new_v4();
+    /*     let id = Uuid::new_v4();
     entity::artists::ActiveModel {
         id: Set(id.to_string().to_owned()),
         name: Set("test".to_owned()),
@@ -71,6 +71,6 @@ async fn handler(Extension(ref pool): Extension<DatabaseConnection>) -> Html<&'s
     }
     .insert(pool)
     .await
-    .expect("Failed to insert");
+    .expect("Failed to insert"); */
     Html("<h1>Hello, World!</h1>")
 }
