@@ -1,31 +1,17 @@
 use axum::{response::Html, routing::get, Extension, Router};
 
-use migration::{Migrator, MigratorTrait};
-use sea_orm::{ConnectOptions, Database, DatabaseConnection};
+    body::Body,
+    extract::Path,
 use std::{env, fs};
 use std::{net::SocketAddr, time::Duration};
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
+mod db;
 mod scanner;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env::set_var("RUST_LOG", "info");
-    if fs::metadata("./deaftone.sqlite").is_err() {
-        fs::File::create("./deaftone.sqlite").expect("Created file");
-    }
-    // Connecting SQLite
-
-    let mut opt = ConnectOptions::new("sqlite://./deaftone.sqlite?mode=rwc".to_owned());
-    opt.max_connections(100)
-        .min_connections(5)
-        .connect_timeout(Duration::from_secs(8))
-        .idle_timeout(Duration::from_secs(8))
-        .max_lifetime(Duration::from_secs(8))
-        .sqlx_logging(false);
-
-    let db = Database::connect(opt).await?;
-    Migrator::up(&db, None).await?;
 
     // Setup tracing logger
     tracing_subscriber::registry()
@@ -36,11 +22,11 @@ async fn main() -> anyhow::Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    use std::time::Instant;
+    // Connecting SQLite
     let before = Instant::now();
 
-    scanner::scanner::walk(&db).await.unwrap();
-    tracing::info!("Scan completed in: {:.2?}", before.elapsed());
+    let db = db::get_connection().await?;
+    db::migrate_up(&db).await?;
 
     // build our application with a route
     let app = Router::new()
