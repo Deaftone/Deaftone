@@ -2,7 +2,7 @@ use anyhow::{Ok, Result};
 use axum::{
     body::Body,
     extract::Path,
-    http::Request,
+    http::{Request, StatusCode},
     response::Html,
     response::{IntoResponse, Response},
     routing::get,
@@ -70,10 +70,17 @@ async fn stream_handler(
     let song = song_repo::get_song(db, song_id)
         .await
         .expect("Unknown Song");
-    let path = song.unwrap().path;
-    println!("{:?}", path);
+    if song.is_none() {
+        return (StatusCode::NOT_FOUND, "Song not found").into_response();
+    } else {
+        let path = song.unwrap().path;
 
-    return ServeFile::new(path).call(req).await.unwrap();
+        return ServeFile::new(path)
+            .call(req)
+            .await
+            .unwrap()
+            .into_response();
+    }
 }
 
 async fn handler(
