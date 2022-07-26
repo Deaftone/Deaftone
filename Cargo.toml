@@ -13,13 +13,15 @@ entity = { path = "entity" }
 migration = { path = "migration" } 
 axum = "0.5.13"
 tokio = { version = "1.20.0", features = ["full"] }
-tower-http = { version = "0.3.0", features = ["trace"] }
+tower-http = { version = "0.3.0", features = ["trace", "fs"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 chrono = "0.4.19"
 anyhow = "1.0.58"
 walkdir = "2.3.2"
 metaflac = "0.2.5"
+tokio-util = "0.7.3"
+tower = "0.4.13"
 
 [dependencies.sea-orm]
 version = "^0.9.1" # sea-orm version
