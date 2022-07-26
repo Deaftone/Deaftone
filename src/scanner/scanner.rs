@@ -1,9 +1,9 @@
-use std::time::SystemTime;
-
+use anyhow::Result;
 use chrono::{DateTime, Utc};
 use entity;
 use migration::OnConflict;
 use sea_orm::{ActiveValue::NotSet, DatabaseConnection, EntityTrait, Set};
+use std::time::SystemTime;
 use uuid::Uuid;
 use walkdir::{DirEntry, WalkDir};
 
@@ -25,7 +25,7 @@ pub async fn process_directory(
     entry: DirEntry,
     path: String,
     dirs: &Vec<entity::directories::Model>,
-) -> anyhow::Result<bool> {
+) -> Result<bool> {
     let index = dirs.iter().position(|r| r.path == path);
     let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
     let mtime: DateTime<Utc> = fmtime.into();
@@ -47,7 +47,7 @@ pub async fn insert_directory(
     path: &String,
     mtime: &DateTime<Utc>,
     db: &DatabaseConnection,
-) -> anyhow::Result<()> {
+) -> Result<()> {
     let init_time: String = Utc::now().naive_local().to_string();
     let dir = entity::directories::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
@@ -69,7 +69,7 @@ pub async fn insert_directory(
         .expect("Failed to insert dir");
     Ok(())
 }
-pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
+pub async fn walk(db: &DatabaseConnection) -> Result<()> {
     tracing::info!("Starting scan");
     let dirs = entity::directories::Entity::find().all(db).await?;
     let current_dir = "G:\\aa";
@@ -84,47 +84,45 @@ pub async fn walk(db: &DatabaseConnection) -> anyhow::Result<()> {
             should_process = process_directory(db, entry.clone(), path.clone(), &dirs).await?;
         }
 
-        if should_process {
-            let f_name = entry.file_name().to_string_lossy();
-            if f_name.ends_with(".flac") {
-                let metadata = skip_fail!(tag_helper::get_metadata(path));
+        let f_name = entry.file_name().to_string_lossy();
+        if f_name.ends_with(".flac") {
+            let metadata = skip_fail!(tag_helper::get_metadata(path));
 
-                let id = Uuid::new_v4();
+            let id = Uuid::new_v4();
 
-                let init_time: String = Utc::now().naive_local().to_string();
+            let init_time: String = Utc::now().naive_local().to_string();
 
-                let song = entity::songs::ActiveModel {
-                    id: Set(id.to_string()),
-                    path: Set(metadata.path),
-                    title: Set(metadata.name),
-                    disk: NotSet,
-                    artist: Set(metadata.album_artist),
-                    album_name: Set(metadata.album),
-                    codec: NotSet,
-                    sample_rate: NotSet,
-                    bits_per_sample: NotSet,
-                    track: NotSet,
-                    year: Set(Some(metadata.year)),
-                    label: NotSet,
-                    music_brainz_recording_id: NotSet,
-                    music_brainz_artist_id: NotSet,
-                    music_brainz_track_id: NotSet,
-                    created_at: Set(init_time.to_owned()),
-                    updated_at: Set(init_time),
-                    album_id: NotSet,
-                };
+            let song = entity::songs::ActiveModel {
+                id: Set(id.to_string()),
+                path: Set(metadata.path),
+                title: Set(metadata.name),
+                disk: NotSet,
+                artist: Set(metadata.album_artist),
+                album_name: Set(metadata.album),
+                codec: NotSet,
+                sample_rate: NotSet,
+                bits_per_sample: NotSet,
+                track: NotSet,
+                year: Set(Some(metadata.year)),
+                label: NotSet,
+                music_brainz_recording_id: NotSet,
+                music_brainz_artist_id: NotSet,
+                music_brainz_track_id: NotSet,
+                created_at: Set(init_time.to_owned()),
+                updated_at: Set(init_time),
+                album_id: NotSet,
+            };
 
-                entity::songs::Entity::insert(song)
-                    .on_conflict(
-                        // on conflict do nothing
-                        OnConflict::column(entity::songs::Column::Path)
-                            .update_column(entity::songs::Column::UpdatedAt)
-                            .to_owned(),
-                    )
-                    .exec(db)
-                    .await
-                    .expect("Failed to insert song");
-            }
+            entity::songs::Entity::insert(song)
+                .on_conflict(
+                    // on conflict do nothing
+                    OnConflict::column(entity::songs::Column::Path)
+                        .update_column(entity::songs::Column::UpdatedAt)
+                        .to_owned(),
+                )
+                .exec(db)
+                .await
+                .expect("Failed to insert song");
         }
     }
 
