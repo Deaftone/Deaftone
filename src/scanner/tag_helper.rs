@@ -13,7 +13,7 @@ pub struct AudioMetadata {
 }
 
 pub fn get_metadata(path: String) -> Result<AudioMetadata> {
-    let tag = Tag::read_from_path(&path).unwrap_or_default();
+    let tag = Tag::read_from_path(&path)?;
     let vorbis = tag
         .vorbis_comments()
         .with_context(|| format!("Failed to read file {}", path))?;
