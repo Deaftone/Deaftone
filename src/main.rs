@@ -36,12 +36,13 @@ async fn main() -> Result<()> {
         .route("/", get(handler))
         .route("/stream/:id", get(api::stream::stream_handler))
         .route("/albums/:id", get(api::albums::get_album))
+        .route("/albums", get(api::albums::get_all_albums))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(db))
         .layer(Extension(scan));
 
     // run it
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 3030));
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
