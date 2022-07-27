@@ -6,7 +6,7 @@ use sea_orm::{
     ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect,
     Set,
 };
-use std::{ops::Not, time::SystemTime};
+use std::time::SystemTime;
 use uuid::Uuid;
 use walkdir::{DirEntry, WalkDir};
 

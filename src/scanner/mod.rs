@@ -22,7 +22,7 @@ impl Scanner {
     }
     pub fn start_scan(&mut self) {
         tokio::spawn(async move {
-            let db = DB::new().await.unwrap().connect();
+            let _db = DB::new().await.unwrap().connect();
 
             use std::time::Instant;
             let before = Instant::now();
