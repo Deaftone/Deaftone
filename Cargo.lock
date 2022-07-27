@@ -514,6 +514,8 @@ dependencies = [
  "metaflac",
  "migration",
  "sea-orm",
+ "serde",
+ "serde_json",
  "tokio",
  "tokio-util",
  "tower",

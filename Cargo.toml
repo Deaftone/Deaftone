@@ -22,7 +22,8 @@ walkdir = "2.3.2"
 metaflac = "0.2.5"
 tokio-util = "0.7.3"
 tower = "0.4.13"
-
+serde = { version = "1.0"}
+serde_json = { version = "1.0.71" }
 [dependencies.sea-orm]
 version = "^0.9.1" # sea-orm version
 features = [
