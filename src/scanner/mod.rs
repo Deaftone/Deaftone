@@ -1,6 +1,6 @@
-use crate::db::get_connection;
 use anyhow::Result;
-use std::sync::{atomic::AtomicBool, Arc};
+
+use crate::db::DB;
 
 pub mod scanner;
 pub mod tag_helper;
@@ -22,11 +22,15 @@ impl Scanner {
     }
     pub fn start_scan(&mut self) {
         tokio::spawn(async move {
-            let db_connection = get_connection().await.expect("Failed to connect to db");
+            let db = DB::new().await.unwrap().connect();
+
             use std::time::Instant;
             let before = Instant::now();
-            scanner::walk(&db_connection).await.unwrap();
+            /*             scanner::walk(&db).await.unwrap();
+            scanner::create_albums(&db).await;
+            scanner::create_artists(&db).await; */
             tracing::info!("Scan completed in: {:.2?}", before.elapsed());
+
             //self.update_scanning(AtomicBool::new(false))
             //val = Arc::new(false);
         });
