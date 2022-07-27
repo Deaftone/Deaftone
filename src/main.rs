@@ -1,27 +1,19 @@
 use anyhow::{Ok, Result};
-use axum::{
-    body::Body,
-    extract::Path,
-    http::{Request, StatusCode},
-    response::Html,
-    response::{IntoResponse, Response},
-    routing::get,
-    Extension, Router,
-};
-use db::song_repo;
+use axum::{response::Html, routing::get, Extension, Router};
+
+use db::DB;
 use scanner::Scanner;
 use sea_orm::DatabaseConnection;
 use std::env;
 use std::net::SocketAddr;
-use tower::Service;
-use tower_http::{services::ServeFile, trace::TraceLayer};
+use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
+mod api;
 mod db;
 mod scanner;
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("RUST_LOG", "info");
+    env::set_var("RUST_LOG", "debug");
 
     // Setup tracing logger
     tracing_subscriber::registry()
@@ -34,8 +26,7 @@ async fn main() -> Result<()> {
 
     // Connecting SQLite
 
-    let db = db::get_connection().await?;
-    db::migrate_up(&db).await?;
+    let db = DB::new().await.unwrap().connect();
 
     let mut scan = scanner::Scanner::new().unwrap();
     scan.start_scan();
@@ -43,7 +34,8 @@ async fn main() -> Result<()> {
     // build our application with a route
     let app = Router::new()
         .route("/", get(handler))
-        .route("/stream/:id", get(stream_handler))
+        .route("/stream/:id", get(api::stream::stream_handler))
+        .route("/albums/:id", get(api::albums::get_album))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(db))
         .layer(Extension(scan));
@@ -58,34 +50,9 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-struct Params {
-    song_id: String,
-}
-
-async fn stream_handler(
-    Path(song_id): Path<String>,
-    Extension(ref db): Extension<DatabaseConnection>,
-    req: Request<Body>,
-) -> impl IntoResponse {
-    let song = song_repo::get_song(db, song_id)
-        .await
-        .expect("Unknown Song");
-    if song.is_none() {
-        return (StatusCode::NOT_FOUND, "Song not found").into_response();
-    } else {
-        let path = song.unwrap().path;
-
-        return ServeFile::new(path)
-            .call(req)
-            .await
-            .unwrap()
-            .into_response();
-    }
-}
-
 async fn handler(
     Extension(ref scanner): Extension<Scanner>,
-    Extension(ref db): Extension<DatabaseConnection>,
+    Extension(ref _db): Extension<DatabaseConnection>,
 ) -> Html<&'static str> {
     /*     let id = Uuid::new_v4();
     entity::artists::ActiveModel {
