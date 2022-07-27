@@ -7,7 +7,6 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: String,
-    pub path: String,
     pub name: String,
     #[sea_orm(column_name = "artistName")]
     pub artist_name: String,
@@ -46,4 +45,18 @@ impl Related<super::songs::Entity> for Entity {
     }
 }
 
+/* pub struct SongsForAlbum;
+
+impl Linked for SongsForAlbum {
+    type FromEntity = Entity;
+
+    type ToEntity = super::songs::Entity;
+
+    fn link(&self) -> Vec<RelationDef> {
+        vec![
+            super::albums::Relation::Songs.def(),
+            super::songs::Relation::Albums.def().rev(),
+        ]
+    }
+} */
 impl ActiveModelBehavior for ActiveModel {}
