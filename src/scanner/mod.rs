@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
+use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, Statement};
 
 use crate::db::DB;
 
@@ -27,12 +27,15 @@ impl Scanner {
 
             use std::time::Instant;
             let before: Instant = Instant::now();
-
-            scanner::walk_partial(&db).await.unwrap();
-            //scanner::walk_full(&db).await.unwrap();
-            /*             scanner::walk(&db).await.unwrap();
-            scanner::create_albums(&db).await;
-            scanner::create_artists(&db).await; */
+            // Run full scan if no songs
+            let count = entity::songs::Entity::find().count(&db).await.unwrap();
+            if count > 0 {
+                tracing::info!("Starting partial scan");
+                scanner::walk_partial(&db).await.unwrap();
+            } else {
+                tracing::info!("Starting full scan");
+                scanner::walk_full(&db).await.unwrap();
+            }
             tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
             // Cleanup orphans
