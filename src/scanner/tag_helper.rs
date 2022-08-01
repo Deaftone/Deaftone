@@ -14,11 +14,11 @@ pub struct AudioMetadata {
 
 pub fn get_metadata(path: String) -> Result<AudioMetadata> {
     let tag = Tag::read_from_path(&path)?;
-    let vorbis = tag
+    let vorbis: &VorbisComment = tag
         .vorbis_comments()
         .with_context(|| format!("Failed to read file {}", path))?;
 
-    let metadata = AudioMetadata {
+    let metadata: AudioMetadata = AudioMetadata {
         name: vorbis
             .title()
             .map(|v| v[0].clone())
@@ -44,18 +44,18 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
 }
 // This is ugly. But why is there 3 different tags for date?
 fn get_year(vorbis: &VorbisComment) -> Result<i32> {
-    let original_year = vorbis
+    let original_year: String = vorbis
         .comments
         .get("ORIGINALYEAR")
         .and_then(|d| d[0].parse::<String>().ok())
         .unwrap_or_default();
 
-    let date = vorbis
+    let date: String = vorbis
         .comments
         .get("DATE")
         .and_then(|d| d[0].parse::<String>().ok())
         .unwrap_or_default();
-    let year = vorbis
+    let year: String = vorbis
         .comments
         .get("YEAR")
         .and_then(|d| d[0].parse::<String>().ok())
