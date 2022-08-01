@@ -6,6 +6,7 @@ use scanner::Scanner;
 use sea_orm::DatabaseConnection;
 use std::env;
 use std::net::SocketAddr;
+use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 mod api;
@@ -13,7 +14,7 @@ mod db;
 mod scanner;
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("RUST_LOG", "debug");
+    env::set_var("RUST_LOG", "info");
 
     // Setup tracing logger
     tracing_subscriber::registry()
@@ -46,6 +47,7 @@ async fn main() -> Result<()> {
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
+        .with_graceful_shutdown(shutdown_signal())
         .await?;
 
     Ok(())
@@ -69,4 +71,29 @@ async fn handler(
     .expect("Failed to insert"); */
     println!("{:?}", scanner.get_status());
     Html("<h1>{Hello, World}!</h1>")
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+    tracing::info!("Shutting down");
 }
