@@ -3,8 +3,9 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::{fs, time::Duration};
 
+pub mod album_repo;
+pub mod artist_repo;
 pub mod song_repo;
-
 #[derive(Clone)]
 pub struct DB {
     pool: DatabaseConnection,
