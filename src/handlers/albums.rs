@@ -6,7 +6,7 @@ use axum::{
 
 use sea_orm::{DatabaseConnection, EntityTrait};
 use serde::Serialize;
-
+#[allow(non_snake_case)]
 #[derive(Serialize)]
 pub struct AlbumResponse {
     id: String,
