@@ -10,8 +10,6 @@ use sea_orm::{
 use uuid::Uuid;
 
 use crate::scanner::tag_helper::AudioMetadata;
-
-use super::album_repo;
 pub async fn get_song(db: &DatabaseConnection, id: String) -> Result<Option<entity::songs::Model>> {
     let song: Option<songs::Model> = Song::find_by_id(id.to_owned())
         .one(db)
@@ -58,7 +56,7 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
     let id: Uuid = Uuid::new_v4();
     let init_time: String = Utc::now().naive_local().to_string();
 
-    let album = album_repo::find_by_name(db, metadata.album.to_owned())
+    let album = super::album::find_by_name(db, metadata.album.to_owned())
         .await
         .unwrap();
 
@@ -89,7 +87,7 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
             Set(album.unwrap().id).into_value().unwrap(),
         )
     } else {
-        let album_id = album_repo::create_album(
+        let album_id = super::album::create_album(
             db,
             metadata.album.to_owned(),
             metadata.album_artist.to_owned(),
