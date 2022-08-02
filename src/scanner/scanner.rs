@@ -107,8 +107,17 @@ pub async fn walk_full(db: &DatabaseConnection) -> Result<()> {
         }
         let f_name = entry.file_name().to_string_lossy();
         if f_name.ends_with(".flac") {
-            let metadata = skip_fail!(tag_helper::get_metadata(path));
+            let metadata = skip_fail!(tag_helper::get_metadata(path.to_owned()));
             skip_fail!(services::song::create_song(db, metadata).await);
+        }
+        if f_name.contains("cover.") {
+            println!("Found cover for {:?}", path);
+            services::album::update_cover_for_path(
+                db,
+                path,
+                entry.path().parent().unwrap().to_string_lossy().to_string(),
+            )
+            .await?;
         }
     }
 
