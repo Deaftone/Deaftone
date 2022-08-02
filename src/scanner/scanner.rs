@@ -87,6 +87,15 @@ pub async fn walk_dir(db: &DatabaseConnection, dir: String) -> Result<()> {
             let metadata = skip_fail!(tag_helper::get_metadata(path.to_owned()));
             skip_fail!(services::song::create_or_update(db, metadata).await);
         }
+        if f_name.contains("cover.") {
+            println!("Found cover for {:?}", path);
+            services::album::update_cover_for_path(
+                db,
+                path,
+                entry.path().parent().unwrap().to_string_lossy().to_string(),
+            )
+            .await?;
+        }
     }
     Ok(())
 }
