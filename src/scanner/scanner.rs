@@ -5,6 +5,7 @@ use chrono::{DateTime, Utc};
 use entity;
 use migration::OnConflict;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use std::path::PathBuf;
 use std::result::Result::Ok;
 use std::time::SystemTime;
 use tokio::fs;
@@ -28,8 +29,11 @@ pub async fn walk_partial(db: &DatabaseConnection) -> Result<()> {
     while let Some(item) = dirs_stream.next().await {
         let item = item?;
         let meta = fs::metadata(&item.path).await;
-
-        if meta.is_ok() {
+        let is_empty = PathBuf::from(&item.path)
+            .read_dir()
+            .map(|mut i| i.next().is_none())
+            .unwrap_or(false);
+        if meta.is_ok() && !is_empty {
             let _ftime = meta.unwrap().modified().unwrap();
             let ftime: DateTime<Utc> = _ftime.into();
 
@@ -68,9 +72,15 @@ pub async fn walk_dir(db: &DatabaseConnection, dir: String) -> Result<()> {
         let path: String = entry.path().to_string_lossy().to_string();
 
         if entry.file_type().is_dir() {
+            let is_empty = PathBuf::from(&path)
+                .read_dir()
+                .map(|mut i| i.next().is_none())
+                .unwrap_or(false);
             let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
             let mtime: DateTime<Utc> = fmtime.into();
-            insert_directory(&path, &mtime, db).await?;
+            if !is_empty {
+                insert_directory(&path, &mtime, db).await?;
+            }
         }
         let f_name = entry.file_name().to_string_lossy();
         if f_name.ends_with(".flac") {
