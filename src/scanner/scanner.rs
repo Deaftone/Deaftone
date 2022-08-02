@@ -1,3 +1,5 @@
+use crate::scanner::tag_helper::{self};
+use crate::services;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use entity;
@@ -8,16 +10,7 @@ use std::time::SystemTime;
 use tokio::fs;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
-use walkdir::{DirEntry, WalkDir};
-
-use crate::{
-    db::{
-        self,
-        artist_repo::{self, find_by_name},
-        song_repo,
-    },
-    scanner::tag_helper::{self, AudioMetadata},
-};
+use walkdir::WalkDir;
 macro_rules! skip_fail {
     ($res:expr) => {
         match $res {
@@ -82,7 +75,7 @@ pub async fn walk_dir(db: &DatabaseConnection, dir: String) -> Result<()> {
         let f_name = entry.file_name().to_string_lossy();
         if f_name.ends_with(".flac") {
             let metadata = skip_fail!(tag_helper::get_metadata(path.to_owned()));
-            skip_fail!(song_repo::create_or_update(db, metadata).await);
+            skip_fail!(services::song::create_or_update(db, metadata).await);
         }
     }
     Ok(())
@@ -105,7 +98,7 @@ pub async fn walk_full(db: &DatabaseConnection) -> Result<()> {
         let f_name = entry.file_name().to_string_lossy();
         if f_name.ends_with(".flac") {
             let metadata = skip_fail!(tag_helper::get_metadata(path));
-            skip_fail!(song_repo::create_song(db, metadata).await);
+            skip_fail!(services::song::create_song(db, metadata).await);
         }
     }
 

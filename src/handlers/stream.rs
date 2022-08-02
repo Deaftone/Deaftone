@@ -8,13 +8,14 @@ use tower_http::services::fs::ServeFile;
 
 use tower::util::ServiceExt;
 
-use crate::db;
+use crate::services;
+
 pub async fn stream_handler(
     Path(song_id): Path<String>,
     Extension(ref db): Extension<DatabaseConnection>,
 ) -> Result<Response<BoxBody>, (StatusCode, String)> {
     let res = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let song = db::song_repo::get_song(db, song_id).await.unwrap();
+    let song = services::song::get_song(db, song_id).await.unwrap();
     match song {
         Some(f) => match ServeFile::new(f.path).oneshot(res).await {
             Ok(res) => Ok(res.map(boxed)),

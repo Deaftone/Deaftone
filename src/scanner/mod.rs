@@ -15,9 +15,9 @@ impl Scanner {
         Ok(scanner)
     }
 
-    fn update_scanning(&mut self, status: bool) {
+    /*     fn update_scanning(&mut self, status: bool) {
         self.scanning = status
-    }
+    } */
     pub fn get_status(&self) -> bool {
         return self.scanning;
     }

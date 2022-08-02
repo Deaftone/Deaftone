@@ -1,12 +1,9 @@
 use chrono::Utc;
-
 use sea_orm::{
     ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait,
     QueryFilter, Set,
 };
 use uuid::Uuid;
-
-use super::artist_repo;
 
 pub async fn find_by_name(
     db: &DatabaseConnection,
@@ -49,7 +46,7 @@ pub async fn create_album(
             Set(db_album.unwrap().id).into_value().unwrap(),
         )
     } else {
-        let artist_id = artist_repo::create_artist(db, artist_name)
+        let artist_id = super::artist::create_artist(db, artist_name)
             .await
             .map_err(|e| anyhow::anyhow!(e))?;
         album.set(

@@ -9,9 +9,10 @@ use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-mod api;
 mod db;
+mod handlers;
 mod scanner;
+mod services;
 #[tokio::main]
 async fn main() -> Result<()> {
     env::set_var("RUST_LOG", "info");
@@ -31,13 +32,13 @@ async fn main() -> Result<()> {
 
     let mut scan = scanner::Scanner::new().unwrap();
     scan.start_scan();
-    println!("{:?}", scan.get_status());
+    //println!("{:?}", scan.get_status());
     // build our application with a route
     let app = Router::new()
         .route("/", get(handler))
-        .route("/stream/:id", get(api::stream::stream_handler))
-        .route("/albums/:id", get(api::albums::get_album))
-        .route("/albums", get(api::albums::get_all_albums))
+        .route("/stream/:id", get(handlers::stream::stream_handler))
+        .route("/albums/:id", get(handlers::albums::get_album))
+        .route("/albums", get(handlers::albums::get_all_albums))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(db))
         .layer(Extension(scan));
