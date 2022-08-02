@@ -11,6 +11,8 @@ use serde::Serialize;
 pub struct ArtistResponse {
     id: String,
     name: String,
+    image: String,
+    bio: String,
     albums: Vec<entity::albums::Model>,
 }
 pub async fn get_artist(
@@ -30,6 +32,8 @@ pub async fn get_artist(
             return Ok(Json(ArtistResponse {
                 id: artist_model.id,
                 name: artist_model.name,
+                image: artist_model.image.unwrap_or_default(),
+                bio: artist_model.bio.unwrap_or_default(),
                 albums,
             }));
         }
