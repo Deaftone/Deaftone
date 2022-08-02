@@ -4,7 +4,7 @@ use axum::{
     Json,
 };
 
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{DatabaseConnection, EntityTrait, QueryOrder};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -20,6 +20,7 @@ pub async fn get_artist(
     Extension(ref db): Extension<DatabaseConnection>,
 ) -> Result<Json<ArtistResponse>, (StatusCode, String)> {
     let artist = entity::artists::Entity::find_by_id(artist_id)
+        .order_by_desc(entity::albums::Column::Year)
         .find_with_related(entity::albums::Entity)
         .all(db)
         .await
