@@ -36,9 +36,11 @@ async fn main() -> Result<()> {
     // build our application with a route
     let app = Router::new()
         .route("/", get(handler))
-        .route("/stream/:id", get(handlers::stream::stream_handler))
+        .route("/stream/:id", get(handlers::songs::stream_handler))
         .route("/albums/:id", get(handlers::albums::get_album))
         .route("/albums", get(handlers::albums::get_all_albums))
+        .route("/artists/:id", get(handlers::artists::get_artist))
+        .route("/artists", get(handlers::artists::get_all_artists))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(db))
         .layer(Extension(scan));
