@@ -11,7 +11,8 @@ use serde::Serialize;
 pub struct AlbumResponse {
     id: String,
     name: String,
-    artist_name: String,
+    artist: String,
+    artistId: String,
     year: i32,
     songs: Vec<entity::songs::Model>,
 }
@@ -32,7 +33,8 @@ pub async fn get_album(
             return Ok(Json(AlbumResponse {
                 id: album_model.id,
                 name: album_model.name,
-                artist_name: album_model.artist_name,
+                artist: album_model.artist_name,
+                artistId: album_model.artist_id.unwrap_or_default(),
                 year: album_model.year,
                 songs,
             }));
