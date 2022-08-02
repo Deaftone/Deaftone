@@ -38,6 +38,7 @@ async fn main() -> Result<()> {
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::songs::stream_handler))
         .route("/albums/:id", get(handlers::albums::get_album))
+        .route("/albums/:id/cover", get(handlers::albums::get_cover))
         .route("/albums", get(handlers::albums::get_all_albums))
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/artists", get(handlers::artists::get_all_artists))

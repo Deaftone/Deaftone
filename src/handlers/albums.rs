@@ -1,11 +1,14 @@
 use axum::{
+    body::{boxed, Body, BoxBody},
     extract::{Extension, Path},
-    http::StatusCode,
+    http::{Request, Response, StatusCode},
     Json,
 };
 
 use sea_orm::{DatabaseConnection, EntityTrait};
 use serde::Serialize;
+use tower::ServiceExt;
+use tower_http::services::ServeFile;
 #[allow(non_snake_case)]
 #[derive(Serialize)]
 pub struct AlbumResponse {
@@ -49,7 +52,32 @@ pub async fn get_album(
 }
 /* #[axum_macros::debug_handler]
  */
+pub async fn get_cover(
+    Extension(ref db): Extension<DatabaseConnection>,
+    Path(album_id): Path<String>,
+) -> Result<Response<BoxBody>, (StatusCode, String)> {
+    let res = Request::builder().uri("/").body(Body::empty()).unwrap();
 
+    let album = entity::albums::Entity::find_by_id(album_id)
+        .one(db)
+        .await
+        .unwrap();
+
+    match album {
+        Some(f) => match ServeFile::new(f.cover.unwrap_or_default())
+            .oneshot(res)
+            .await
+        {
+            Ok(res) => Ok(res.map(boxed)),
+
+            Err(err) => Err((
+                StatusCode::NOT_FOUND,
+                format!("Something went wrong: {}", err),
+            )),
+        },
+        None => Err((StatusCode::NOT_FOUND, format!("Unable to find song"))),
+    }
+}
 pub async fn get_all_albums(
     Extension(ref db): Extension<DatabaseConnection>,
 ) -> Json<Vec<entity::albums::Model>> {
