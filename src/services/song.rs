@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use anyhow::{Ok, Result};
 use chrono::Utc;
 use entity::songs;
@@ -62,7 +64,7 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
 
     let mut song: entity::songs::ActiveModel = entity::songs::ActiveModel {
         id: Set(id.to_string()),
-        path: Set(metadata.path),
+        path: Set(metadata.path.to_owned()),
         title: Set(metadata.name),
         disk: Set(Some(metadata.number as i32)),
         artist: Set(metadata.album_artist.to_owned()),
@@ -91,6 +93,12 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
             db,
             metadata.album.to_owned(),
             metadata.album_artist.to_owned(),
+            Path::new(&metadata.path)
+                .parent()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string(),
             Some(metadata.year),
         )
         .await
