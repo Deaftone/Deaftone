@@ -1,2 +1,3 @@
 pub mod albums;
-pub mod stream;
+pub mod artists;
+pub mod songs;
