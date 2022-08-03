@@ -16,7 +16,8 @@ pub async fn get_song(db: &DatabaseConnection, id: String) -> Result<Option<enti
     let song: Option<songs::Model> = Song::find_by_id(id.to_owned())
         .one(db)
         .await
-        .expect("Failed to get song from db");
+        .map_err(|e| anyhow::anyhow!(e))?;
+
     Ok(song)
 }
 pub async fn get_song_by_path(
@@ -26,7 +27,8 @@ pub async fn get_song_by_path(
     let song: Option<songs::Model> = Song::find()
         .filter(songs::Column::Path.eq(path))
         .one(db)
-        .await?;
+        .await
+        .map_err(|e| anyhow::anyhow!(e))?;
     Ok(song)
 }
 pub async fn create_or_update(
@@ -36,7 +38,8 @@ pub async fn create_or_update(
     let db_song = entity::songs::Entity::find()
         .filter(entity::songs::Column::Path.eq(metadata.path.to_owned()))
         .one(db)
-        .await?;
+        .await
+        .map_err(|e| anyhow::anyhow!(e))?;
 
     if db_song.is_some() {
         let mut song: entity::songs::ActiveModel = db_song.unwrap().into();
@@ -48,7 +51,7 @@ pub async fn create_or_update(
         song.track = Set(Some(metadata.track as i32));
         song.year = Set(Some(metadata.year));
         song.updated_at = Set(update_time);
-        song.update(db).await?;
+        song.update(db).await.map_err(|e| anyhow::anyhow!(e))?;
     } else {
         create_song(db, metadata).await?;
     }
@@ -60,7 +63,7 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
 
     let album = super::album::find_by_name(db, metadata.album.to_owned())
         .await
-        .unwrap();
+        .map_err(|e| anyhow::anyhow!(e))?;
 
     let mut song: entity::songs::ActiveModel = entity::songs::ActiveModel {
         id: Set(id.to_string()),
