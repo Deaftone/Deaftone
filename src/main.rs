@@ -32,7 +32,6 @@ async fn main() -> Result<()> {
 
     let mut scan = scanner::Scanner::new().unwrap();
     scan.start_scan();
-    //println!("{:?}", scan.get_status());
     // build our application with a route
     let app = Router::new()
         .route("/", get(handler))
