@@ -60,18 +60,6 @@ async fn handler(
     Extension(ref scanner): Extension<Scanner>,
     Extension(ref _db): Extension<DatabaseConnection>,
 ) -> Html<&'static str> {
-    /*     let id = Uuid::new_v4();
-    entity::artists::ActiveModel {
-        id: Set(id.to_string().to_owned()),
-        name: Set("test".to_owned()),
-        image: NotSet,
-        bio: NotSet,
-        created_at: Set(Utc::now().naive_local()),
-        updated_at: Set(Utc::now().naive_local()),
-    }
-    .insert(pool)
-    .await
-    .expect("Failed to insert"); */
     println!("{:?}", scanner.get_status());
     Html("<h1>{Hello, World}!</h1>")
 }
