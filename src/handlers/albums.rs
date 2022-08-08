@@ -1,14 +1,16 @@
 use axum::{
-    body::{boxed, Body, BoxBody},
+    body::{self, boxed, Body, BoxBody, Full},
     extract::{Extension, Path},
-    http::{Request, Response, StatusCode},
+    http::{header, Request, Response, StatusCode},
     Json,
 };
 
+use include_dir::{include_dir, Dir};
 use sea_orm::{DatabaseConnection, EntityTrait};
 use serde::Serialize;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
+static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/resources");
 #[allow(non_snake_case)]
 #[derive(Serialize)]
 pub struct AlbumResponse {
@@ -64,19 +66,42 @@ pub async fn get_cover(
         .unwrap();
 
     match album {
+        Some(f) => {
+            if f.cover.is_some() {
+                match ServeFile::new(f.cover.unwrap()).oneshot(res).await {
+                    Ok(res) => Ok(res.map(boxed)),
+                    Err(err) => Err((
+                        StatusCode::NOT_FOUND,
+                        format!("Something went wrong: {}", err),
+                    )),
+                }
+            } else {
+                let unknown_album = ASSETS.get_file("unknown_album.jpg").unwrap();
+                let body = boxed(Full::from(unknown_album.contents()));
+                Ok(Response::builder()
+                    .header(header::CONTENT_TYPE, "image/jpg")
+                    .body(body)
+                    .unwrap())
+            }
+        }
+        None => Err((StatusCode::NOT_FOUND, format!("Unable to find album"))),
+    }
+    /*     match album {
         Some(f) => match ServeFile::new(f.cover.unwrap_or_default())
             .oneshot(res)
             .await
         {
             Ok(res) => Ok(res.map(boxed)),
-
-            Err(err) => Err((
-                StatusCode::NOT_FOUND,
-                format!("Something went wrong: {}", err),
-            )),
+            Err(_err) => {
+                let body = boxed(Full::from(unknown_album.contents()));
+                Ok(Response::builder()
+                    .header(header::CONTENT_TYPE, "image/jpg")
+                    .body(body)
+                    .unwrap())
+            }
         },
-        None => Err((StatusCode::NOT_FOUND, format!("Unable to find song"))),
-    }
+        None => Err((StatusCode::NOT_FOUND, format!("Unable to find album"))),
+    } */
 }
 pub async fn get_all_albums(
     Extension(ref db): Extension<DatabaseConnection>,

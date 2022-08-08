@@ -26,6 +26,7 @@ serde = { version = "1.0"}
 serde_json = { version = "1.0.71" }
 axum-macros = "0.2.3"
 tokio-stream = "0.1.9"
+include_dir = "0.7.2"
 [dependencies.sea-orm]
 version = "^0.9.1" # sea-orm version
 features = [
