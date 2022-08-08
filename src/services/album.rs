@@ -1,11 +1,11 @@
 use anyhow::Ok;
 use chrono::Utc;
+use sea_orm::PaginatorTrait;
 use sea_orm::{
     ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait,
     QueryFilter, Set,
 };
 use uuid::Uuid;
-
 pub async fn find_by_name(
     db: &DatabaseConnection,
     album_name: String,
@@ -32,6 +32,24 @@ pub async fn update_cover_for_path(
         album.update(db).await?;
     }
     Ok(())
+}
+
+pub async fn get_all_albums(db: &DatabaseConnection) -> anyhow::Result<Vec<entity::albums::Model>> {
+    let albums: Vec<entity::albums::Model> = entity::albums::Entity::find()
+        .all(db)
+        .await
+        .expect("Failed to get albums");
+    Ok(albums)
+}
+pub async fn get_albums_paginate(
+    db: &DatabaseConnection,
+    page: usize,
+    size: usize,
+) -> anyhow::Result<Vec<entity::albums::Model>> {
+    let db_albums = entity::albums::Entity::find().paginate(db, size);
+    let albums = db_albums.fetch_page(page).await?;
+    //albums.Ok(albums)
+    Ok(albums)
 }
 pub async fn create_album(
     db: &DatabaseConnection,

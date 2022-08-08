@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::{
     body::{self, boxed, Body, BoxBody, Full},
     extract::{Extension, Path},
@@ -10,6 +12,8 @@ use sea_orm::{DatabaseConnection, EntityTrait};
 use serde::Serialize;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
+
+use crate::services;
 static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/resources");
 #[allow(non_snake_case)]
 #[derive(Serialize)]
@@ -105,10 +109,57 @@ pub async fn get_cover(
 }
 pub async fn get_all_albums(
     Extension(ref db): Extension<DatabaseConnection>,
-) -> Json<Vec<entity::albums::Model>> {
-    let albums: Vec<entity::albums::Model> = entity::albums::Entity::find()
-        .all(db)
-        .await
-        .expect("Failed to get albums");
-    return Json(albums);
+    axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
+) -> Result<Json<Vec<entity::albums::Model>>, (StatusCode, String)> {
+    if params.get("size").is_some() {
+        let size: usize = match params.get("size").unwrap().parse::<usize>() {
+            Ok(size) => size,
+            Err(_) => 10,
+        };
+        let albums = services::album::get_albums_paginate(
+            db,
+            params
+                .get("page")
+                .unwrap_or(&String::from("0"))
+                .parse::<usize>()
+                .unwrap_or(0),
+            size,
+        )
+        .await;
+        match albums {
+            Ok(_albums) => return Ok(Json(_albums)),
+            Err(err) => Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to get albums {}", err),
+            )),
+        }
+    } else {
+        let albums = services::album::get_all_albums(db).await;
+        match albums {
+            Ok(_albums) => return Ok(Json(_albums)),
+            Err(err) => Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to get albums {}", err),
+            )),
+        }
+    }
+}
+pub async fn get_album_page(
+    Extension(ref db): Extension<DatabaseConnection>,
+    axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
+) -> Result<Json<Vec<entity::albums::Model>>, (StatusCode, String)> {
+    println!("{:?}", params);
+    let albums = services::album::get_albums_paginate(
+        db,
+        0,
+        params.get("size").unwrap().parse::<usize>().unwrap(),
+    )
+    .await;
+    match albums {
+        Ok(_albums) => return Ok(Json(_albums)),
+        Err(err) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to get albums {}", err),
+        )),
+    }
 }
