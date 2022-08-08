@@ -45,7 +45,7 @@ pub async fn create_album(
         .one(db)
         .await?;
 
-    let id = Uuid::new_v4();
+    let id: Uuid = Uuid::new_v4();
     let init_time: String = Utc::now().naive_local().to_string();
 
     let mut album = entity::albums::ActiveModel {
@@ -66,7 +66,7 @@ pub async fn create_album(
             Set(db_album.unwrap().id).into_value().unwrap(),
         )
     } else {
-        let artist_id = super::artist::create_artist(db, artist_name)
+        let artist_id: Uuid = super::artist::create_artist(db, artist_name)
             .await
             .map_err(|e| anyhow::anyhow!(e))?;
         album.set(

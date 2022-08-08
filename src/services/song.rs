@@ -1,19 +1,19 @@
-use std::path::Path;
-
-use anyhow::{Ok, Result};
+use anyhow::Ok;
 use chrono::Utc;
-use entity::songs;
-use entity::songs::Entity as Song;
 use migration::OnConflict;
 use sea_orm::{
     ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait,
     QueryFilter, Set,
 };
+use std::path::Path;
 use uuid::Uuid;
 
 use crate::scanner::tag_helper::AudioMetadata;
-pub async fn get_song(db: &DatabaseConnection, id: String) -> Result<Option<entity::songs::Model>> {
-    let song: Option<songs::Model> = Song::find_by_id(id.to_owned())
+pub async fn get_song(
+    db: &DatabaseConnection,
+    id: String,
+) -> anyhow::Result<Option<entity::songs::Model>> {
+    let song: Option<entity::songs::Model> = entity::songs::Entity::find_by_id(id.to_owned())
         .one(db)
         .await
         .map_err(|e| anyhow::anyhow!(e))?;
@@ -24,8 +24,8 @@ pub async fn get_song_by_path(
     db: &DatabaseConnection,
     path: String,
 ) -> anyhow::Result<Option<entity::songs::Model>> {
-    let song: Option<songs::Model> = Song::find()
-        .filter(songs::Column::Path.eq(path))
+    let song: Option<entity::songs::Model> = entity::songs::Entity::find()
+        .filter(entity::songs::Column::Path.eq(path))
         .one(db)
         .await
         .map_err(|e| anyhow::anyhow!(e))?;

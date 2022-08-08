@@ -5,7 +5,7 @@ use sea_orm::{
 };
 use uuid::Uuid;
 pub async fn create_artist(db: &DatabaseConnection, artist_name: String) -> anyhow::Result<Uuid> {
-    let id = Uuid::new_v4();
+    let id: Uuid = Uuid::new_v4();
     let init_time: String = Utc::now().naive_local().to_string();
 
     let artist = entity::artists::ActiveModel {
