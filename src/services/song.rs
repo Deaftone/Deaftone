@@ -84,6 +84,7 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
         created_at: Set(init_time.to_owned()),
         updated_at: Set(init_time),
         album_id: NotSet,
+        duration: Set(metadata.duration),
     };
 
     if album.is_some() {
@@ -127,6 +128,7 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
                 .update_column(entity::songs::Column::Title)
                 .update_column(entity::songs::Column::Track)
                 .update_column(entity::songs::Column::Year)
+                .update_column(entity::songs::Column::Duration)
                 .to_owned(),
         )
         .exec(db)
