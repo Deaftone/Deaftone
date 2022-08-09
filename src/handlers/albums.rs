@@ -72,6 +72,7 @@ pub async fn get_cover(
     match album {
         Some(f) => {
             if f.cover.is_some() {
+                // Serve image from FS
                 match ServeFile::new(f.cover.unwrap()).oneshot(res).await {
                     Ok(res) => Ok(res.map(boxed)),
                     Err(err) => Err((
@@ -80,6 +81,7 @@ pub async fn get_cover(
                     )),
                 }
             } else {
+                // Serve unknown album image
                 let unknown_album = ASSETS.get_file("unknown_album.jpg").unwrap();
                 let body = boxed(Full::from(unknown_album.contents()));
                 Ok(Response::builder()
@@ -90,22 +92,6 @@ pub async fn get_cover(
         }
         None => Err((StatusCode::NOT_FOUND, format!("Unable to find album"))),
     }
-    /*     match album {
-        Some(f) => match ServeFile::new(f.cover.unwrap_or_default())
-            .oneshot(res)
-            .await
-        {
-            Ok(res) => Ok(res.map(boxed)),
-            Err(_err) => {
-                let body = boxed(Full::from(unknown_album.contents()));
-                Ok(Response::builder()
-                    .header(header::CONTENT_TYPE, "image/jpg")
-                    .body(body)
-                    .unwrap())
-            }
-        },
-        None => Err((StatusCode::NOT_FOUND, format!("Unable to find album"))),
-    } */
 }
 pub async fn get_all_albums(
     Extension(ref db): Extension<DatabaseConnection>,
@@ -144,7 +130,7 @@ pub async fn get_all_albums(
         }
     }
 }
-pub async fn get_album_page(
+/* pub async fn get_album_page(
     Extension(ref db): Extension<DatabaseConnection>,
     axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
 ) -> Result<Json<Vec<entity::albums::Model>>, (StatusCode, String)> {
@@ -162,4 +148,4 @@ pub async fn get_album_page(
             format!("Failed to get albums {}", err),
         )),
     }
-}
+} */

@@ -16,6 +16,7 @@ pub struct Model {
     #[sea_orm(column_name = "albumName")]
     pub album_name: String,
     pub codec: Option<String>,
+    pub duration: u32,
     #[sea_orm(column_name = "sampleRate")]
     pub sample_rate: Option<String>,
     #[sea_orm(column_name = "bitsPerSample")]

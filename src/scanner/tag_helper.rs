@@ -10,6 +10,7 @@ pub struct AudioMetadata {
     pub track: u32,
     pub path: String,
     pub lossless: bool,
+    pub duration: u32,
 }
 
 pub fn get_metadata(path: String) -> Result<AudioMetadata> {
@@ -17,6 +18,9 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
     let vorbis: &VorbisComment = tag
         .vorbis_comments()
         .with_context(|| format!("Failed to read file {}", path))?;
+    let stream_info = tag
+        .get_streaminfo()
+        .with_context(|| format!("Failed to read streaminfo {}", path))?;
 
     let metadata: AudioMetadata = AudioMetadata {
         name: vorbis
@@ -39,6 +43,7 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
         track: vorbis.track().unwrap_or(0),
         path,
         lossless: true,
+        duration: (stream_info.total_samples as u32 / stream_info.sample_rate) as u32,
     };
     Ok(metadata)
 }
