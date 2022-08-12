@@ -28,9 +28,9 @@ async fn main() -> Result<()> {
 
     // Connecting SQLite
 
-    let db = DB::new().await.unwrap().connect();
+    let db: DatabaseConnection = DB::new().await.unwrap().connect();
 
-    let mut scan = scanner::Scanner::new().unwrap();
+    let mut scan: Scanner = scanner::Scanner::new().unwrap();
     scan.start_scan();
     // build our application with a route
     let app = Router::new()
@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
         .layer(Extension(scan));
 
     // run it
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3030));
+    let addr: SocketAddr = SocketAddr::from(([0, 0, 0, 0], 3030));
     tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

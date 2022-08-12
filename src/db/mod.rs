@@ -12,7 +12,8 @@ impl DB {
         if fs::metadata("./deaftone.sqlite").is_err() {
             fs::File::create("./deaftone.sqlite").expect("Created file");
         }
-        let mut opt = ConnectOptions::new("sqlite://./deaftone.sqlite?mode=rwc".to_owned());
+        let mut opt: ConnectOptions =
+            ConnectOptions::new("sqlite://./deaftone.sqlite?mode=rwc".to_owned());
         opt.max_connections(100)
             .min_connections(5)
             .connect_timeout(Duration::from_secs(8))
@@ -20,7 +21,7 @@ impl DB {
             .max_lifetime(Duration::from_secs(8))
             .sqlx_logging(false);
 
-        let pool = Database::connect(opt).await?;
+        let pool: DatabaseConnection = Database::connect(opt).await?;
         let db = DB { pool };
         db.migrate_up().await?;
         Ok(db)

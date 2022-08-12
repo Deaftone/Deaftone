@@ -62,9 +62,9 @@ pub async fn get_cover(
     Extension(ref db): Extension<DatabaseConnection>,
     Path(album_id): Path<String>,
 ) -> Result<Response<BoxBody>, (StatusCode, String)> {
-    let res = Request::builder().uri("/").body(Body::empty()).unwrap();
+    let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
 
-    let album = entity::albums::Entity::find_by_id(album_id)
+    let album: Option<entity::albums::Model> = entity::albums::Entity::find_by_id(album_id)
         .one(db)
         .await
         .unwrap();
@@ -102,16 +102,17 @@ pub async fn get_all_albums(
             Ok(size) => size,
             Err(_) => 10,
         };
-        let albums = services::album::get_albums_paginate(
-            db,
-            params
-                .get("page")
-                .unwrap_or(&String::from("0"))
-                .parse::<usize>()
-                .unwrap_or(0),
-            size,
-        )
-        .await;
+        let albums: Result<Vec<entity::albums::Model>, anyhow::Error> =
+            services::album::get_albums_paginate(
+                db,
+                params
+                    .get("page")
+                    .unwrap_or(&String::from("0"))
+                    .parse::<usize>()
+                    .unwrap_or(0),
+                size,
+            )
+            .await;
         match albums {
             Ok(_albums) => return Ok(Json(_albums)),
             Err(err) => Err((
@@ -120,7 +121,8 @@ pub async fn get_all_albums(
             )),
         }
     } else {
-        let albums = services::album::get_all_albums(db).await;
+        let albums: Result<Vec<entity::albums::Model>, anyhow::Error> =
+            services::album::get_all_albums(db).await;
         match albums {
             Ok(_albums) => return Ok(Json(_albums)),
             Err(err) => Err((

@@ -1,7 +1,7 @@
 use crate::scanner::tag_helper::{self};
 use crate::services;
 use anyhow::Result;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use entity;
 use migration::OnConflict;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
@@ -27,17 +27,17 @@ macro_rules! skip_fail {
 pub async fn walk_partial(db: &DatabaseConnection) -> Result<()> {
     let mut dirs_stream = entity::directories::Entity::find().stream(db).await?;
     while let Some(item) = dirs_stream.next().await {
-        let item = item?;
+        let item: entity::directories::Model = item?;
         let meta = fs::metadata(&item.path).await;
         let is_empty = PathBuf::from(&item.path)
             .read_dir()
             .map(|mut i| i.next().is_none())
             .unwrap_or(false);
         if meta.is_ok() && !is_empty {
-            let _ftime = meta.unwrap().modified().unwrap();
+            let _ftime: SystemTime = meta.unwrap().modified().unwrap();
             let ftime: DateTime<Utc> = _ftime.into();
 
-            let dbtime = item.mtime;
+            let dbtime: NaiveDateTime = item.mtime;
 
             if ftime.naive_utc() > dbtime {
                 tracing::info!("Dir changed {}", item.path);
@@ -161,7 +161,7 @@ pub async fn insert_directory(
     db: &DatabaseConnection,
 ) -> Result<()> {
     let init_time: String = Utc::now().naive_local().to_string();
-    let dir = entity::directories::ActiveModel {
+    let dir: entity::directories::ActiveModel = entity::directories::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
         path: Set(path.to_owned()),
         mtime: Set(mtime.naive_utc()),
