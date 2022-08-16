@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use axum::{
-    body::{self, boxed, Body, BoxBody, Full},
+    body::{boxed, Body, BoxBody, Full},
     extract::{Extension, Path},
     http::{header, Request, Response, StatusCode},
     Json,
@@ -14,6 +14,7 @@ use tower::ServiceExt;
 use tower_http::services::ServeFile;
 
 use crate::services;
+
 static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/resources");
 #[allow(non_snake_case)]
 #[derive(Serialize)]

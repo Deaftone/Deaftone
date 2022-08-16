@@ -9,6 +9,8 @@ use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+use crate::services::playlist::create_playlist;
 mod db;
 mod handlers;
 mod scanner;
@@ -29,7 +31,8 @@ async fn main() -> Result<()> {
     // Connecting SQLite
 
     let db: DatabaseConnection = DB::new().await.unwrap().connect();
-
+    /*     create_playlist(&db).await?;
+     */
     let mut scan: Scanner = scanner::Scanner::new().unwrap();
     scan.start_scan();
     // build our application with a route
@@ -41,6 +44,7 @@ async fn main() -> Result<()> {
         .route("/albums", get(handlers::albums::get_all_albums))
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/artists", get(handlers::artists::get_all_artists))
+        .route("/playlists/:id", get(handlers::playlist::get_playlist))
         .layer(TraceLayer::new_for_http())
         .layer(Extension(db))
         .layer(Extension(scan));

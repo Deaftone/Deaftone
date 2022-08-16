@@ -26,6 +26,8 @@ pub async fn create_tables(db: &DbConn) {
     create_table(db, &schema, entity::albums::Entity).await;
     create_table(db, &schema, entity::artists::Entity).await;
     create_table(db, &schema, entity::directories::Entity).await;
+    create_table(db, &schema, entity::playlists::Entity).await;
+    create_table(db, &schema, entity::playlists_song::Entity).await;
 }
 #[async_trait::async_trait]
 #[allow(unused_must_use)]
