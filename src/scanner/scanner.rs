@@ -25,9 +25,9 @@ macro_rules! skip_fail {
 }
 
 pub async fn walk_partial(db: &DatabaseConnection) -> Result<()> {
-    let mut dirs_stream = entity::directories::Entity::find().stream(db).await?;
+    let mut dirs_stream = entity::directorie::Entity::find().stream(db).await?;
     while let Some(item) = dirs_stream.next().await {
-        let item: entity::directories::Model = item?;
+        let item: entity::directorie::Model = item?;
         let meta = fs::metadata(&item.path).await;
         let is_empty = PathBuf::from(&item.path)
             .read_dir()
@@ -49,12 +49,12 @@ pub async fn walk_partial(db: &DatabaseConnection) -> Result<()> {
             tracing::info!("Dropping all items for path {}", item.path);
             // Drop all songs for missing path
 
-            entity::songs::Entity::delete_many()
-                .filter(entity::songs::Column::Path.contains(&item.path))
+            entity::song::Entity::delete_many()
+                .filter(entity::song::Column::Path.contains(&item.path))
                 .exec(db)
                 .await?;
-            entity::directories::Entity::delete_many()
-                .filter(entity::directories::Column::Path.contains(&item.path))
+            entity::directorie::Entity::delete_many()
+                .filter(entity::directorie::Column::Path.contains(&item.path))
                 .exec(db)
                 .await?;
         }
@@ -161,7 +161,7 @@ pub async fn insert_directory(
     db: &DatabaseConnection,
 ) -> Result<()> {
     let init_time: String = Utc::now().naive_local().to_string();
-    let dir: entity::directories::ActiveModel = entity::directories::ActiveModel {
+    let dir: entity::directorie::ActiveModel = entity::directorie::ActiveModel {
         id: Set(Uuid::new_v4().to_string()),
         path: Set(path.to_owned()),
         mtime: Set(mtime.naive_utc()),
@@ -169,11 +169,11 @@ pub async fn insert_directory(
         updated_at: Set(init_time),
     };
 
-    entity::directories::Entity::insert(dir)
+    entity::directorie::Entity::insert(dir)
         .on_conflict(
-            OnConflict::column(entity::directories::Column::Path)
-                .update_column(entity::directories::Column::UpdatedAt)
-                .update_column(entity::directories::Column::Mtime)
+            OnConflict::column(entity::directorie::Column::Path)
+                .update_column(entity::directorie::Column::UpdatedAt)
+                .update_column(entity::directorie::Column::Mtime)
                 .to_owned(),
         )
         .exec(db)

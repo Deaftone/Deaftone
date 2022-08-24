@@ -28,7 +28,7 @@ impl Scanner {
             use std::time::Instant;
             let before: Instant = Instant::now();
             // Run full scan if no songs
-            let count: usize = entity::songs::Entity::find().count(&db).await.unwrap();
+            let count: usize = entity::song::Entity::find().count(&db).await.unwrap();
             if count > 0 {
                 tracing::info!("Starting partial scan");
                 scanner::walk_partial(&db).await.unwrap();

@@ -21,7 +21,7 @@ pub async fn get_artist(
     Path(artist_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<ArtistResponse>, (StatusCode, String)> {
-    let artist = entity::artists::Entity::find_by_id(artist_id)
+    let artist = entity::artist::Entity::find_by_id(artist_id)
         .order_by_desc(entity::album::Column::Year)
         .find_with_related(entity::album::Entity)
         .all(&state.database)
@@ -46,8 +46,8 @@ pub async fn get_artist(
 /* #[axum_macros::debug_handler]
  */
 
-pub async fn get_all_artists(State(state): State<AppState>) -> Json<Vec<entity::artists::Model>> {
-    let artists: Vec<entity::artists::Model> = entity::artists::Entity::find()
+pub async fn get_all_artists(State(state): State<AppState>) -> Json<Vec<entity::artist::Model>> {
+    let artists: Vec<entity::artist::Model> = entity::artist::Entity::find()
         .all(&state.database)
         .await
         .expect("Failed to get artists");

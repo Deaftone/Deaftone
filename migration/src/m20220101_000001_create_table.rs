@@ -22,12 +22,12 @@ where
 
 pub async fn create_tables(db: &DbConn) {
     let schema = Schema::new(db.get_database_backend());
-    create_table(db, &schema, entity::songs::Entity).await;
+    create_table(db, &schema, entity::song::Entity).await;
     create_table(db, &schema, entity::album::Entity).await;
-    create_table(db, &schema, entity::artists::Entity).await;
-    create_table(db, &schema, entity::directories::Entity).await;
-    create_table(db, &schema, entity::playlists::Entity).await;
-    create_table(db, &schema, entity::playlists_song::Entity).await;
+    create_table(db, &schema, entity::artist::Entity).await;
+    create_table(db, &schema, entity::directorie::Entity).await;
+    create_table(db, &schema, entity::playlist::Entity).await;
+    create_table(db, &schema, entity::playlist_song::Entity).await;
 }
 #[async_trait::async_trait]
 #[allow(unused_must_use)]
@@ -52,11 +52,11 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name(&format!(
                         "idx-{}-{}",
-                        entity::songs::Entity.to_string(),
-                        entity::songs::Column::Id.to_string()
+                        entity::song::Entity.to_string(),
+                        entity::song::Column::Id.to_string()
                     ))
-                    .table(entity::songs::Entity)
-                    .col(entity::songs::Column::Id)
+                    .table(entity::song::Entity)
+                    .col(entity::song::Column::Id)
                     .to_owned(),
             )
             .await;
@@ -65,11 +65,11 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name(&format!(
                         "idx-{}-{}",
-                        entity::artists::Entity.to_string(),
-                        entity::artists::Column::Id.to_string()
+                        entity::artist::Entity.to_string(),
+                        entity::artist::Column::Id.to_string()
                     ))
-                    .table(entity::artists::Entity)
-                    .col(entity::artists::Column::Id)
+                    .table(entity::artist::Entity)
+                    .col(entity::artist::Column::Id)
                     .to_owned(),
             )
             .await;
@@ -78,11 +78,11 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name(&format!(
                         "idx-{}-{}",
-                        entity::directories::Entity.to_string(),
-                        entity::directories::Column::Id.to_string()
+                        entity::directorie::Entity.to_string(),
+                        entity::directorie::Column::Id.to_string()
                     ))
-                    .table(entity::directories::Entity)
-                    .col(entity::directories::Column::Id)
+                    .table(entity::directorie::Entity)
+                    .col(entity::directorie::Column::Id)
                     .to_owned(),
             )
             .await;
@@ -91,11 +91,11 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name(&format!(
                         "idx-{}-{}",
-                        entity::artists::Entity.to_string(),
-                        entity::artists::Column::Name.to_string()
+                        entity::artist::Entity.to_string(),
+                        entity::artist::Column::Name.to_string()
                     ))
-                    .table(entity::artists::Entity)
-                    .col(entity::artists::Column::Name)
+                    .table(entity::artist::Entity)
+                    .col(entity::artist::Column::Name)
                     .to_owned(),
             )
             .await;
@@ -117,11 +117,11 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name(&format!(
                         "idx-{}-{}",
-                        entity::songs::Entity.to_string(),
-                        entity::songs::Column::Path.to_string()
+                        entity::song::Entity.to_string(),
+                        entity::song::Column::Path.to_string()
                     ))
-                    .table(entity::songs::Entity)
-                    .col(entity::songs::Column::Path)
+                    .table(entity::song::Entity)
+                    .col(entity::song::Column::Path)
                     .to_owned(),
             )
             .await;

@@ -15,7 +15,7 @@ pub async fn stream_handler(
     State(state): State<AppState>,
 ) -> Result<Response<BoxBody>, (StatusCode, String)> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let song: Option<entity::songs::Model> = services::song::get_song(&state.database, song_id)
+    let song: Option<entity::song::Model> = services::song::get_song(&state.database, song_id)
         .await
         .unwrap();
     match song {

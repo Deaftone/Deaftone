@@ -10,9 +10,9 @@ use uuid::Uuid;
 pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
-) -> anyhow::Result<Vec<(entity::album::Model, Vec<entity::songs::Model>)>> {
+) -> anyhow::Result<Vec<(entity::album::Model, Vec<entity::song::Model>)>> {
     Ok(entity::album::Entity::find_by_id(album_id)
-        .find_with_related(entity::songs::Entity)
+        .find_with_related(entity::song::Entity)
         .all(db)
         .await?)
 }
@@ -68,8 +68,8 @@ pub async fn create_album(
     path: String,
     year: Option<i32>,
 ) -> anyhow::Result<Uuid> {
-    let db_album = entity::artists::Entity::find()
-        .filter(entity::artists::Column::Name.eq(artist_name.to_owned()))
+    let db_album = entity::artist::Entity::find()
+        .filter(entity::artist::Column::Name.eq(artist_name.to_owned()))
         .one(db)
         .await?;
 

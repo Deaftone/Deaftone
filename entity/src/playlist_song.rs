@@ -16,32 +16,32 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::playlists::Entity",
+        belongs_to = "super::playlist::Entity",
         from = "Column::PlaylistId",
-        to = "super::playlists::Column::Id",
+        to = "super::playlist::Column::Id",
         on_update = "Cascade",
         on_delete = "SetNull"
     )]
-    PlaylistsSong,
+    PlaylistSong,
     #[sea_orm(
-        belongs_to = "super::songs::Entity",
+        belongs_to = "super::song::Entity",
         from = "Column::SongId",
-        to = "super::songs::Column::Id",
+        to = "super::song::Column::Id",
         on_update = "Cascade",
         on_delete = "SetNull"
     )]
-    Songs,
+    Song,
 }
 
-impl Related<super::playlists::Entity> for Entity {
+impl Related<super::playlist::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::PlaylistsSong.def()
+        Relation::PlaylistSong.def()
     }
 }
 
-impl Related<super::songs::Entity> for Entity {
+impl Related<super::song::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Songs.def()
+        Relation::Song.def()
     }
 }
 

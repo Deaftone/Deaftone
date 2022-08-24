@@ -3,8 +3,8 @@
 pub mod prelude;
 
 pub mod album;
-pub mod artists;
-pub mod directories;
-pub mod playlists;
-pub mod playlists_song;
-pub mod songs;
+pub mod artist;
+pub mod directorie;
+pub mod playlist;
+pub mod playlist_song;
+pub mod song;

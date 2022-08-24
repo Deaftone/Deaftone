@@ -24,7 +24,7 @@ pub struct AlbumResponse {
     artist: String,
     artistId: String,
     year: i32,
-    songs: Vec<entity::songs::Model>,
+    songs: Vec<entity::song::Model>,
 }
 pub async fn get_album(
     Path(album_id): Path<String>,

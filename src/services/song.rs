@@ -12,8 +12,8 @@ use crate::scanner::tag_helper::AudioMetadata;
 pub async fn get_song(
     db: &DatabaseConnection,
     id: String,
-) -> anyhow::Result<Option<entity::songs::Model>> {
-    let song: Option<entity::songs::Model> = entity::songs::Entity::find_by_id(id.to_owned())
+) -> anyhow::Result<Option<entity::song::Model>> {
+    let song: Option<entity::song::Model> = entity::song::Entity::find_by_id(id.to_owned())
         .one(db)
         .await
         .map_err(|e| anyhow::anyhow!(e))?;
@@ -23,9 +23,9 @@ pub async fn get_song(
 pub async fn get_song_by_path(
     db: &DatabaseConnection,
     path: String,
-) -> anyhow::Result<Option<entity::songs::Model>> {
-    let song: Option<entity::songs::Model> = entity::songs::Entity::find()
-        .filter(entity::songs::Column::Path.eq(path))
+) -> anyhow::Result<Option<entity::song::Model>> {
+    let song: Option<entity::song::Model> = entity::song::Entity::find()
+        .filter(entity::song::Column::Path.eq(path))
         .one(db)
         .await
         .map_err(|e| anyhow::anyhow!(e))?;
@@ -35,14 +35,14 @@ pub async fn create_or_update(
     db: &DatabaseConnection,
     metadata: AudioMetadata,
 ) -> anyhow::Result<()> {
-    let db_song = entity::songs::Entity::find()
-        .filter(entity::songs::Column::Path.eq(metadata.path.to_owned()))
+    let db_song = entity::song::Entity::find()
+        .filter(entity::song::Column::Path.eq(metadata.path.to_owned()))
         .one(db)
         .await
         .map_err(|e| anyhow::anyhow!(e))?;
 
     if db_song.is_some() {
-        let mut song: entity::songs::ActiveModel = db_song.unwrap().into();
+        let mut song: entity::song::ActiveModel = db_song.unwrap().into();
         let update_time: String = Utc::now().naive_local().to_string();
         song.title = Set(metadata.name);
         song.album_name = Set(metadata.album);
@@ -65,7 +65,7 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
         .await
         .map_err(|e| anyhow::anyhow!(e))?;
 
-    let mut song: entity::songs::ActiveModel = entity::songs::ActiveModel {
+    let mut song: entity::song::ActiveModel = entity::song::ActiveModel {
         id: Set(id.to_string()),
         path: Set(metadata.path.to_owned()),
         title: Set(metadata.name),
@@ -89,7 +89,7 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
 
     if album.is_some() {
         song.set(
-            entity::songs::Column::AlbumId,
+            entity::song::Column::AlbumId,
             Set(album.unwrap().id).into_value().unwrap(),
         )
     } else {
@@ -108,27 +108,27 @@ pub async fn create_song(db: &DatabaseConnection, metadata: AudioMetadata) -> an
         .await
         .map_err(|e| anyhow::anyhow!(e))?;
         song.set(
-            entity::songs::Column::AlbumId,
+            entity::song::Column::AlbumId,
             Set(album_id.to_string()).into_value().unwrap(),
         )
     }
 
-    entity::songs::Entity::insert(song)
+    entity::song::Entity::insert(song)
         .on_conflict(
-            OnConflict::column(entity::songs::Column::Path)
-                .update_column(entity::songs::Column::UpdatedAt)
-                .update_column(entity::songs::Column::AlbumName)
-                .update_column(entity::songs::Column::Artist)
-                .update_column(entity::songs::Column::Disk)
-                .update_column(entity::songs::Column::Label)
-                .update_column(entity::songs::Column::MusicBrainzArtistId)
-                .update_column(entity::songs::Column::MusicBrainzRecordingId)
-                .update_column(entity::songs::Column::MusicBrainzTrackId)
-                .update_column(entity::songs::Column::SampleRate)
-                .update_column(entity::songs::Column::Title)
-                .update_column(entity::songs::Column::Track)
-                .update_column(entity::songs::Column::Year)
-                .update_column(entity::songs::Column::Duration)
+            OnConflict::column(entity::song::Column::Path)
+                .update_column(entity::song::Column::UpdatedAt)
+                .update_column(entity::song::Column::AlbumName)
+                .update_column(entity::song::Column::Artist)
+                .update_column(entity::song::Column::Disk)
+                .update_column(entity::song::Column::Label)
+                .update_column(entity::song::Column::MusicBrainzArtistId)
+                .update_column(entity::song::Column::MusicBrainzRecordingId)
+                .update_column(entity::song::Column::MusicBrainzTrackId)
+                .update_column(entity::song::Column::SampleRate)
+                .update_column(entity::song::Column::Title)
+                .update_column(entity::song::Column::Track)
+                .update_column(entity::song::Column::Year)
+                .update_column(entity::song::Column::Duration)
                 .to_owned(),
         )
         .exec(db)
