@@ -22,7 +22,7 @@ pub enum Relation {
         on_update = "Cascade",
         on_delete = "SetNull"
     )]
-    PlaylistSong,
+    Playlist,
     #[sea_orm(
         belongs_to = "super::song::Entity",
         from = "Column::SongId",
@@ -31,12 +31,6 @@ pub enum Relation {
         on_delete = "SetNull"
     )]
     Song,
-}
-
-impl Related<super::playlist::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::PlaylistSong.def()
-    }
 }
 
 impl Related<super::song::Entity> for Entity {

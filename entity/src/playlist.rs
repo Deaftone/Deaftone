@@ -15,13 +15,17 @@ pub struct Model {
     pub updated_at: String,
 }
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::playlist_song::Entity")]
-    PlaylistSong,
-}
-impl Related<super::playlist_song::Entity> for Entity {
+pub enum Relation {}
+impl Related<super::song::Entity> for Entity {
+    // The final relation is Playlist -> PlaylistSong -> Song
     fn to() -> RelationDef {
-        Relation::PlaylistSong.def()
+        super::playlist_song::Relation::Song.def()
+    }
+
+    fn via() -> Option<RelationDef> {
+        // The original relation is CakeFilling -> Cake,
+        // after `rev` it becomes Playlist -> PlaylistSong
+        Some(super::playlist_song::Relation::Playlist.def().rev())
     }
 }
 
