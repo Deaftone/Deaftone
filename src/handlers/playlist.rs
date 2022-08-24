@@ -1,10 +1,10 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Path, State},
     http::StatusCode,
     Json,
 };
 
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder};
+use sea_orm::{EntityTrait};
 use serde::Serialize;
 
 use crate::AppState;
@@ -27,16 +27,16 @@ pub async fn get_playlist(
 
     match playlist.first() {
         Some(f) => {
-            let playlist_model: entity::playlists::Model = f.0.to_owned();
+            let _playlist_model: entity::playlists::Model = f.0.to_owned();
             let songs = f.1.to_owned();
-            return Ok(Json(PlayListResponse {
+            Ok(Json(PlayListResponse {
                 id: "test".to_string(),
                 name: "test".to_string(),
                 songs,
-            }));
+            }))
         }
         None => {
-            return Err((
+            Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to find album".to_owned(),
             ))

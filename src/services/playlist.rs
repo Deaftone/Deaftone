@@ -8,7 +8,7 @@ pub async fn create_playlist(db: &DatabaseConnection) -> anyhow::Result<()> {
     let init_time: String = Utc::now().naive_local().to_string();
 
     let playlist = entity::playlists::ActiveModel {
-        id: Set(id.to_string().to_owned()),
+        id: Set(id.to_string()),
         name: Set("New music".to_string()),
         created_at: Set(init_time.to_owned()),
         updated_at: Set(init_time),

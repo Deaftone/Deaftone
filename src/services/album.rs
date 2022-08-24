@@ -11,10 +11,10 @@ pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
 ) -> anyhow::Result<Vec<(entity::album::Model, Vec<entity::songs::Model>)>> {
-    return Ok(entity::album::Entity::find_by_id(album_id)
+    Ok(entity::album::Entity::find_by_id(album_id)
         .find_with_related(entity::songs::Entity)
         .all(db)
-        .await?);
+        .await?)
 }
 pub async fn find_by_name(
     db: &DatabaseConnection,
@@ -103,5 +103,5 @@ pub async fn create_album(
         )
     }
     album.insert(db).await.map_err(|e| anyhow::anyhow!(e))?;
-    return Ok(id);
+    Ok(id)
 }

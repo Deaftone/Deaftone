@@ -19,7 +19,7 @@ impl Scanner {
         self.scanning = status
     } */
     pub fn get_status(&self) -> bool {
-        return self.scanning;
+        self.scanning
     }
     pub fn start_scan(&mut self) {
         tokio::spawn(async move {

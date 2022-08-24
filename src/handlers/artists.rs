@@ -1,10 +1,10 @@
 use axum::{
-    extract::{Extension, Path, State},
+    extract::{Path, State},
     http::StatusCode,
     Json,
 };
 
-use sea_orm::{DatabaseConnection, EntityTrait, QueryOrder};
+use sea_orm::{EntityTrait, QueryOrder};
 use serde::Serialize;
 
 use crate::AppState;
@@ -54,5 +54,5 @@ pub async fn get_all_artists(State(state): State<AppState>) -> Json<Vec<entity::
         .all(&state.database)
         .await
         .expect("Failed to get artists");
-    return Json(artists);
+    Json(artists)
 }

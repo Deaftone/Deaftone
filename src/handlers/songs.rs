@@ -1,9 +1,9 @@
 use axum::{
     body::{boxed, Body, BoxBody},
-    extract::{Extension, Path, State},
+    extract::{Path, State},
     http::{Request, Response, StatusCode},
 };
-use sea_orm::DatabaseConnection;
+
 use tower_http::services::fs::ServeFile;
 
 use tower::util::ServiceExt;
@@ -26,6 +26,6 @@ pub async fn stream_handler(
                 format!("Something went wrong: {}", err),
             )),
         },
-        None => Err((StatusCode::NOT_FOUND, format!("Unable to find song"))),
+        None => Err((StatusCode::NOT_FOUND, "Unable to find song".to_string())),
     }
 }

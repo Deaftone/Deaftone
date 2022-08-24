@@ -28,7 +28,7 @@ impl DB {
     }
 
     pub fn connect(self) -> DatabaseConnection {
-        return self.pool;
+        self.pool
     }
     async fn migrate_up(&self) -> Result<()> {
         Migrator::up(&self.pool, None).await?;

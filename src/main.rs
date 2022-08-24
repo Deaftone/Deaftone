@@ -10,7 +10,7 @@ use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::services::playlist::create_playlist;
+
 mod db;
 mod handlers;
 mod scanner;

@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use metaflac::{block::VorbisComment, Tag};
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AudioMetadata {
     pub name: String,
     pub number: u32,

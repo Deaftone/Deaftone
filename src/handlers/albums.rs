@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use axum::{
     body::{boxed, Body, BoxBody, Full},
-    extract::{Extension, Path, State},
+    extract::{Path, State},
     http::{header, Request, Response, StatusCode},
     Json,
 };
 
 use include_dir::{include_dir, Dir};
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{EntityTrait};
 use serde::Serialize;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
@@ -36,24 +36,24 @@ pub async fn get_album(
             Some(f) => {
                 let album_model = f.0.to_owned();
                 let songs = f.1.to_owned();
-                return Ok(Json(AlbumResponse {
+                Ok(Json(AlbumResponse {
                     id: album_model.id,
                     name: album_model.name,
                     artist: album_model.artist_name,
                     artistId: album_model.artist_id.unwrap_or_default(),
                     year: album_model.year,
                     songs,
-                }));
+                }))
             }
             None => {
-                return Err((
+                Err((
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "Failed to find album".to_owned(),
                 ))
             }
         },
         None => {
-            return Err((
+            Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to find album".to_owned(),
             ))
@@ -94,7 +94,7 @@ pub async fn get_cover(
                     .unwrap())
             }
         }
-        None => Err((StatusCode::NOT_FOUND, format!("Unable to find album"))),
+        None => Err((StatusCode::NOT_FOUND, "Unable to find album".to_string())),
     }
 }
 pub async fn get_all_albums(
@@ -102,10 +102,7 @@ pub async fn get_all_albums(
     axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
 ) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
     if params.get("size").is_some() {
-        let size: usize = match params.get("size").unwrap().parse::<usize>() {
-            Ok(size) => size,
-            Err(_) => 10,
-        };
+        let size: usize = params.get("size").unwrap().parse::<usize>().unwrap_or(10);
         let albums: Result<Vec<entity::album::Model>, anyhow::Error> =
             services::album::get_albums_paginate(
                 &state.database,
@@ -118,7 +115,7 @@ pub async fn get_all_albums(
             )
             .await;
         match albums {
-            Ok(_albums) => return Ok(Json(_albums)),
+            Ok(_albums) => Ok(Json(_albums)),
             Err(err) => Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to get albums {}", err),
@@ -128,7 +125,7 @@ pub async fn get_all_albums(
         let albums: Result<Vec<entity::album::Model>, anyhow::Error> =
             services::album::get_all_albums(&state.database).await;
         match albums {
-            Ok(_albums) => return Ok(Json(_albums)),
+            Ok(_albums) => Ok(Json(_albums)),
             Err(err) => Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to get albums {}", err),
