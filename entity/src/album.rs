@@ -31,14 +31,14 @@ pub enum Relation {
         on_update = "Cascade",
         on_delete = "SetNull"
     )]
-    Artists,
+    Artist,
     #[sea_orm(has_many = "super::songs::Entity")]
     Songs,
 }
 
 impl Related<super::artists::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Artists.def()
+        Relation::Artist.def()
     }
 }
 

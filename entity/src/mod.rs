@@ -2,7 +2,7 @@
 
 pub mod prelude;
 
-pub mod albums;
+pub mod album;
 pub mod artists;
 pub mod directories;
 pub mod playlists;

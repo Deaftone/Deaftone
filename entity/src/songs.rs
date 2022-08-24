@@ -41,18 +41,18 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::albums::Entity",
+        belongs_to = "super::album::Entity",
         from = "Column::AlbumId",
-        to = "super::albums::Column::Id",
+        to = "super::album::Column::Id",
         on_update = "Cascade",
         on_delete = "SetNull"
     )]
-    Albums,
+    Album,
 }
 
-impl Related<super::albums::Entity> for Entity {
+impl Related<super::album::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Albums.def()
+        Relation::Album.def()
     }
 }
 

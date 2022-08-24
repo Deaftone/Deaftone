@@ -23,7 +23,7 @@ where
 pub async fn create_tables(db: &DbConn) {
     let schema = Schema::new(db.get_database_backend());
     create_table(db, &schema, entity::songs::Entity).await;
-    create_table(db, &schema, entity::albums::Entity).await;
+    create_table(db, &schema, entity::album::Entity).await;
     create_table(db, &schema, entity::artists::Entity).await;
     create_table(db, &schema, entity::directories::Entity).await;
     create_table(db, &schema, entity::playlists::Entity).await;
@@ -39,11 +39,11 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name(&format!(
                         "idx-{}-{}",
-                        entity::albums::Entity.to_string(),
-                        entity::albums::Column::Id.to_string()
+                        entity::album::Entity.to_string(),
+                        entity::album::Column::Id.to_string()
                     ))
-                    .table(entity::albums::Entity)
-                    .col(entity::albums::Column::Id)
+                    .table(entity::album::Entity)
+                    .col(entity::album::Column::Id)
                     .to_owned(),
             )
             .await;
@@ -104,11 +104,11 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name(&format!(
                         "idx-{}-{}",
-                        entity::albums::Entity.to_string(),
-                        entity::albums::Column::Name.to_string()
+                        entity::album::Entity.to_string(),
+                        entity::album::Column::Name.to_string()
                     ))
-                    .table(entity::albums::Entity)
-                    .col(entity::albums::Column::Name)
+                    .table(entity::album::Entity)
+                    .col(entity::album::Column::Name)
                     .to_owned(),
             )
             .await;
