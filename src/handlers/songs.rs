@@ -1,6 +1,6 @@
 use axum::{
     body::{boxed, Body, BoxBody},
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     http::{Request, Response, StatusCode},
 };
 use sea_orm::DatabaseConnection;
@@ -8,14 +8,16 @@ use tower_http::services::fs::ServeFile;
 
 use tower::util::ServiceExt;
 
-use crate::services;
+use crate::{services, AppState};
 
 pub async fn stream_handler(
     Path(song_id): Path<String>,
-    Extension(ref db): Extension<DatabaseConnection>,
+    State(state): State<AppState>,
 ) -> Result<Response<BoxBody>, (StatusCode, String)> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let song: Option<entity::songs::Model> = services::song::get_song(db, song_id).await.unwrap();
+    let song: Option<entity::songs::Model> = services::song::get_song(&state.database, song_id)
+        .await
+        .unwrap();
     match song {
         Some(f) => match ServeFile::new(f.path).oneshot(res).await {
             Ok(res) => Ok(res.map(boxed)),

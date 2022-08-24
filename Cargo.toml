@@ -11,7 +11,7 @@ members = [".", "entity", "migration"]
 [dependencies]
 entity = { path = "entity" }
 migration = { path = "migration" } 
-axum = "0.5.13"
+axum = "0.6.0-rc.1"
 tokio = { version = "1.20.0", features = ["full"] }
 tower-http = { version = "0.3.0", features = ["trace", "fs"] }
 tracing = "0.1"
@@ -27,6 +27,7 @@ serde_json = { version = "1.0.71" }
 axum-macros = "0.2.3"
 tokio-stream = "0.1.9"
 include_dir = "0.7.2"
+cached = "0.38.0"
 [dependencies.sea-orm]
 version = "^0.9.1" # sea-orm version
 features = [

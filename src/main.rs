@@ -15,6 +15,11 @@ mod db;
 mod handlers;
 mod scanner;
 mod services;
+#[derive(Clone)]
+pub struct AppState {
+    pub database: DatabaseConnection,
+    pub scanner: Scanner,
+}
 #[tokio::main]
 async fn main() -> Result<()> {
     env::set_var("RUST_LOG", "info");
@@ -33,10 +38,16 @@ async fn main() -> Result<()> {
     let db: DatabaseConnection = DB::new().await.unwrap().connect();
     /*     create_playlist(&db).await?;
      */
+
     let mut scan: Scanner = scanner::Scanner::new().unwrap();
     scan.start_scan();
-    // build our application with a route
-    let app = Router::new()
+    // build our application with a route and state
+
+    let state = AppState {
+        database: db,
+        scanner: scan,
+    };
+    let app = Router::with_state(state)
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::songs::stream_handler))
         .route("/albums/:id", get(handlers::albums::get_album))
@@ -45,9 +56,7 @@ async fn main() -> Result<()> {
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/artists", get(handlers::artists::get_all_artists))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
-        .layer(TraceLayer::new_for_http())
-        .layer(Extension(db))
-        .layer(Extension(scan));
+        .layer(TraceLayer::new_for_http());
 
     // run it
     let addr: SocketAddr = SocketAddr::from(([0, 0, 0, 0], 3030));

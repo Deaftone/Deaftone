@@ -1,11 +1,13 @@
 use axum::{
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     http::StatusCode,
     Json,
 };
 
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder};
 use serde::Serialize;
+
+use crate::AppState;
 
 #[derive(Serialize)]
 pub struct PlayListResponse {
@@ -15,11 +17,11 @@ pub struct PlayListResponse {
 }
 pub async fn get_playlist(
     Path(playlist_id): Path<String>,
-    Extension(ref db): Extension<DatabaseConnection>,
+    State(state): State<AppState>,
 ) -> Result<Json<PlayListResponse>, (StatusCode, String)> {
     let playlist = entity::playlists::Entity::find_by_id(playlist_id)
         .find_with_related(entity::playlists_song::Entity)
-        .all(db)
+        .all(&state.database)
         .await
         .expect("Failed to get album");
 

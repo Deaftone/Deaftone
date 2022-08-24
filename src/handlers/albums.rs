@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use axum::{
     body::{boxed, Body, BoxBody, Full},
-    extract::{Extension, Path},
+    extract::{Extension, Path, State},
     http::{header, Request, Response, StatusCode},
     Json,
 };
@@ -13,7 +13,7 @@ use serde::Serialize;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
 
-use crate::services;
+use crate::{services, AppState};
 
 static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/resources");
 #[allow(non_snake_case)]
@@ -28,27 +28,30 @@ pub struct AlbumResponse {
 }
 pub async fn get_album(
     Path(album_id): Path<String>,
-    Extension(ref db): Extension<DatabaseConnection>,
+    State(state): State<AppState>,
 ) -> Result<Json<AlbumResponse>, (StatusCode, String)> {
-    let album = entity::albums::Entity::find_by_id(album_id)
-        .find_with_related(entity::songs::Entity)
-        .all(db)
-        .await
-        .expect("Failed to get album");
-
-    match album.first() {
-        Some(f) => {
-            let album_model = f.0.to_owned();
-            let songs = f.1.to_owned();
-            return Ok(Json(AlbumResponse {
-                id: album_model.id,
-                name: album_model.name,
-                artist: album_model.artist_name,
-                artistId: album_model.artist_id.unwrap_or_default(),
-                year: album_model.year,
-                songs,
-            }));
-        }
+    let album = services::album::get_album_by_id(&state.database, album_id).await;
+    match album.ok() {
+        Some(_album) => match _album.first() {
+            Some(f) => {
+                let album_model = f.0.to_owned();
+                let songs = f.1.to_owned();
+                return Ok(Json(AlbumResponse {
+                    id: album_model.id,
+                    name: album_model.name,
+                    artist: album_model.artist_name,
+                    artistId: album_model.artist_id.unwrap_or_default(),
+                    year: album_model.year,
+                    songs,
+                }));
+            }
+            None => {
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Failed to find album".to_owned(),
+                ))
+            }
+        },
         None => {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -60,13 +63,13 @@ pub async fn get_album(
 /* #[axum_macros::debug_handler]
  */
 pub async fn get_cover(
-    Extension(ref db): Extension<DatabaseConnection>,
+    State(state): State<AppState>,
     Path(album_id): Path<String>,
 ) -> Result<Response<BoxBody>, (StatusCode, String)> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
 
-    let album: Option<entity::albums::Model> = entity::albums::Entity::find_by_id(album_id)
-        .one(db)
+    let album: Option<entity::album::Model> = entity::album::Entity::find_by_id(album_id)
+        .one(&state.database)
         .await
         .unwrap();
 
@@ -95,17 +98,17 @@ pub async fn get_cover(
     }
 }
 pub async fn get_all_albums(
-    Extension(ref db): Extension<DatabaseConnection>,
+    State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
-) -> Result<Json<Vec<entity::albums::Model>>, (StatusCode, String)> {
+) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
     if params.get("size").is_some() {
         let size: usize = match params.get("size").unwrap().parse::<usize>() {
             Ok(size) => size,
             Err(_) => 10,
         };
-        let albums: Result<Vec<entity::albums::Model>, anyhow::Error> =
+        let albums: Result<Vec<entity::album::Model>, anyhow::Error> =
             services::album::get_albums_paginate(
-                db,
+                &state.database,
                 params
                     .get("page")
                     .unwrap_or(&String::from("0"))
@@ -122,8 +125,8 @@ pub async fn get_all_albums(
             )),
         }
     } else {
-        let albums: Result<Vec<entity::albums::Model>, anyhow::Error> =
-            services::album::get_all_albums(db).await;
+        let albums: Result<Vec<entity::album::Model>, anyhow::Error> =
+            services::album::get_all_albums(&state.database).await;
         match albums {
             Ok(_albums) => return Ok(Json(_albums)),
             Err(err) => Err((
@@ -136,7 +139,7 @@ pub async fn get_all_albums(
 /* pub async fn get_album_page(
     Extension(ref db): Extension<DatabaseConnection>,
     axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
-) -> Result<Json<Vec<entity::albums::Model>>, (StatusCode, String)> {
+) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
     println!("{:?}", params);
     let albums = services::album::get_albums_paginate(
         db,
