@@ -13,14 +13,14 @@ use crate::AppState;
 pub struct PlayListResponse {
     id: String,
     name: String,
-    songs: Vec<entity::playlist_song::Model>,
+    songs: Vec<entity::song::Model>,
 }
 pub async fn get_playlist(
     Path(playlist_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<PlayListResponse>, (StatusCode, String)> {
     let playlist = entity::playlist::Entity::find_by_id(playlist_id)
-        .find_with_related(entity::playlist_song::Entity)
+        .find_with_related(entity::song::Entity)
         .all(&state.database)
         .await
         .expect("Failed to get album");

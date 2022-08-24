@@ -19,7 +19,7 @@ pub async fn create_playlist(db: &DatabaseConnection) -> anyhow::Result<()> {
     let playlist_song = entity::playlist_song::ActiveModel {
         id: Set(p_id.to_string()),
         playlist_id: Set(Some(id.to_string())),
-        song_id: Set(Some("6fe6d11c-7afe-4c23-98cb-1e486e7e79ee".to_string())),
+        song_id: Set(Some("b69f58cb-3dac-41ee-b29b-910b12c45b11".to_string())),
     };
     entity::playlist::Entity::insert(playlist).exec(db).await?;
     entity::playlist_song::Entity::insert(playlist_song)
