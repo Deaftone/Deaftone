@@ -40,10 +40,7 @@ pub async fn get_artist(
                 albums,
             }))
         }
-        None => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to find album".to_owned(),
-        )),
+        None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
     };
 }
 /* #[axum_macros::debug_handler]

@@ -4,7 +4,7 @@ use axum::{
     Json,
 };
 
-use sea_orm::{EntityTrait};
+use sea_orm::EntityTrait;
 use serde::Serialize;
 
 use crate::AppState;
@@ -35,11 +35,6 @@ pub async fn get_playlist(
                 songs,
             }))
         }
-        None => {
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to find album".to_owned(),
-            ))
-        }
+        None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
     }
 }

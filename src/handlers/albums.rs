@@ -8,7 +8,7 @@ use axum::{
 };
 
 use include_dir::{include_dir, Dir};
-use sea_orm::{EntityTrait};
+use sea_orm::EntityTrait;
 use serde::Serialize;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
@@ -45,19 +45,9 @@ pub async fn get_album(
                     songs,
                 }))
             }
-            None => {
-                Err((
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    "Failed to find album".to_owned(),
-                ))
-            }
+            None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
         },
-        None => {
-            Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Failed to find album".to_owned(),
-            ))
-        }
+        None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
     }
 }
 /* #[axum_macros::debug_handler]
@@ -117,7 +107,7 @@ pub async fn get_all_albums(
         match albums {
             Ok(_albums) => Ok(Json(_albums)),
             Err(err) => Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
+                StatusCode::ACCEPTED,
                 format!("Failed to get albums {}", err),
             )),
         }
@@ -127,7 +117,7 @@ pub async fn get_all_albums(
         match albums {
             Ok(_albums) => Ok(Json(_albums)),
             Err(err) => Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
+                StatusCode::ACCEPTED,
                 format!("Failed to get albums {}", err),
             )),
         }
@@ -147,7 +137,7 @@ pub async fn get_all_albums(
     match albums {
         Ok(_albums) => return Ok(Json(_albums)),
         Err(err) => Err((
-            StatusCode::INTERNAL_SERVER_ERROR,
+            StatusCode::ACCEPTED,
             format!("Failed to get albums {}", err),
         )),
     }
