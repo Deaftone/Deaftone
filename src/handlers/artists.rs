@@ -43,8 +43,6 @@ pub async fn get_artist(
         None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
     };
 }
-/* #[axum_macros::debug_handler]
- */
 
 pub async fn get_all_artists(State(state): State<AppState>) -> Json<Vec<entity::artist::Model>> {
     let artists: Vec<entity::artist::Model> = entity::artist::Entity::find()
