@@ -1,31 +1,31 @@
 use axum::{
-    body::{boxed, Body, BoxBody},
+    body::{boxed, Body, BoxBody, Full},
     extract::{Path, State},
-    http::{Request, Response, StatusCode},
+    http::{header, Request, Response, StatusCode},
 };
 
-use tower_http::services::fs::ServeFile;
-
-use tower::util::ServiceExt;
+use axum_macros::debug_handler;
+use include_dir::{include_dir, Dir};
+use sea_orm::EntityTrait;
 
 use crate::{services, AppState};
 
-pub async fn stream_handler(
+pub async fn get_song(
     Path(song_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Response<BoxBody>, (StatusCode, String)> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let song: Option<entity::song::Model> = services::song::get_song(&state.database, song_id)
+
         .await
         .unwrap();
-    match song {
-        Some(f) => match ServeFile::new(f.path).oneshot(res).await {
-            Ok(res) => Ok(res.map(boxed)),
-            Err(err) => Err((
-                StatusCode::NOT_FOUND,
-                format!("Something went wrong: {}", err),
-            )),
-        },
-        None => Err((StatusCode::NOT_FOUND, "Unable to find song".to_string())),
+
+    match album {
+                Ok(res) => Ok(res.map(boxed)),
+                Err(err) => Err((
+                    StatusCode::NOT_FOUND,
+                    format!("Something went wrong: {}", err),
+                )),
+            }
+        }
     }
 }

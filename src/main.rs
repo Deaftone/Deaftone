@@ -10,7 +10,6 @@ use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-
 mod db;
 mod handlers;
 mod scanner;
@@ -49,7 +48,7 @@ async fn main() -> Result<()> {
     };
     let app = Router::with_state(state)
         .route("/", get(handler))
-        .route("/stream/:id", get(handlers::songs::stream_handler))
+        .route("/stream/:id", get(handlers::stream::stream_handler))
         .route("/albums/:id", get(handlers::albums::get_album))
         .route("/albums/:id/cover", get(handlers::albums::get_cover))
         .route("/albums", get(handlers::albums::get_all_albums))
