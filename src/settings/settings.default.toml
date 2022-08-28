@@ -1,0 +1,2 @@
+log_level= "info"
+db_path="./deaftone.sqlite"

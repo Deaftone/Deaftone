@@ -28,6 +28,8 @@ axum-macros = "0.2.3"
 tokio-stream = "0.1.9"
 include_dir = "0.7.2"
 cached = "0.38.0"
+config = "0.13.2"
+lazy_static = "1.4.0"
 [dependencies.sea-orm]
 version = "^0.9.1" # sea-orm version
 features = [

@@ -3,17 +3,20 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::{fs, time::Duration};
 
+use crate::SETTINGS;
+
 #[derive(Clone)]
 pub struct DB {
     pool: DatabaseConnection,
 }
 impl DB {
     pub async fn new() -> Result<DB> {
-        if fs::metadata("./deaftone.sqlite").is_err() {
-            fs::File::create("./deaftone.sqlite").expect("Created file");
+        let db_path = SETTINGS.db_path.as_str();
+        if fs::metadata(db_path).is_err() {
+            fs::File::create(db_path).expect("Created file");
         }
         let mut opt: ConnectOptions =
-            ConnectOptions::new("sqlite://./deaftone.sqlite?mode=rwc".to_owned());
+            ConnectOptions::new(format!("sqlite://{}?mode=rwc", db_path).to_owned());
         opt.max_connections(100)
             .min_connections(5)
             .connect_timeout(Duration::from_secs(8))

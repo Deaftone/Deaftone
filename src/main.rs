@@ -2,6 +2,7 @@ use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, Extension, Router};
 
 use db::DB;
+use lazy_static::lazy_static;
 use scanner::Scanner;
 use sea_orm::DatabaseConnection;
 use std::env;
@@ -9,11 +10,16 @@ use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
 mod db;
 mod handlers;
 mod scanner;
 mod services;
+mod settings;
+
+lazy_static! {
+    static ref SETTINGS: settings::Settings =
+        settings::Settings::new().expect("Failed to load config: ");
+}
 #[derive(Clone)]
 pub struct AppState {
     pub database: DatabaseConnection,
@@ -21,7 +27,7 @@ pub struct AppState {
 }
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("RUST_LOG", "info");
+    env::set_var("RUST_LOG", SETTINGS.log_level.as_str());
 
     // Setup tracing logger
     tracing_subscriber::registry()
@@ -37,7 +43,9 @@ async fn main() -> Result<()> {
     let db: DatabaseConnection = DB::new().await.unwrap().connect();
     /*     create_playlist(&db).await?;
      */
+    // Set property
 
+    // Get property
     let mut scan: Scanner = scanner::Scanner::new().unwrap();
     scan.start_scan();
     // build our application with a route and state
