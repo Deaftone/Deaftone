@@ -15,7 +15,7 @@ impl Scanner {
         Ok(scanner)
     }
 
-    pub fn start_scan(self) {
+    pub fn start_scan(&mut self) {
         tokio::spawn(async move {
             // Update global scan status
 
