@@ -14,7 +14,7 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 lazy_static! {
-    static ref scan_status: Mutex<AtomicBool> = Mutex::new(AtomicBool::new(false));
+    static ref SCAN_STATUS: Mutex<AtomicBool> = Mutex::new(AtomicBool::new(false));
     static ref SETTINGS: settings::Settings =
         settings::Settings::new().expect("Failed to load config: ");
 }
@@ -91,7 +91,7 @@ async fn main() -> Result<()> {
 }
 
 async fn handler() -> Html<&'static str> {
-    println!("{:?}", scan_status.lock().unwrap());
+    println!("{:?}", SCAN_STATUS.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
 }
 

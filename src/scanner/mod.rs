@@ -4,7 +4,7 @@ use anyhow::Result;
 use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, Statement};
 use tokio::time::sleep;
 
-use crate::{db::DB, scan_status};
+use crate::{db::DB, SCAN_STATUS};
 pub mod scanner;
 pub mod tag_helper;
 #[derive(Clone)]
@@ -14,19 +14,16 @@ impl Scanner {
         let scanner: Scanner = Scanner {};
         Ok(scanner)
     }
-    /*     fn update_scanning(&mut self, status: Arc<AtomicBool>) {
-        self.scanning = status
-    }
-    pub fn get_status(&self) -> bool {
-        self.scanning.load(Ordering::Relaxed)
-    } */
 
-    pub fn start_scan(&mut self) {
+    pub fn start_scan(self) {
         tokio::spawn(async move {
-            scan_status
+            // Update global scan status
+
+            SCAN_STATUS
                 .lock()
                 .unwrap()
                 .store(true, std::sync::atomic::Ordering::Relaxed);
+
             let db: DatabaseConnection = DB::new().await.unwrap().connect();
             use std::time::Instant;
             let before: Instant = Instant::now();
@@ -61,7 +58,8 @@ impl Scanner {
             .await
             .unwrap();
 
-            scan_status
+            // Update global scan status
+            SCAN_STATUS
                 .lock()
                 .unwrap()
                 .store(false, std::sync::atomic::Ordering::Relaxed);
