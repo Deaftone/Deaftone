@@ -1,10 +1,6 @@
-use std::time::Duration;
-
+use crate::{db::DB, SCAN_STATUS};
 use anyhow::Result;
 use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, Statement};
-use tokio::time::sleep;
-
-use crate::{db::DB, SCAN_STATUS};
 pub mod scanner;
 pub mod tag_helper;
 #[derive(Clone)]
