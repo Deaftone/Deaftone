@@ -1,25 +1,28 @@
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, Extension, Router};
 
+use config::{Config, File, FileFormat};
 use db::DB;
 use lazy_static::lazy_static;
 use scanner::Scanner;
 use sea_orm::DatabaseConnection;
-use std::env;
 use std::net::SocketAddr;
+use std::sync::atomic::AtomicBool;
+use std::{env, sync::Mutex};
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+lazy_static! {
+    static ref scan_status: Mutex<AtomicBool> = Mutex::new(AtomicBool::new(false));
+    static ref SETTINGS: settings::Settings =
+        settings::Settings::new().expect("Failed to load config: ");
+}
 mod db;
 mod handlers;
 mod scanner;
 mod services;
-mod settings;
-
-lazy_static! {
-    static ref SETTINGS: settings::Settings =
-        settings::Settings::new().expect("Failed to load config: ");
-}
+pub mod settings;
 #[derive(Clone)]
 pub struct AppState {
     pub database: DatabaseConnection,
@@ -27,7 +30,7 @@ pub struct AppState {
 }
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("RUST_LOG", SETTINGS.log_level.as_str());
+    env::set_var("RUST_LOG", "info");
 
     // Setup tracing logger
     tracing_subscriber::registry()
@@ -38,14 +41,23 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
+    // Setup config
+
+    /*    let mut s = Settings::new
+
+    match settings {
+        core::result::Result::Ok(config) => {}
+        Err(e) => {
+            tracing::error!("Failed to load config.json. Error: {}", e);
+            std::process::exit(0);
+        }
+    } */
     // Connecting SQLite
 
     let db: DatabaseConnection = DB::new().await.unwrap().connect();
     /*     create_playlist(&db).await?;
      */
-    // Set property
 
-    // Get property
     let mut scan: Scanner = scanner::Scanner::new().unwrap();
     scan.start_scan();
     // build our application with a route and state
@@ -78,11 +90,8 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn handler(
-    Extension(ref scanner): Extension<Scanner>,
-    Extension(ref _db): Extension<DatabaseConnection>,
-) -> Html<&'static str> {
-    println!("{:?}", scanner.get_status());
+async fn handler() -> Html<&'static str> {
+    println!("{:?}", scan_status.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
 }
 
