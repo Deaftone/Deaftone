@@ -30,7 +30,7 @@ pub struct AppState {
 }
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("RUST_LOG", "info");
+    env::set_var("RUST_LOG", "debug");
 
     // Setup tracing logger
     tracing_subscriber::registry()
