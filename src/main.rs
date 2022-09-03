@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
             std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "example_tracing_aka_logging=debug,tower_http=debug".into()),
+                .unwrap_or_else(|_| "deaftone=debug,tower_http=debug".into()),
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
