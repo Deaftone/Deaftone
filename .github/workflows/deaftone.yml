@@ -16,7 +16,13 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
-
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "deaftone"
+          key: "deaftone"
+          env-vars: ""
+          workspaces: ""
+          cache-on-failure: ""
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         continue-on-error: true # WARNING: only for this example, remove it!
@@ -37,7 +43,13 @@ jobs:
           toolchain: stable
           override: true
           components: rustfmt, clippy
-
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "deaftone"
+          key: "deaftone"
+          env-vars: ""
+          workspaces: ""
+          cache-on-failure: ""
       - name: Run cargo fmt
         uses: actions-rs/cargo@v1
         continue-on-error: true # WARNING: only for this example, remove it!
@@ -61,8 +73,8 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: ""
-          key: ""
+          shared-key: "deaftone"
+          key: "deaftone"
           env-vars: ""
           workspaces: ""
           cache-on-failure: ""
