@@ -1,0 +1,23 @@
+name: Rust
+
+on: [push]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build deaftone
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ""
+          key: ""
+          env-vars: ""
+          workspaces: ""
+          cache-on-failure: ""
+          toolchain: stable
+      - run: cargo build --release --all-features
