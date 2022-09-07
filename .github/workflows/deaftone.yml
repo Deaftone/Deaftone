@@ -78,4 +78,4 @@ jobs:
           env-vars: ""
           workspaces: ""
           cache-on-failure: ""
-      - run: cargo build --release --all-features
+      - run: cargo build --release
