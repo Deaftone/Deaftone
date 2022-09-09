@@ -1,14 +1,18 @@
-use axum::{
-    body::{boxed, Body, BoxBody},
-    extract::{Path, State},
-    http::{Request, StatusCode},
-    response::Response,
-};
-use tower::ServiceExt;
-use tower_http::services::ServeFile;
+use std::process::Stdio;
 
 use crate::{services, AppState};
+use axum::{
+    body::{boxed, Body, BoxBody, StreamBody},
+    extract::{Path, State},
+    http::{Request, StatusCode},
+    response::{IntoResponse, Response},
+};
 
+use futures::StreamExt;
+use tokio::process::Command;
+use tokio_util::io::ReaderStream;
+use tower::ServiceExt;
+use tower_http::services::ServeFile;
 pub async fn stream_handler(
     Path(song_id): Path<String>,
     State(state): State<AppState>,
@@ -27,4 +31,33 @@ pub async fn stream_handler(
         },
         None => Err((StatusCode::NOT_FOUND, "Unable to find song".to_string())),
     }
+}
+
+pub async fn test_stream_handler(State(state): State<AppState>) -> impl IntoResponse {
+    //"G:\\aa\\B\\Billie Eilish\\Billie Eilish - Happier Than Ever [2021] - WEB FLAC\\07. Lost Cause.flac"
+
+    let mut child = Command::new("ffmpeg")
+        .stdout(Stdio::piped())
+        .stdin(Stdio::piped())
+        .arg("-v")
+        .arg("0")
+        .arg("-i")
+        .arg("G:\\aa\\B\\Billie Eilish\\Billie Eilish - Happier Than Ever [2021] - WEB FLAC\\07. Lost Cause.flac")
+        .arg("-map")
+        .arg("0:a:0")
+        .arg("-codec:a")
+        .arg("libmp3lame")
+        .arg("-b:a")
+        .arg("128k")
+        .arg("-f")
+        .arg("mp3")
+        .arg("-")
+        .spawn()
+        .unwrap();
+
+    //    let mut stdin = child.stdin.take().unwrap();
+    let stdout = child.stdout.take().unwrap();
+    let stream = ReaderStream::new(stdout).boxed();
+    let body = StreamBody::new(stream);
+    return body.into_response();
 }

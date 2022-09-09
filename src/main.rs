@@ -69,6 +69,7 @@ async fn main() -> Result<()> {
     let app = Router::with_state(state)
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::stream::stream_handler))
+        .route("/stream/test", get(handlers::stream::test_stream_handler))
         .route("/albums/:id", get(handlers::albums::get_album))
         .route("/songs/:id", get(handlers::songs::get_song))
         .route("/songs/:id/cover", get(handlers::songs::get_cover))
