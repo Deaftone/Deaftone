@@ -1,7 +1,7 @@
 use anyhow::{Ok, Result};
-use axum::{response::Html, routing::get, Extension, Router};
+use axum::{response::Html, routing::get, Router};
 
-use config::{Config, File, FileFormat};
+
 use db::DB;
 use lazy_static::lazy_static;
 use scanner::Scanner;

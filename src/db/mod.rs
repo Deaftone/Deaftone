@@ -16,7 +16,7 @@ impl DB {
             fs::File::create(db_path).expect("Created file");
         }
         let mut opt: ConnectOptions =
-            ConnectOptions::new(format!("sqlite://{}?mode=rwc", db_path).to_owned());
+            ConnectOptions::new(format!("sqlite://{}?mode=rwc", db_path));
         opt.max_connections(100)
             .min_connections(5)
             .connect_timeout(Duration::from_secs(8))

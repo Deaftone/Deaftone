@@ -1,8 +1,8 @@
-use std::time::Duration;
+
 
 use anyhow::Result;
 use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, Statement};
-use tokio::time::sleep;
+
 
 use crate::{db::DB, scan_status};
 pub mod scanner;
