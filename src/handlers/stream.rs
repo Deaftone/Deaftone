@@ -1,6 +1,7 @@
 use std::process::Stdio;
 
 use crate::{services, AppState};
+use anyhow::Error;
 use axum::{
     body::{boxed, Body, BoxBody, StreamBody},
     extract::{Path, State},
@@ -33,31 +34,42 @@ pub async fn stream_handler(
     }
 }
 
-pub async fn test_stream_handler(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn transcode_stream_handler(
+    Path(song_id): Path<String>,
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
     //"G:\\aa\\B\\Billie Eilish\\Billie Eilish - Happier Than Ever [2021] - WEB FLAC\\07. Lost Cause.flac"
-
-    let mut child = Command::new("ffmpeg")
-        .stdout(Stdio::piped())
-        .stdin(Stdio::piped())
-        .arg("-v")
-        .arg("0")
-        .arg("-i")
-        .arg("G:\\aa\\B\\Billie Eilish\\Billie Eilish - Happier Than Ever [2021] - WEB FLAC\\07. Lost Cause.flac")
-        .arg("-map")
-        .arg("0:a:0")
-        .arg("-codec:a")
-        .arg("libmp3lame")
-        .arg("-b:a")
-        .arg("128k")
-        .arg("-f")
-        .arg("mp3")
-        .arg("-")
-        .spawn()
+    let song = services::song::get_song(&state.database, song_id)
+        .await
         .unwrap();
 
-    //    let mut stdin = child.stdin.take().unwrap();
-    let stdout = child.stdout.take().unwrap();
-    let stream = ReaderStream::new(stdout).boxed();
-    let body = StreamBody::new(stream);
-    return body.into_response();
+    match song {
+        Some(f) => {
+            let mut child = Command::new("ffmpeg")
+                .stdout(Stdio::piped())
+                .stdin(Stdio::piped())
+                .arg("-v")
+                .arg("0")
+                .arg("-i")
+                .arg(f.path)
+                .arg("-map")
+                .arg("0:a:0")
+                .arg("-codec:a")
+                .arg("libmp3lame")
+                .arg("-b:a")
+                .arg("128k")
+                .arg("-f")
+                .arg("mp3")
+                .arg("-")
+                .spawn()
+                .unwrap();
+
+            //    let mut stdin = child.stdin.take().unwrap();
+            let stdout = child.stdout.take().unwrap();
+            let stream = ReaderStream::new(stdout).boxed();
+            let body = StreamBody::new(stream);
+            Ok(body.into_response())
+        }
+        None => return Err((StatusCode::NOT_FOUND, "Unable to find song".to_string())),
+    }
 }
