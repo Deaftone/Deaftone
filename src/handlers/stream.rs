@@ -1,7 +1,7 @@
 use std::process::Stdio;
 
 use crate::{services, AppState};
-use anyhow::Error;
+
 use axum::{
     body::{boxed, Body, BoxBody, StreamBody},
     extract::{Path, State},
@@ -70,6 +70,6 @@ pub async fn transcode_stream_handler(
             let body = StreamBody::new(stream);
             Ok(body.into_response())
         }
-        None => return Err((StatusCode::NOT_FOUND, "Unable to find song".to_string())),
+        None => Err((StatusCode::NOT_FOUND, "Unable to find song".to_string())),
     }
 }
