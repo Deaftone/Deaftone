@@ -1,5 +1,5 @@
 use crate::scanner::tag_helper::{self};
-use crate::services;
+use crate::{services, SETTINGS};
 use anyhow::Result;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use entity;
@@ -102,7 +102,7 @@ pub async fn walk_dir(db: &DatabaseConnection, dir: String) -> Result<()> {
 pub async fn walk_full(db: &DatabaseConnection) -> Result<()> {
     tracing::info!("Starting scan");
     //let dirs: Vec<entity::directories::Model> = entity::directories::Entity::find().all(db).await?;
-    let current_dir: &str = "G:\\aa";
+    let current_dir: &str = SETTINGS.media_path.as_str();
     for entry in WalkDir::new(current_dir)
         .follow_links(true)
         .into_iter()
