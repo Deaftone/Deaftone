@@ -15,7 +15,7 @@ use tower_http::services::ServeFile;
 
 use crate::{services, AppState};
 
-static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/resources");
+static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/resources");
 #[allow(non_snake_case)]
 #[derive(Serialize)]
 pub struct AlbumResponse {

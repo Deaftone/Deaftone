@@ -88,7 +88,6 @@ pub async fn walk_dir(db: &DatabaseConnection, dir: String) -> Result<()> {
             skip_fail!(services::song::create_or_update(db, metadata).await);
         }
         if f_name.contains("cover.") {
-            println!("Found cover for {:?}", path);
             services::album::update_cover_for_path(
                 db,
                 path,
@@ -120,7 +119,7 @@ pub async fn walk_full(db: &DatabaseConnection) -> Result<()> {
             skip_fail!(services::song::create_song(db, metadata).await);
         }
         if f_name.contains("cover.") {
-            println!("Found cover for {:?}", path);
+            //println!("Found cover for {:?}", path);
             services::album::update_cover_for_path(
                 db,
                 path,

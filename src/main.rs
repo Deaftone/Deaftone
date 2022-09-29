@@ -1,7 +1,7 @@
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, Router};
 
-use db::DB;
+use database::DB;
 use lazy_static::lazy_static;
 use scanner::Scanner;
 use sea_orm::DatabaseConnection;
@@ -17,11 +17,11 @@ lazy_static! {
     static ref SETTINGS: settings::Settings =
         settings::Settings::new().expect("Failed to load config: ");
 }
-mod db;
+mod database;
 mod handlers;
 mod scanner;
 mod services;
-pub mod settings;
+mod settings;
 #[derive(Clone)]
 pub struct AppState {
     pub database: DatabaseConnection,

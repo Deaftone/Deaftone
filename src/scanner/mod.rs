@@ -1,10 +1,9 @@
-
+use std::time::Instant;
 
 use anyhow::Result;
 use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, Statement};
 
-
-use crate::{db::DB, scan_status};
+use crate::{database::DB, scan_status};
 pub mod scanner;
 pub mod tag_helper;
 #[derive(Clone)]
@@ -22,6 +21,8 @@ impl Scanner {
     } */
 
     pub fn start_scan(&mut self) {
+        let start = Instant::now();
+
         tokio::spawn(async move {
             scan_status
                 .lock()
@@ -60,7 +61,8 @@ impl Scanner {
             ))
             .await
             .unwrap();
-
+            let duration = start.elapsed();
+            println!("Time elapsed in scan() is: {:?}", duration);
             scan_status
                 .lock()
                 .unwrap()
