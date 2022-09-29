@@ -1,7 +1,7 @@
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, Router};
 
-use database::DB;
+use database::Database;
 use lazy_static::lazy_static;
 use scanner::Scanner;
 use sea_orm::DatabaseConnection;
@@ -13,7 +13,7 @@ use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 lazy_static! {
-    static ref scan_status: Mutex<AtomicBool> = Mutex::new(AtomicBool::new(false));
+    static ref SCAN_STATUS: Mutex<AtomicBool> = Mutex::new(AtomicBool::new(false));
     static ref SETTINGS: settings::Settings =
         settings::Settings::new().expect("Failed to load config: ");
 }
@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
     } */
     // Connecting SQLite
 
-    let db: DatabaseConnection = DB::new().await.unwrap().connect();
+    let db: DatabaseConnection = Database::new().await.unwrap().connect();
     /*     create_playlist(&db).await?;
      */
 
@@ -94,7 +94,7 @@ async fn main() -> Result<()> {
 }
 
 async fn handler() -> Html<&'static str> {
-    println!("{:?}", scan_status.lock().unwrap());
+    println!("{:?}", SCAN_STATUS.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
 }
 

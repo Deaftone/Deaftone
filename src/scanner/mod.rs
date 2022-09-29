@@ -3,7 +3,7 @@ use std::time::Instant;
 use anyhow::Result;
 use sea_orm::{ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, Statement};
 
-use crate::{database::DB, scan_status};
+use crate::{database::Database, SCAN_STATUS};
 pub mod scanner;
 pub mod tag_helper;
 #[derive(Clone)]
@@ -24,12 +24,11 @@ impl Scanner {
         let start = Instant::now();
 
         tokio::spawn(async move {
-            scan_status
+            SCAN_STATUS
                 .lock()
                 .unwrap()
                 .store(true, std::sync::atomic::Ordering::Relaxed);
-            let db: DatabaseConnection = DB::new().await.unwrap().connect();
-            use std::time::Instant;
+            let db: DatabaseConnection = Database::new().await.unwrap().connect();
             let before: Instant = Instant::now();
             // Run full scan if no songs
             let count: usize = entity::song::Entity::find().count(&db).await.unwrap();
@@ -63,7 +62,7 @@ impl Scanner {
             .unwrap();
             let duration = start.elapsed();
             println!("Time elapsed in scan() is: {:?}", duration);
-            scan_status
+            SCAN_STATUS
                 .lock()
                 .unwrap()
                 .store(false, std::sync::atomic::Ordering::Relaxed);
