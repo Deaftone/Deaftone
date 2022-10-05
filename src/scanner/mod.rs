@@ -28,7 +28,7 @@ impl Scanner {
                 .lock()
                 .unwrap()
                 .store(true, std::sync::atomic::Ordering::Relaxed);
-            let db: DatabaseConnection = Database::new().await.unwrap().connect();
+            let db: DatabaseConnection = Database::new().await.unwrap().pool;
             let before: Instant = Instant::now();
             // Run full scan if no songs
             let count: usize = entity::song::Entity::find().count(&db).await.unwrap();

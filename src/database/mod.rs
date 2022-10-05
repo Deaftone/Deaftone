@@ -2,13 +2,12 @@ use anyhow::Result;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, DatabaseConnection};
 use std::{fs, time::Duration};
-use tracing_subscriber::registry::Data;
 
 use crate::SETTINGS;
 
 #[derive(Clone)]
 pub struct Database {
-    pool: DatabaseConnection,
+    pub pool: DatabaseConnection,
 }
 impl Database {
     pub async fn new() -> Result<Database, anyhow::Error> {
@@ -30,11 +29,16 @@ impl Database {
         Ok(db)
     }
 
-    pub fn connect(self) -> DatabaseConnection {
-        self.pool
-    }
     async fn migrate_up(&self) -> Result<()> {
         Migrator::up(&self.pool, None).await?;
         Ok(())
+    }
+}
+pub trait Test {
+    fn test(&self);
+}
+impl Test for Database {
+    fn test(&self) {
+        println!("Added test");
     }
 }

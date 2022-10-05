@@ -1,6 +1,11 @@
+mod database;
+mod handlers;
+mod scanner;
+mod services;
+mod settings;
+use crate::database::Test;
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, Router};
-
 use database::Database;
 use lazy_static::lazy_static;
 use scanner::Scanner;
@@ -17,11 +22,7 @@ lazy_static! {
     static ref SETTINGS: settings::Settings =
         settings::Settings::new().expect("Failed to load config: ");
 }
-mod database;
-mod handlers;
-mod scanner;
-mod services;
-mod settings;
+
 #[derive(Clone)]
 pub struct AppState {
     pub database: DatabaseConnection,
@@ -53,16 +54,15 @@ async fn main() -> Result<()> {
     } */
     // Connecting SQLite
 
-    let db: DatabaseConnection = Database::new().await.unwrap().connect();
+    let db = Database::new().await?;
     /*     create_playlist(&db).await?;
      */
-
     let mut scan: Scanner = scanner::Scanner::new().unwrap();
     scan.start_scan();
     // build our application with a route and state
-
+    db.test();
     let state = AppState {
-        database: db,
+        database: db.pool,
         scanner: scan,
     };
     let app = Router::with_state(state)
