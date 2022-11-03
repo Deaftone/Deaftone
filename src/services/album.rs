@@ -81,6 +81,7 @@ pub async fn create_album(
         name: Set(album_name.to_owned()),
         artist_name: Set(artist_name.to_owned()),
         year: Set(year.unwrap_or_default()),
+        album_description: NotSet,
         path: Set(path),
         cover: NotSet,
         created_at: Set(init_time.to_owned()),
