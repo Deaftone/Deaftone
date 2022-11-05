@@ -9,5 +9,5 @@ name = "entity"
 path = "src/lib.rs"
 
 [dependencies]
-sea-orm = { version = "^0" }
+sea-orm = { version = "=0.9.3" }
 serde = { version = "1", features = ["derive"] }
