@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use std::result::Result::Ok;
 use std::time::SystemTime;
 use tokio::fs;
+use tokio::time::Instant;
 use tokio_stream::StreamExt;
 use uuid::Uuid;
 use walkdir::WalkDir;
@@ -48,18 +49,16 @@ pub async fn walk_partial(db: &DatabaseConnection) -> Result<()> {
         } else {
             tracing::info!("Dropping all items for path {}", item.path);
             // Drop all songs for missing path
-
-            entity::song::Entity::delete_many()
+            /*             entity::song::Entity::delete_many()
                 .filter(entity::song::Column::Path.contains(&item.path))
                 .exec(db)
                 .await?;
             entity::directorie::Entity::delete_many()
                 .filter(entity::directorie::Column::Path.contains(&item.path))
                 .exec(db)
-                .await?;
+                .await?; */
         }
     }
-
     Ok(())
 }
 
@@ -100,7 +99,6 @@ pub async fn walk_dir(db: &DatabaseConnection, dir: String) -> Result<()> {
 }
 pub async fn walk_full(db: &DatabaseConnection) -> Result<()> {
     tracing::info!("Starting scan");
-    //let dirs: Vec<entity::directories::Model> = entity::directories::Entity::find().all(db).await?;
     let current_dir: &str = SETTINGS.media_path.as_str();
     for entry in WalkDir::new(current_dir)
         .follow_links(true)
