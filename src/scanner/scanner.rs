@@ -109,9 +109,21 @@ pub async fn walk_full(db: &DatabaseConnection) -> Result<()> {
     {
         let path: String = entry.path().to_string_lossy().to_string();
         if entry.file_type().is_dir() {
-            let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
-            let mtime: DateTime<Utc> = fmtime.into();
-            insert_directory(&path, &mtime, db).await?;
+            if entry.file_type().is_dir() {
+                let is_empty = PathBuf::from(&path)
+                    .read_dir()
+                    .map(|mut i| i.next().is_none())
+                    .unwrap_or(false);
+                let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
+                let mtime: DateTime<Utc> = fmtime.into();
+                if !is_empty {
+                    let start = Instant::now();
+
+                    insert_directory(&path, &mtime, db).await?;
+                    let duration = start.elapsed();
+                    println!("Time elapsed in insert_directory() is: {:?}", duration);
+                }
+            }
         }
         let f_name = entry.file_name().to_string_lossy();
         if f_name.ends_with(".flac") {
