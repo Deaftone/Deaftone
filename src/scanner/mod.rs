@@ -17,13 +17,11 @@ use sqlx::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
         SqliteSynchronous,
     },
-    Pool,
+    ConnectOptions, Pool,
 };
 use std::path::PathBuf;
 use std::result::Result::Ok;
 use std::time::SystemTime;
-use tokio::fs;
-use tokio_stream::StreamExt;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
@@ -70,7 +68,9 @@ impl Scanner {
                 .create_if_missing(true)
                 .journal_mode(SqliteJournalMode::Wal)
                 .synchronous(SqliteSynchronous::Normal)
-                .busy_timeout(pool_timeout);
+                .busy_timeout(pool_timeout)
+                .disable_statement_logging()
+                .clone();
 
             let sqlite_pool = SqlitePoolOptions::new()
                 .max_connections(5)
@@ -93,6 +93,10 @@ impl Scanner {
                 .await
                 .unwrap();
             sqlx::query("pragma mmap_size = 30000000000;")
+                .execute(&sqlite_pool)
+                .await
+                .unwrap();
+            sqlx::query("pragma synchronous = normal;")
                 .execute(&sqlite_pool)
                 .await
                 .unwrap();
@@ -212,6 +216,8 @@ impl Scanner {
             .into_iter()
             .filter_map(|e| e.ok())
         {
+            let start = Instant::now();
+
             let path: String = entry.path().to_string_lossy().to_string();
             if entry.file_type().is_dir() {
                 if entry.file_type().is_dir() {
@@ -224,7 +230,7 @@ impl Scanner {
                     if !is_empty {
                         let start = Instant::now();
 
-                        //  Self::insert_directory(&path, &mtime, db).await?;
+                        Self::insert_directory(&path, &mtime, db).await?;
                         let duration = start.elapsed();
                         println!("Time elapsed in insert_directory() is: {:?}", duration);
                     }
@@ -244,6 +250,9 @@ impl Scanner {
                 )
                 .await?;
             } */
+
+            let duration = start.elapsed();
+            println!("Time elapsed in walk_interation is: {:?}", duration);
         }
 
         Ok(())
@@ -251,38 +260,37 @@ impl Scanner {
     pub async fn insert_directory(
         path: &String,
         mtime: &DateTime<Utc>,
-        db: &DatabaseConnection,
-    ) -> Result<()> {
+        sqlite_pool: &Pool<sqlx::Sqlite>,
+    ) -> Result<SqliteQueryResult, anyhow::Error> {
         let init_time: String = Utc::now().naive_local().to_string();
-        let dir: entity::directorie::ActiveModel = entity::directorie::ActiveModel {
-            id: Set(Uuid::new_v4().to_string()),
-            path: Set(path.to_owned()),
-            mtime: Set(mtime.naive_utc()),
-            created_at: Set(init_time.to_owned()),
-            updated_at: Set(init_time),
-        };
-
-        entity::directorie::Entity::insert(dir)
-            .on_conflict(
-                OnConflict::column(entity::directorie::Column::Path)
-                    .update_column(entity::directorie::Column::UpdatedAt)
-                    .update_column(entity::directorie::Column::Mtime)
-                    .to_owned(),
-            )
-            .exec(db)
-            .await
-            .expect("Failed to insert dir");
-        Ok(())
+        Ok(sqlx::query(
+            "INSERT OR REPLACE INTO directories (
+                    id,
+                    path,
+                    mtime,
+                    createdAt,
+                    updatedAt
+                )
+                VALUES (?,?,?,?,?)",
+        )
+        .bind(Uuid::new_v4().to_string())
+        .bind(path.to_owned())
+        .bind(mtime.naive_utc())
+        .bind(init_time.to_owned())
+        .bind(init_time)
+        .execute(sqlite_pool)
+        .await?)
     }
 
     pub async fn create_song(
         sqlite_pool: &Pool<sqlx::Sqlite>,
         metadata: AudioMetadata,
     ) -> Result<SqliteQueryResult, anyhow::Error> {
+        tracing::info!("Inserting {}", metadata.path);
         let id: Uuid = Uuid::new_v4();
         let init_time: String = Utc::now().naive_local().to_string();
         Ok(sqlx::query(
-            "INSERT INTO songs (
+            "INSERT OR REPLACE INTO songs (
                 id, 
                 path,
                 title,
