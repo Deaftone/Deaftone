@@ -65,7 +65,7 @@ async fn main() -> Result<()> {
         database: db.pool,
         scanner: scan,
     };
-    let app = Router::with_state(state)
+    let app = Router::new()
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::stream::stream_handler))
         .route(
@@ -80,7 +80,8 @@ async fn main() -> Result<()> {
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/artists", get(handlers::artists::get_all_artists))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
-        .layer(TraceLayer::new_for_http());
+        .layer(TraceLayer::new_for_http())
+        .with_state(state);
 
     // run it
     let addr: SocketAddr = SocketAddr::from(([0, 0, 0, 0], 3030));
