@@ -22,10 +22,11 @@ where
 
 pub async fn create_tables(db: &DbConn) {
     let schema = Schema::new(db.get_database_backend());
+    create_table(db, &schema, entity::setting::Entity).await;
     create_table(db, &schema, entity::song::Entity).await;
     create_table(db, &schema, entity::album::Entity).await;
     create_table(db, &schema, entity::artist::Entity).await;
-    create_table(db, &schema, entity::directorie::Entity).await;
+    create_table(db, &schema, entity::directory::Entity).await;
     create_table(db, &schema, entity::playlist::Entity).await;
     create_table(db, &schema, entity::playlist_song::Entity).await;
 }
@@ -78,11 +79,11 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name(&format!(
                         "idx-{}-{}",
-                        entity::directorie::Entity.to_string(),
-                        entity::directorie::Column::Id.to_string()
+                        entity::directory::Entity.to_string(),
+                        entity::directory::Column::Id.to_string()
                     ))
-                    .table(entity::directorie::Entity)
-                    .col(entity::directorie::Column::Id)
+                    .table(entity::directory::Entity)
+                    .col(entity::directory::Column::Id)
                     .to_owned(),
             )
             .await;
