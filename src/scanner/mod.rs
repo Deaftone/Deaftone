@@ -58,8 +58,6 @@ impl Scanner {
                 .lock()
                 .unwrap()
                 .store(true, std::sync::atomic::Ordering::Relaxed);
-
-            //let db: DatabaseConnection = Database::new().await.unwrap().pool;
             let database_file = "deaftone.sqlite";
             let database_url = format!("sqlite://{}", database_file);
             let pool_timeout = Duration::from_secs(30);
@@ -78,15 +76,21 @@ impl Scanner {
                 .await
                 .unwrap();
             let before: Instant = Instant::now();
-            // Run full scan if no songs
-            /*             let count: usize = entity::song::Entity::find().count(&db).await.unwrap();
-            if count > 0 {
-                tracing::info!("Starting partial scan");
-                Self::walk_partial(&db).await.unwrap();
-            } else {
-                tracing::info!("Starting full scan");
-                Self::walk_full(&db).await.unwrap();
-            } */
+
+            let has_scanned_full =
+                sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
+                    .fetch_one(&sqlite_pool)
+                    .await
+                    .unwrap()
+                    .value;
+
+            match has_scanned_full == "1" {
+                true => {
+                    tracing::info!("Starting partial scan");
+                    Self::walk_partial(&sqlite_pool).await.unwrap();
+                }
+                _ => Self::walk_full(&sqlite_pool).await.unwrap(),
+            }
 
             sqlx::query("pragma temp_store = memory;")
                 .execute(&sqlite_pool)
@@ -104,7 +108,6 @@ impl Scanner {
                 .execute(&sqlite_pool)
                 .await
                 .unwrap();
-            Self::walk_full(&sqlite_pool).await.unwrap();
 
             tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
@@ -136,43 +139,43 @@ impl Scanner {
         });
     }
 
-    /*  pub async fn walk_partial(db: &Pool<sqlx::Sqlite>) -> Result<()> {
-           let mut dirs_stream = entity::directorie::Entity::find().stream(db).await?;
-           while let Some(item) = dirs_stream.next().await {
-               let item: entity::directorie::Model = item?;
-               let meta = fs::metadata(&item.path).await;
-               let is_empty = PathBuf::from(&item.path)
-                   .read_dir()
-                   .map(|mut i| i.next().is_none())
-                   .unwrap_or(false);
-               if meta.is_ok() && !is_empty {
-                   let _ftime: SystemTime = meta.unwrap().modified().unwrap();
-                   let ftime: DateTime<Utc> = _ftime.into();
+    pub async fn walk_partial(db: &Pool<sqlx::Sqlite>) -> Result<()> {
+        /*  let mut dirs_stream = entity::directorie::Entity::find().stream(db).await?;
+        while let Some(item) = dirs_stream.next().await {
+            let item: entity::directorie::Model = item?;
+            let meta = fs::metadata(&item.path).await;
+            let is_empty = PathBuf::from(&item.path)
+                .read_dir()
+                .map(|mut i| i.next().is_none())
+                .unwrap_or(false);
+            if meta.is_ok() && !is_empty {
+                let _ftime: SystemTime = meta.unwrap().modified().unwrap();
+                let ftime: DateTime<Utc> = _ftime.into();
 
-                   let dbtime: NaiveDateTime = item.mtime;
+                let dbtime: NaiveDateTime = item.mtime;
 
-                   if ftime.naive_utc() > dbtime {
-                       tracing::info!("Dir changed {}", item.path);
-                       Self::walk_dir(db, item.path).await?;
-                   } else {
-                       tracing::debug!("Dir hasn't {}", item.path);
-                   }
-               } else {
-                   tracing::info!("Dropping all items for path {}", item.path);
-                   // Drop all songs for missing path
-                   /*             entity::song::Entity::delete_many()
-                       .filter(entity::song::Column::Path.contains(&item.path))
-                       .exec(db)
-                       .await?;
-                   entity::directorie::Entity::delete_many()
-                       .filter(entity::directorie::Column::Path.contains(&item.path))
-                       .exec(db)
-                       .await?; */
-               }
-           }
-           Ok(())
-       }
-    */
+                if ftime.naive_utc() > dbtime {
+                    tracing::info!("Dir changed {}", item.path);
+                    Self::walk_dir(db, item.path).await?;
+                } else {
+                    tracing::debug!("Dir hasn't {}", item.path);
+                }
+            } else {
+                tracing::info!("Dropping all items for path {}", item.path);
+                // Drop all songs for missing path
+                /*             entity::song::Entity::delete_many()
+                    .filter(entity::song::Column::Path.contains(&item.path))
+                    .exec(db)
+                    .await?;
+                entity::directorie::Entity::delete_many()
+                    .filter(entity::directorie::Column::Path.contains(&item.path))
+                    .exec(db)
+                    .await?; */
+            }
+        } */
+        Ok(())
+    }
+
     /*   pub async fn walk_dir(db: &Pool<sqlx::Sqlite>, dir: String) -> Result<()> {
         for entry in WalkDir::new(dir)
             .follow_links(true)
@@ -219,24 +222,16 @@ impl Scanner {
             let start = Instant::now();
 
             let path: String = entry.path().to_string_lossy().to_string();
+            let f_name = entry.file_name().to_string_lossy();
+
             if entry.file_type().is_dir() {
                 let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
                 let mtime: DateTime<Utc> = fmtime.into();
-                let start = Instant::now();
                 Self::insert_directory(&path, &mtime, db).await?;
-                let duration = start.elapsed();
-                println!("Time elapsed in insert_directory() is: {:?}", duration);
             }
-            let f_name = entry.file_name().to_string_lossy();
             if f_name.ends_with(".flac") {
-                let start = Instant::now();
                 let metadata = skip_fail!(tag_helper::get_metadata(path.to_owned()));
-                let duration = start.elapsed();
-                println!("Time elapsed in get_metadata() is: {:?}", duration);
-                let start = Instant::now();
                 skip_fail!(Self::create_song(db, metadata).await);
-                let duration = start.elapsed();
-                println!("Time elapsed in create_song() is: {:?}", duration);
             }
             /*             if f_name.contains("cover.") {
                 //println!("Found cover for {:?}", path);
@@ -252,6 +247,17 @@ impl Scanner {
             println!("Time elapsed in walk_interation is: {:?}", duration);
         }
 
+        sqlx::query(
+            "INSERT OR REPLACE INTO settings (
+                    name,
+                    value
+                )
+                VALUES (?,?)",
+        )
+        .bind("scanned".to_string())
+        .bind(true)
+        .execute(db)
+        .await?;
         Ok(())
     }
     pub async fn insert_directory(
