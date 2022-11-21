@@ -80,18 +80,17 @@ impl Scanner {
             let has_scanned_full =
                 sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
                     .fetch_one(&sqlite_pool)
-                    .await
-                    .unwrap()
-                    .value;
-
-            match has_scanned_full == "1" {
-                true => {
-                    tracing::info!("Starting partial scan");
-                    Self::walk_partial(&sqlite_pool).await.unwrap();
-                }
-                _ => Self::walk_full(&sqlite_pool).await.unwrap(),
+                    .await;
+            match has_scanned_full {
+                Err(sqlx::Error::RowNotFound) => Self::walk_full(&sqlite_pool).await.unwrap(),
+                value => match value.unwrap().value == "1" {
+                    true => {
+                        tracing::info!("Starting partial scan");
+                        Self::walk_partial(&sqlite_pool).await.unwrap();
+                    }
+                    _ => Self::walk_full(&sqlite_pool).await.unwrap(),
+                },
             }
-
             sqlx::query("pragma temp_store = memory;")
                 .execute(&sqlite_pool)
                 .await
