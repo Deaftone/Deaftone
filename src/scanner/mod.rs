@@ -1,17 +1,13 @@
 use std::{
+    fs::{self, DirEntry},
     str::FromStr,
     time::{Duration, Instant},
 };
 
-use crate::{services, SETTINGS};
+use crate::SETTINGS;
 use anyhow::Result;
-use chrono::{DateTime, NaiveDateTime, Utc};
-use entity;
-use migration::OnConflict;
-use sea_orm::{
-    ActiveValue::NotSet, ConnectionTrait, DatabaseConnection, EntityTrait, PaginatorTrait, Set,
-    Statement,
-};
+use chrono::{DateTime, Utc};
+
 use sqlx::{
     sqlite::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
@@ -19,13 +15,13 @@ use sqlx::{
     },
     ConnectOptions, Pool,
 };
-use std::path::PathBuf;
+
 use std::result::Result::Ok;
 use std::time::SystemTime;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
-use crate::{database::Database, SCAN_STATUS};
+use crate::SCAN_STATUS;
 
 use self::tag_helper::AudioMetadata;
 pub mod tag_helper;
@@ -77,7 +73,7 @@ impl Scanner {
                 .unwrap();
             let before: Instant = Instant::now();
 
-            let has_scanned_full =
+            /*             let has_scanned_full =
                 sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
                     .fetch_one(&sqlite_pool)
                     .await;
@@ -90,24 +86,25 @@ impl Scanner {
                     }
                     _ => Self::walk_full(&sqlite_pool).await.unwrap(),
                 },
-            }
-            sqlx::query("pragma temp_store = memory;")
-                .execute(&sqlite_pool)
-                .await
-                .unwrap();
-            sqlx::query("pragma mmap_size = 30000000000;")
-                .execute(&sqlite_pool)
-                .await
-                .unwrap();
-            sqlx::query("pragma synchronous = normal;")
-                .execute(&sqlite_pool)
-                .await
-                .unwrap();
-            sqlx::query("pragma page_size = 4096;")
-                .execute(&sqlite_pool)
-                .await
-                .unwrap();
-
+            } */
+            Self::walk_full(&sqlite_pool).await.unwrap();
+            /*             sqlx::query("pragma temp_store = memory;")
+                           .execute(&sqlite_pool)
+                           .await
+                           .unwrap();
+                       sqlx::query("pragma mmap_size = 30000000000;")
+                           .execute(&sqlite_pool)
+                           .await
+                           .unwrap();
+                       sqlx::query("pragma synchronous = normal;")
+                           .execute(&sqlite_pool)
+                           .await
+                           .unwrap();
+                       sqlx::query("pragma page_size = 4096;")
+                           .execute(&sqlite_pool)
+                           .await
+                           .unwrap();
+            */
             tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
             // Cleanup orphans
@@ -138,7 +135,7 @@ impl Scanner {
         });
     }
 
-    pub async fn walk_partial(db: &Pool<sqlx::Sqlite>) -> Result<()> {
+    pub async fn walk_partial(_db: &Pool<sqlx::Sqlite>) -> Result<()> {
         /*  let mut dirs_stream = entity::directorie::Entity::find().stream(db).await?;
         while let Some(item) = dirs_stream.next().await {
             let item: entity::directorie::Model = item?;
@@ -219,19 +216,13 @@ impl Scanner {
             .filter_map(|e| e.ok())
         {
             let start = Instant::now();
-
-            let path: String = entry.path().to_string_lossy().to_string();
-            let f_name = entry.file_name().to_string_lossy();
-
             if entry.file_type().is_dir() {
-                let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
-                let mtime: DateTime<Utc> = fmtime.into();
-                Self::insert_directory(&path, &mtime, db).await?;
+                skip_fail!(Self::scan_dir(&entry, db).await);
             }
-            if f_name.ends_with(".flac") {
+            /*             if f_name.ends_with(".flac") {
                 let metadata = skip_fail!(tag_helper::get_metadata(path.to_owned()));
                 skip_fail!(Self::create_song(db, metadata).await);
-            }
+            } */
             /*             if f_name.contains("cover.") {
                 //println!("Found cover for {:?}", path);
                 services::album::update_cover_for_path(
@@ -257,6 +248,36 @@ impl Scanner {
         .bind(true)
         .execute(db)
         .await?;
+        Ok(())
+    }
+
+    async fn scan_dir(entry: &walkdir::DirEntry, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
+        let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
+        let mtime: DateTime<Utc> = fmtime.into();
+        let path: String = entry.path().to_string_lossy().to_string();
+        Self::insert_directory(&path, &mtime, sqlite_pool).await?;
+        /*         if f_name.ends_with(".flac") {
+            let metadata = tag_helper::get_metadata(path.to_owned())?;
+            Self::create_song(sqlite_pool, metadata).await?;
+        } */
+
+        let mut tracks: Vec<AudioMetadata> = Vec::new();
+
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if entry.file_name().to_string_lossy().ends_with(".flac") {
+                let metadata = skip_fail!(tag_helper::get_metadata(
+                    path.as_path().to_string_lossy().to_string()
+                ));
+                tracks.push(metadata);
+                //skip_fail!(Self::create_song(db, metadata).await);
+            }
+        }
+        for ele in tracks {
+            println!("{:}", ele.album)
+        }
         Ok(())
     }
     pub async fn insert_directory(
