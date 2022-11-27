@@ -43,7 +43,7 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
         track: vorbis.track().unwrap_or(0),
         path,
         lossless: true,
-        duration: (stream_info.total_samples as u32 / stream_info.sample_rate) as u32,
+        duration: (stream_info.total_samples as u32 / stream_info.sample_rate),
     };
     Ok(metadata)
 }
