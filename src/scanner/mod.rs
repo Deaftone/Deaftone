@@ -13,7 +13,7 @@ use sqlx::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
         SqliteSynchronous,
     },
-    ConnectOptions, Pool,
+    ConnectOptions, Pool, Sqlite, Transaction,
 };
 
 use std::result::Result::Ok;
@@ -24,6 +24,7 @@ use walkdir::WalkDir;
 use crate::SCAN_STATUS;
 
 use self::tag_helper::AudioMetadata;
+mod metaflac;
 pub mod tag_helper;
 
 macro_rules! skip_fail {
@@ -255,35 +256,39 @@ impl Scanner {
         let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
         let mtime: DateTime<Utc> = fmtime.into();
         let path: String = entry.path().to_string_lossy().to_string();
-        Self::insert_directory(&path, &mtime, sqlite_pool).await?;
+        /*         let mut buf = Vec::new();
+        let song = metaflac::read_from(entry.path().to_path_buf(), &mut buf);
+        println!("{:}", song.unwrap().) */
+        let mut tx = sqlite_pool.begin().await.unwrap();
+
+        Self::insert_directory(&path, &mtime, &mut tx).await?;
         /*         if f_name.ends_with(".flac") {
             let metadata = tag_helper::get_metadata(path.to_owned())?;
             Self::create_song(sqlite_pool, metadata).await?;
         } */
-
         let mut tracks: Vec<AudioMetadata> = Vec::new();
 
         for entry in fs::read_dir(path)? {
             let entry = entry?;
             let path = entry.path();
 
-            if entry.file_name().to_string_lossy().ends_with(".flac") {
+            if path.extension() == Some(std::ffi::OsStr::new("flac")) {
                 let metadata = skip_fail!(tag_helper::get_metadata(
                     path.as_path().to_string_lossy().to_string()
                 ));
-                tracks.push(metadata);
-                //skip_fail!(Self::create_song(db, metadata).await);
+                skip_fail!(Self::create_song(&mut tx, metadata).await);
             }
         }
-        for ele in tracks {
+        /*         for ele in tracks {
             println!("{:}", ele.album)
-        }
+        } */
+        tx.commit().await.unwrap();
         Ok(())
     }
     pub async fn insert_directory(
         path: &String,
         mtime: &DateTime<Utc>,
-        sqlite_pool: &Pool<sqlx::Sqlite>,
+        tx: &mut Transaction<'_, Sqlite>,
     ) -> Result<SqliteQueryResult, anyhow::Error> {
         let init_time: String = Utc::now().naive_local().to_string();
         Ok(sqlx::query(
@@ -301,12 +306,12 @@ impl Scanner {
         .bind(mtime.naive_utc())
         .bind(init_time.to_owned())
         .bind(init_time)
-        .execute(sqlite_pool)
+        .execute(tx)
         .await?)
     }
 
     pub async fn create_song(
-        sqlite_pool: &Pool<sqlx::Sqlite>,
+        tx: &mut Transaction<'_, Sqlite>,
         metadata: AudioMetadata,
     ) -> Result<SqliteQueryResult, anyhow::Error> {
         tracing::info!("Inserting {}", metadata.path);
@@ -339,7 +344,7 @@ impl Scanner {
         .bind(init_time.to_owned())
         .bind(init_time)
         .bind(metadata.duration)
-        .execute(sqlite_pool)
+        .execute(tx)
         .await?)
     }
 }
