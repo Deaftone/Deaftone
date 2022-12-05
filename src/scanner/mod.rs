@@ -297,14 +297,13 @@ impl Scanner {
                             create_album = false;
                             // Set album_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
                             album_id = id;
-                            println!("Album not found {:}", metadata.album)
+                            tracing::info!("Creating album \"{:}\"", metadata.album)
                         }
                         value => {
                             album_id = value.unwrap().get("id");
                         }
                     }
                 }
-                println!("{:?}", path.parent().unwrap());
                 skip_fail!(Self::create_song(&mut tx, &album_id, metadata).await);
             }
         }
