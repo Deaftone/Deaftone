@@ -13,7 +13,7 @@ use sqlx::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
         SqliteSynchronous,
     },
-    ConnectOptions, Pool, Sqlite, Transaction,
+    ConnectOptions, Execute, Pool, Row, Sqlite, Transaction,
 };
 
 use std::result::Result::Ok;
@@ -68,7 +68,7 @@ impl Scanner {
                 .clone();
 
             let sqlite_pool = SqlitePoolOptions::new()
-                .max_connections(5)
+                .max_connections(10)
                 .connect_with(connection_options)
                 .await
                 .unwrap();
@@ -88,6 +88,20 @@ impl Scanner {
                     _ => Self::walk_full(&sqlite_pool).await.unwrap(),
                 },
             } */
+
+            sqlx::query("pragma temp_store = memory;")
+                .execute(&sqlite_pool)
+                .await
+                .unwrap();
+            sqlx::query("pragma mmap_size = 30000000000;")
+                .execute(&sqlite_pool)
+                .await
+                .unwrap();
+            sqlx::query("pragma page_size = 4096;")
+                .execute(&sqlite_pool)
+                .await
+                .unwrap();
+
             Self::walk_full(&sqlite_pool).await.unwrap();
             /*             sqlx::query("pragma temp_store = memory;")
                            .execute(&sqlite_pool)
@@ -105,7 +119,12 @@ impl Scanner {
                            .execute(&sqlite_pool)
                            .await
                            .unwrap();
+                       sqlx::query("PRAGMA foreign_keys = ON;")
+                           .execute(&sqlite_pool)
+                           .await
+                           .unwrap();
             */
+
             tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
             // Cleanup orphans
@@ -216,26 +235,9 @@ impl Scanner {
             .into_iter()
             .filter_map(|e| e.ok())
         {
-            let start = Instant::now();
             if entry.file_type().is_dir() {
                 skip_fail!(Self::scan_dir(&entry, db).await);
             }
-            /*             if f_name.ends_with(".flac") {
-                let metadata = skip_fail!(tag_helper::get_metadata(path.to_owned()));
-                skip_fail!(Self::create_song(db, metadata).await);
-            } */
-            /*             if f_name.contains("cover.") {
-                //println!("Found cover for {:?}", path);
-                services::album::update_cover_for_path(
-                    db,
-                    path,
-                    entry.path().parent().unwrap().to_string_lossy().to_string(),
-                )
-                .await?;
-            } */
-
-            let duration = start.elapsed();
-            println!("Time elapsed in walk_interation is: {:?}", duration);
         }
 
         sqlx::query(
@@ -256,36 +258,60 @@ impl Scanner {
         let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
         let mtime: DateTime<Utc> = fmtime.into();
         let path: String = entry.path().to_string_lossy().to_string();
-        /*         let mut buf = Vec::new();
-        let song = metaflac::read_from(entry.path().to_path_buf(), &mut buf);
-        println!("{:}", song.unwrap().) */
         let mut tx = sqlite_pool.begin().await.unwrap();
-
         Self::insert_directory(&path, &mtime, &mut tx).await?;
-        /*         if f_name.ends_with(".flac") {
-            let metadata = tag_helper::get_metadata(path.to_owned())?;
-            Self::create_song(sqlite_pool, metadata).await?;
-        } */
-        let mut tracks: Vec<AudioMetadata> = Vec::new();
+        tracing::info!("Scanning dir {:}", &path);
+
+        let mut create_album = true;
+        let mut album_id: String = "".to_string();
 
         for entry in fs::read_dir(path)? {
-            let entry = entry?;
-            let path = entry.path();
-
+            let path = entry?.path();
+            let path_string = path.as_path().to_string_lossy().to_string();
+            let path_parent = path.parent().unwrap().to_string_lossy().to_string();
             if path.extension() == Some(std::ffi::OsStr::new("flac")) {
-                let metadata = skip_fail!(tag_helper::get_metadata(
-                    path.as_path().to_string_lossy().to_string()
-                ));
-                skip_fail!(Self::create_song(&mut tx, metadata).await);
+                let metadata = skip_fail!(tag_helper::get_metadata(path_string.clone()));
+                if create_album {
+                    let album_exists =
+                        sqlx::query("SELECT * FROM albums WHERE name = ? AND path = ?")
+                            .bind(&metadata.album)
+                            .bind(&path_parent)
+                            .persistent(true)
+                            .fetch_one(sqlite_pool)
+                            .await;
+                    match album_exists {
+                        Err(sqlx::Error::RowNotFound) => {
+                            let id: String = Uuid::new_v4().to_string();
+                            skip_fail!(
+                                Self::create_album(
+                                    &mut tx,
+                                    &id,
+                                    &metadata.album,
+                                    &metadata.album_artist,
+                                    path_parent,
+                                    &metadata.year
+                                )
+                                .await
+                            );
+                            // Set create album to false since we know its created now
+                            create_album = false;
+                            // Set album_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
+                            album_id = id;
+                            println!("Album not found {:}", metadata.album)
+                        }
+                        value => {
+                            album_id = value.unwrap().get("id");
+                        }
+                    }
+                }
+                println!("{:?}", path.parent().unwrap());
+                skip_fail!(Self::create_song(&mut tx, &album_id, metadata).await);
             }
         }
-        /*         for ele in tracks {
-            println!("{:}", ele.album)
-        } */
         tx.commit().await.unwrap();
         Ok(())
     }
-    pub async fn insert_directory(
+    async fn insert_directory(
         path: &String,
         mtime: &DateTime<Utc>,
         tx: &mut Transaction<'_, Sqlite>,
@@ -302,19 +328,19 @@ impl Scanner {
                 VALUES (?,?,?,?,?)",
         )
         .bind(Uuid::new_v4().to_string())
-        .bind(path.to_owned())
+        .bind(&path)
         .bind(mtime.naive_utc())
-        .bind(init_time.to_owned())
-        .bind(init_time)
-        .execute(tx)
+        .bind(&init_time)
+        .bind(&init_time)
+        .execute(&mut *tx)
         .await?)
     }
 
-    pub async fn create_song(
+    async fn create_song(
         tx: &mut Transaction<'_, Sqlite>,
+        album_id: &String,
         metadata: AudioMetadata,
     ) -> Result<SqliteQueryResult, anyhow::Error> {
-        tracing::info!("Inserting {}", metadata.path);
         let id: Uuid = Uuid::new_v4();
         let init_time: String = Utc::now().naive_local().to_string();
         Ok(sqlx::query(
@@ -329,9 +355,10 @@ impl Scanner {
                 year,
                 createdAt,
                 updatedAt,
-                duration
+                duration,
+                albumId
              )
-        VALUES (?, ? ,?,?,?,?,?,?,?,?,?)",
+        VALUES (?, ? ,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(id.to_string())
         .bind(metadata.path)
@@ -341,10 +368,42 @@ impl Scanner {
         .bind(metadata.album)
         .bind(metadata.track)
         .bind(metadata.year)
-        .bind(init_time.to_owned())
-        .bind(init_time)
+        .bind(&init_time)
+        .bind(&init_time)
         .bind(metadata.duration)
-        .execute(tx)
+        .bind(&album_id)
+        .execute(&mut *tx)
+        .await?)
+    }
+    async fn create_album(
+        tx: &mut Transaction<'_, Sqlite>,
+        id: &String,
+        album_name: &String,
+        artist_name: &String,
+        path: String,
+        year: &i32,
+    ) -> Result<SqliteQueryResult, anyhow::Error> {
+        let init_time: String = Utc::now().naive_local().to_string();
+        Ok(sqlx::query(
+            "INSERT OR REPLACE INTO albums (
+                id, 
+                name,
+                artistName,
+                path,
+                year,
+                createdAt,
+                updatedAt
+             )
+        VALUES (?,?,?,?,?,?,?)",
+        )
+        .bind(id)
+        .bind(album_name)
+        .bind(artist_name)
+        .bind(path)
+        .bind(year)
+        .bind(&init_time)
+        .bind(&init_time)
+        .execute(&mut *tx)
         .await?)
     }
 }
