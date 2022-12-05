@@ -11,7 +11,7 @@ members = [".", "entity", "migration"]
 [dependencies]
 entity = { path = "entity" }
 migration = { path = "migration" } 
-axum = "0.6.0-rc.5"
+axum = "0.6.1"
 tokio = { version = "1.20.0", features = ["full"] }
 tower-http = { version = "0.3.0", features = ["trace", "fs"] }
 tracing = "0.1"
@@ -24,7 +24,7 @@ tokio-util = "0.7.3"
 tower = "0.4.13"
 serde = { version = "1.0"}
 serde_json = { version = "1.0.71" }
-axum-macros = "0.2.3"
+axum-macros = "0.3.0"
 tokio-stream = "0.1.9"
 include_dir = "0.7.2"
 config = "0.13.2"
