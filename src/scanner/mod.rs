@@ -263,14 +263,44 @@ impl Scanner {
         tracing::info!("Scanning dir {:}", &path);
 
         let mut create_album = true;
+        let mut create_artist = true;
         let mut album_id: String = "".to_string();
+        let mut artist_id: String = "".to_string();
 
         for entry in fs::read_dir(path)? {
+            // Is assigning here bad? Since in a large collection it could be alot of allocations
             let path = entry?.path();
             let path_string = path.as_path().to_string_lossy().to_string();
             let path_parent = path.parent().unwrap().to_string_lossy().to_string();
+
             if path.extension() == Some(std::ffi::OsStr::new("flac")) {
+                let start = Instant::now();
                 let metadata = skip_fail!(tag_helper::get_metadata(path_string.clone()));
+                tracing::info!("Metadata read in: {:.2?}", start.elapsed());
+                // Check if album has been created. This is a nice speedup since we can assume that when we are in a folder of tracks the they are all from the same album
+                if create_artist {
+                    let artists_exists = sqlx::query("SELECT * FROM artists WHERE name = ?")
+                        .bind(&metadata.album_artist)
+                        .persistent(true)
+                        .fetch_one(sqlite_pool)
+                        .await;
+                    match artists_exists {
+                        Err(sqlx::Error::RowNotFound) => {
+                            let id: String = Uuid::new_v4().to_string();
+                            skip_fail!(
+                                Self::create_artist(&mut tx, &id, &metadata.album_artist,).await
+                            );
+                            // Set create artist to false since we know its created now
+                            create_artist = false;
+                            // Set artist_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
+                            artist_id = id;
+                            tracing::info!("Creating artists \"{:}\"", metadata.album_artist)
+                        }
+                        value => {
+                            artist_id = value.unwrap().get("id");
+                        }
+                    }
+                }
                 if create_album {
                     let album_exists =
                         sqlx::query("SELECT * FROM albums WHERE name = ? AND path = ?")
@@ -286,9 +316,10 @@ impl Scanner {
                                 Self::create_album(
                                     &mut tx,
                                     &id,
+                                    &artist_id,
                                     &metadata.album,
                                     &metadata.album_artist,
-                                    path_parent,
+                                    &path_parent,
                                     &metadata.year
                                 )
                                 .await
@@ -304,7 +335,7 @@ impl Scanner {
                         }
                     }
                 }
-                skip_fail!(Self::create_song(&mut tx, &album_id, metadata).await);
+                skip_fail!(Self::create_song(&mut tx, &album_id, &metadata).await);
             }
         }
         tx.commit().await.unwrap();
@@ -338,7 +369,7 @@ impl Scanner {
     async fn create_song(
         tx: &mut Transaction<'_, Sqlite>,
         album_id: &String,
-        metadata: AudioMetadata,
+        metadata: &AudioMetadata,
     ) -> Result<SqliteQueryResult, anyhow::Error> {
         let id: Uuid = Uuid::new_v4();
         let init_time: String = Utc::now().naive_local().to_string();
@@ -360,16 +391,16 @@ impl Scanner {
         VALUES (?, ? ,?,?,?,?,?,?,?,?,?,?)",
         )
         .bind(id.to_string())
-        .bind(metadata.path)
-        .bind(metadata.name)
-        .bind(metadata.number)
-        .bind(metadata.album_artist)
-        .bind(metadata.album)
-        .bind(metadata.track)
-        .bind(metadata.year)
+        .bind(&metadata.path)
+        .bind(&metadata.name)
+        .bind(&metadata.number)
+        .bind(&metadata.album_artist)
+        .bind(&metadata.album)
+        .bind(&metadata.track)
+        .bind(&metadata.year)
         .bind(&init_time)
         .bind(&init_time)
-        .bind(metadata.duration)
+        .bind(&metadata.duration)
         .bind(&album_id)
         .execute(&mut *tx)
         .await?)
@@ -377,9 +408,10 @@ impl Scanner {
     async fn create_album(
         tx: &mut Transaction<'_, Sqlite>,
         id: &String,
+        artist_id: &String,
         album_name: &String,
         artist_name: &String,
-        path: String,
+        path: &String,
         year: &i32,
     ) -> Result<SqliteQueryResult, anyhow::Error> {
         let init_time: String = Utc::now().naive_local().to_string();
@@ -391,15 +423,39 @@ impl Scanner {
                 path,
                 year,
                 createdAt,
+                updatedAt,
+                artistId
+             )
+        VALUES (?,?,?,?,?,?,?,?)",
+        )
+        .bind(&id)
+        .bind(&album_name)
+        .bind(&artist_name)
+        .bind(&path)
+        .bind(&year)
+        .bind(&init_time)
+        .bind(&init_time)
+        .bind(&artist_id)
+        .execute(&mut *tx)
+        .await?)
+    }
+    async fn create_artist(
+        tx: &mut Transaction<'_, Sqlite>,
+        id: &String,
+        artist_name: &String,
+    ) -> Result<SqliteQueryResult, anyhow::Error> {
+        let init_time: String = Utc::now().naive_local().to_string();
+        Ok(sqlx::query(
+            "INSERT OR REPLACE INTO artists (
+                id, 
+                name,
+                createdAt,
                 updatedAt
              )
-        VALUES (?,?,?,?,?,?,?)",
+        VALUES (?,?,?,?)",
         )
         .bind(id)
-        .bind(album_name)
         .bind(artist_name)
-        .bind(path)
-        .bind(year)
         .bind(&init_time)
         .bind(&init_time)
         .execute(&mut *tx)
