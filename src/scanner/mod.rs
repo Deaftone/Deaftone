@@ -1,5 +1,5 @@
 use std::{
-    fs::{self, DirEntry},
+    fs::{self},
     str::FromStr,
     time::{Duration, Instant},
 };
@@ -24,7 +24,6 @@ use walkdir::WalkDir;
 use crate::SCAN_STATUS;
 
 use self::tag_helper::AudioMetadata;
-mod metaflac;
 pub mod tag_helper;
 
 macro_rules! skip_fail {
@@ -358,7 +357,7 @@ impl Scanner {
                 VALUES (?,?,?,?,?)",
         )
         .bind(Uuid::new_v4().to_string())
-        .bind(&path)
+        .bind(path)
         .bind(mtime.naive_utc())
         .bind(&init_time)
         .bind(&init_time)
@@ -393,15 +392,15 @@ impl Scanner {
         .bind(id.to_string())
         .bind(&metadata.path)
         .bind(&metadata.name)
-        .bind(&metadata.number)
+        .bind(metadata.number)
         .bind(&metadata.album_artist)
         .bind(&metadata.album)
-        .bind(&metadata.track)
-        .bind(&metadata.year)
+        .bind(metadata.track)
+        .bind(metadata.year)
         .bind(&init_time)
         .bind(&init_time)
-        .bind(&metadata.duration)
-        .bind(&album_id)
+        .bind(metadata.duration)
+        .bind(album_id)
         .execute(&mut *tx)
         .await?)
     }
@@ -428,14 +427,14 @@ impl Scanner {
              )
         VALUES (?,?,?,?,?,?,?,?)",
         )
-        .bind(&id)
-        .bind(&album_name)
-        .bind(&artist_name)
-        .bind(&path)
-        .bind(&year)
+        .bind(id)
+        .bind(album_name)
+        .bind(artist_name)
+        .bind(path)
+        .bind(year)
         .bind(&init_time)
         .bind(&init_time)
-        .bind(&artist_id)
+        .bind(artist_id)
         .execute(&mut *tx)
         .await?)
     }
