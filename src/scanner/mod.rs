@@ -235,7 +235,42 @@ impl Scanner {
             .filter_map(|e| e.ok())
         {
             if entry.file_type().is_dir() {
-                skip_fail!(Self::scan_dir(&entry, db).await);
+                let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
+                let mtime: DateTime<Utc> = fmtime.into();
+                let path: String = entry.path().to_string_lossy().to_string();
+
+                let directory_exists = sqlx::query("SELECT * FROM directories WHERE path = ?")
+                    .bind(&path)
+                    .persistent(true)
+                    .fetch_one(db)
+                    .await;
+                match directory_exists {
+                    Err(sqlx::Error::RowNotFound) => {
+                        tracing::info!("Creating directory");
+                        Self::insert_directory(&path, &mtime, &db).await?;
+                        tracing::info!("Creating directory {:}", &path);
+                        skip_fail!(Self::scan_dir(&entry, &path, db).await);
+                    }
+                    value => {
+                        let directory_mtime: DateTime<Utc> = value.unwrap().get("mtime");
+                        if directory_mtime < mtime {
+                            tracing::info!(
+                                "Found modified directory {:} dtime: {:} ftime: {:}",
+                                &path,
+                                directory_mtime,
+                                mtime
+                            );
+                            skip_fail!(Self::scan_dir(&entry, &path, db).await);
+                        } else {
+                            tracing::info!(
+                                "Skipping directory {:} dtime: {:} ftime: {:}",
+                                &path,
+                                directory_mtime,
+                                mtime
+                            );
+                        }
+                    }
+                }
             }
         }
 
@@ -253,12 +288,12 @@ impl Scanner {
         Ok(())
     }
 
-    async fn scan_dir(entry: &walkdir::DirEntry, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
-        let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
-        let mtime: DateTime<Utc> = fmtime.into();
-        let path: String = entry.path().to_string_lossy().to_string();
+    async fn scan_dir(
+        entry: &walkdir::DirEntry,
+        path: &String,
+        sqlite_pool: &Pool<sqlx::Sqlite>,
+    ) -> Result<()> {
         let mut tx = sqlite_pool.begin().await.unwrap();
-        Self::insert_directory(&path, &mtime, &mut tx).await?;
         tracing::info!("Scanning dir {:}", &path);
 
         let mut create_album = true;
@@ -273,9 +308,7 @@ impl Scanner {
             let path_parent = path.parent().unwrap().to_string_lossy().to_string();
 
             if path.extension() == Some(std::ffi::OsStr::new("flac")) {
-                let start = Instant::now();
                 let metadata = skip_fail!(tag_helper::get_metadata(path_string.clone()));
-                tracing::info!("Metadata read in: {:.2?}", start.elapsed());
                 // Check if album has been created. This is a nice speedup since we can assume that when we are in a folder of tracks the they are all from the same album
                 if create_artist {
                     let artists_exists = sqlx::query("SELECT * FROM artists WHERE name = ?")
@@ -343,7 +376,7 @@ impl Scanner {
     async fn insert_directory(
         path: &String,
         mtime: &DateTime<Utc>,
-        tx: &mut Transaction<'_, Sqlite>,
+        tx: &Pool<sqlx::Sqlite>,
     ) -> Result<SqliteQueryResult, anyhow::Error> {
         let init_time: String = Utc::now().naive_local().to_string();
         Ok(sqlx::query(
@@ -361,7 +394,7 @@ impl Scanner {
         .bind(mtime.naive_utc())
         .bind(&init_time)
         .bind(&init_time)
-        .execute(&mut *tx)
+        .execute(tx)
         .await?)
     }
 
