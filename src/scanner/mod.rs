@@ -1,5 +1,6 @@
 use std::{
     fs::{self},
+    path::PathBuf,
     pin::Pin,
     str::FromStr,
     time::{Duration, Instant},
@@ -7,7 +8,7 @@ use std::{
 
 use crate::SETTINGS;
 use anyhow::{Error, Result};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 
 use futures::Stream;
 use sqlx::{
@@ -166,7 +167,50 @@ impl Scanner {
 
         while let Some(row) = rows.try_next().await? {
             let path: String = row.get("path");
-            println!("{:}", path);
+            let ddirectory_mtime: NaiveDateTime = row.get("mtime");
+            let meta = fs::metadata(&path);
+            let is_empty = PathBuf::from(&path)
+                .read_dir()
+                .map(|mut i| i.next().is_none())
+                .unwrap_or(false);
+
+            if meta.is_ok() && !is_empty {
+                let _ftime: SystemTime = meta.unwrap().modified().unwrap();
+                let ftime: DateTime<Utc> = _ftime.into();
+
+                if ftime.naive_utc() > ddirectory_mtime {
+                    tracing::info!("Dir changed {:}", &path);
+                    //Self::walk_dir(db, item.path).await?;
+                } else {
+                    tracing::info!("Dir hasn't {}", &path);
+                }
+            } else {
+                tracing::info!("Dropping all items for path {}", &path);
+                let query = sqlx::query("DELETE FROM directories WHERE path LIKE ?")
+                    .bind(&path)
+                    .persistent(true)
+                    .execute(pool)
+                    .await;
+
+                println!("{:?}", query.unwrap());
+                let query = sqlx::query("DELETE FROM songs WHERE path LIKE ?")
+                    .bind(&path)
+                    .persistent(true)
+                    .execute(pool)
+                    .await;
+
+                println!("{:?}", query.unwrap());
+                // Drop all songs for missing path
+                /*             entity::song::Entity::delete_many()
+                    .filter(entity::song::Column::Path.contains(&item.path))
+                    .exec(db)
+                    .await?;
+
+                entity::directorie::Entity::delete_many()
+                    .filter(entity::directorie::Column::Path.contains(&item.path))
+                    .exec(db)
+                    .await?; */
+            }
         }
         /*  let mut dirs_stream = entity::directorie::Entity::find().stream(db).await?;
         while let Some(item) = dirs_stream.next().await {
