@@ -1,20 +1,23 @@
 use std::{
     fs::{self},
+    pin::Pin,
     str::FromStr,
     time::{Duration, Instant},
 };
 
 use crate::SETTINGS;
-use anyhow::Result;
+use anyhow::{Error, Result};
 use chrono::{DateTime, Utc};
 
+use futures::Stream;
 use sqlx::{
     sqlite::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
         SqliteSynchronous,
     },
-    ConnectOptions, Execute, Pool, Row, Sqlite, Transaction,
+    ConnectOptions, Execute, Pool, Row, Sqlite, SqlitePool, Transaction,
 };
+use tokio_stream::StreamExt;
 
 use std::result::Result::Ok;
 use std::time::SystemTime;
@@ -101,7 +104,9 @@ impl Scanner {
                 .await
                 .unwrap();
 
-            Self::walk_full(&sqlite_pool).await.unwrap();
+            //Self::walk_full(&sqlite_pool).await.unwrap();
+            Self::walk_partial(&sqlite_pool).await.unwrap();
+
             /*             sqlx::query("pragma temp_store = memory;")
                            .execute(&sqlite_pool)
                            .await
@@ -154,7 +159,15 @@ impl Scanner {
         });
     }
 
-    pub async fn walk_partial(_db: &Pool<sqlx::Sqlite>) -> Result<()> {
+    pub async fn walk_partial(pool: &Pool<sqlx::Sqlite>) -> Result<()> {
+        let mut connection = pool.acquire().await?;
+
+        let mut rows = sqlx::query("SELECT * FROM directories").fetch(&mut connection);
+
+        while let Some(row) = rows.try_next().await? {
+            let path: String = row.get("path");
+            println!("{:}", path);
+        }
         /*  let mut dirs_stream = entity::directorie::Entity::find().stream(db).await?;
         while let Some(item) = dirs_stream.next().await {
             let item: entity::directorie::Model = item?;
@@ -191,41 +204,6 @@ impl Scanner {
         Ok(())
     }
 
-    /*   pub async fn walk_dir(db: &Pool<sqlx::Sqlite>, dir: String) -> Result<()> {
-        for entry in WalkDir::new(dir)
-            .follow_links(true)
-            .into_iter()
-            .filter_map(|e| e.ok())
-        {
-            let path: String = entry.path().to_string_lossy().to_string();
-
-            if entry.file_type().is_dir() {
-                let is_empty = PathBuf::from(&path)
-                    .read_dir()
-                    .map(|mut i| i.next().is_none())
-                    .unwrap_or(false);
-                let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
-                let mtime: DateTime<Utc> = fmtime.into();
-                if !is_empty {
-                    Self::insert_directory(&path, &mtime, db).await?;
-                }
-            }
-            let f_name = entry.file_name().to_string_lossy();
-            if f_name.ends_with(".flac") {
-                let metadata = skip_fail!(tag_helper::get_metadata(path.to_owned()));
-                skip_fail!(services::song::create_or_update(db, metadata).await);
-            }
-            if f_name.contains("cover.") {
-                services::album::update_cover_for_path(
-                    db,
-                    path,
-                    entry.path().parent().unwrap().to_string_lossy().to_string(),
-                )
-                .await?;
-            }
-        }
-        Ok(())
-    } */
     pub async fn walk_full(db: &Pool<sqlx::Sqlite>) -> Result<()> {
         tracing::info!("Starting scan");
         let current_dir: &str = SETTINGS.media_path.as_str();
@@ -344,10 +322,19 @@ impl Scanner {
                     match album_exists {
                         Err(sqlx::Error::RowNotFound) => {
                             let id: String = Uuid::new_v4().to_string();
+                            // Searching for cover here allows us to not have to check every iteration of the album to find the cover. Rather we search the dir once. Which should already be cached by the system
+                            let mut cover: Option<String> = None;
+                            for entry in fs::read_dir(&path_parent)? {
+                                let f_name = entry?.path().to_string_lossy().to_string().clone();
+                                if f_name.contains("cover.") {
+                                    cover = Some(f_name);
+                                }
+                            }
                             skip_fail!(
                                 Self::create_album(
                                     &mut tx,
                                     &id,
+                                    cover,
                                     &artist_id,
                                     &metadata.album,
                                     &metadata.album_artist,
@@ -356,6 +343,7 @@ impl Scanner {
                                 )
                                 .await
                             );
+
                             // Set create album to false since we know its created now
                             create_album = false;
                             // Set album_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
@@ -440,6 +428,7 @@ impl Scanner {
     async fn create_album(
         tx: &mut Transaction<'_, Sqlite>,
         id: &String,
+        cover: Option<String>,
         artist_id: &String,
         album_name: &String,
         artist_name: &String,
@@ -452,17 +441,19 @@ impl Scanner {
                 id, 
                 name,
                 artistName,
+                cover,
                 path,
                 year,
                 createdAt,
                 updatedAt,
                 artistId
              )
-        VALUES (?,?,?,?,?,?,?,?)",
+        VALUES (?,?,?,?,?,?,?,?,?)",
         )
         .bind(id)
         .bind(album_name)
         .bind(artist_name)
+        .bind(cover.unwrap_or_default())
         .bind(path)
         .bind(year)
         .bind(&init_time)
