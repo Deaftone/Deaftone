@@ -310,6 +310,15 @@ impl Scanner {
         Ok(())
     }
 
+    async fn scan_dir_partial(
+        entry: &walkdir::DirEntry,
+        path: &String,
+        sqlite_pool: &Pool<sqlx::Sqlite>,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    // Scan dir function for a full directory scan missing check for seen songs
     async fn scan_dir(
         entry: &walkdir::DirEntry,
         path: &String,
