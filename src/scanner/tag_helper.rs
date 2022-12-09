@@ -18,10 +18,14 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
     let vorbis: &VorbisComment = tag
         .vorbis_comments()
         .with_context(|| format!("Failed to read file {}", path))?;
-    let stream_info = tag
-        .get_streaminfo()
-        .with_context(|| format!("Failed to read streaminfo {}", path))?;
 
+    let mut stream_info = tag.get_blocks(metaflac::BlockType::StreamInfo);
+    let duration = match stream_info.next() {
+        Some(&metaflac::Block::StreamInfo(ref s)) => {
+            Some((s.total_samples as u32 / s.sample_rate) as u32)
+        }
+        _ => None,
+    };
     let metadata: AudioMetadata = AudioMetadata {
         name: vorbis
             .title()
@@ -43,7 +47,7 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
         track: vorbis.track().unwrap_or(0),
         path,
         lossless: true,
-        duration: (stream_info.total_samples as u32 / stream_info.sample_rate),
+        duration: duration.unwrap_or_default(),
     };
     Ok(metadata)
 }
