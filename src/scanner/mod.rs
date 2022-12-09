@@ -1,22 +1,20 @@
 use std::{
     fs::{self},
     path::PathBuf,
-    pin::Pin,
     str::FromStr,
     time::{Duration, Instant},
 };
 
 use crate::SETTINGS;
-use anyhow::{Error, Result};
+use anyhow::Result;
 use chrono::{DateTime, NaiveDateTime, Utc};
 
-use futures::Stream;
 use sqlx::{
     sqlite::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
         SqliteSynchronous,
     },
-    ConnectOptions, Execute, Pool, Row, Sqlite, SqlitePool, Transaction,
+    ConnectOptions, Execute, Pool, Row, Sqlite, Transaction,
 };
 use tokio_stream::StreamExt;
 
@@ -269,9 +267,9 @@ impl Scanner {
                 match directory_exists {
                     Err(sqlx::Error::RowNotFound) => {
                         tracing::info!("Creating directory");
-                        Self::insert_directory(&path, &mtime, &db).await?;
+                        Self::insert_directory(&path, &mtime, db).await?;
                         tracing::info!("Creating directory {:}", &path);
-                        skip_fail!(Self::scan_dir(&entry, &path, db).await);
+                        skip_fail!(Self::scan_dir(&path, db).await);
                     }
                     value => {
                         let directory_mtime: DateTime<Utc> = value.unwrap().get("mtime");
@@ -282,7 +280,7 @@ impl Scanner {
                                 directory_mtime,
                                 mtime
                             );
-                            skip_fail!(Self::scan_dir(&entry, &path, db).await);
+                            skip_fail!(Self::scan_dir(&path, db).await);
                         } else {
                             tracing::info!(
                                 "Skipping directory {:} dtime: {:} ftime: {:}",
@@ -319,27 +317,24 @@ impl Scanner {
     }
 
     // Scan dir function for a full directory scan missing check for seen songs
-    async fn scan_dir(
-        entry: &walkdir::DirEntry,
-        path: &String,
-        sqlite_pool: &Pool<sqlx::Sqlite>,
-    ) -> Result<()> {
+    async fn scan_dir(path: &String, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
         let mut tx = sqlite_pool.begin().await.unwrap();
         tracing::info!("Scanning dir {:}", &path);
 
         let mut create_album = true;
         let mut create_artist = true;
-        let mut album_id: String = "".to_string();
-        let mut artist_id: String = "".to_string();
+        let mut album_id: String = String::new();
+        let mut artist_id: String = String::new();
 
         for entry in fs::read_dir(path)? {
             // Is assigning here bad? Since in a large collection it could be alot of allocations
             let path = entry?.path();
-            let path_string = path.as_path().to_string_lossy().to_string();
             let path_parent = path.parent().unwrap().to_string_lossy().to_string();
 
             if path.extension() == Some(std::ffi::OsStr::new("flac")) {
-                let metadata = skip_fail!(tag_helper::get_metadata(path_string.clone()));
+                let metadata = skip_fail!(tag_helper::get_metadata(
+                    path.as_path().to_string_lossy().to_string()
+                ));
                 // Check if album has been created. This is a nice speedup since we can assume that when we are in a folder of tracks the they are all from the same album
                 if create_artist {
                     let artists_exists = sqlx::query("SELECT * FROM artists WHERE name = ?")
