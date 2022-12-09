@@ -1,31 +1,26 @@
+use crate::SCAN_STATUS;
+use crate::{services, SETTINGS};
+use anyhow::Result;
+use chrono::{DateTime, NaiveDateTime, Utc};
+use sqlx::{
+    sqlite::{
+        SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
+        SqliteSynchronous,
+    },
+    ConnectOptions, Pool, Row,
+};
+use std::result::Result::Ok;
+use std::time::SystemTime;
 use std::{
     fs::{self},
     path::PathBuf,
     str::FromStr,
     time::{Duration, Instant},
 };
-
-use crate::SETTINGS;
-use anyhow::Result;
-use chrono::{DateTime, NaiveDateTime, Utc};
-
-use sqlx::{
-    sqlite::{
-        SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
-        SqliteSynchronous,
-    },
-    ConnectOptions, Execute, Pool, Row, Sqlite, Transaction,
-};
 use tokio_stream::StreamExt;
-
-use std::result::Result::Ok;
-use std::time::SystemTime;
 use uuid::Uuid;
 use walkdir::WalkDir;
 
-use crate::SCAN_STATUS;
-
-use self::tag_helper::AudioMetadata;
 pub mod tag_helper;
 
 macro_rules! skip_fail {
@@ -103,8 +98,8 @@ impl Scanner {
                 .await
                 .unwrap();
 
-            //Self::walk_full(&sqlite_pool).await.unwrap();
-            Self::walk_partial(&sqlite_pool).await.unwrap();
+            Self::walk_full(&sqlite_pool).await.unwrap();
+            //Self::walk_partial(&sqlite_pool).await.unwrap();
 
             /*             sqlx::query("pragma temp_store = memory;")
                            .execute(&sqlite_pool)
@@ -309,9 +304,9 @@ impl Scanner {
     }
 
     async fn scan_dir_partial(
-        entry: &walkdir::DirEntry,
-        path: &String,
-        sqlite_pool: &Pool<sqlx::Sqlite>,
+        _entry: &walkdir::DirEntry,
+        _path: &String,
+        _sqlite_pool: &Pool<sqlx::Sqlite>,
     ) -> Result<()> {
         Ok(())
     }
@@ -346,7 +341,12 @@ impl Scanner {
                         Err(sqlx::Error::RowNotFound) => {
                             let id: String = Uuid::new_v4().to_string();
                             skip_fail!(
-                                Self::create_artist(&mut tx, &id, &metadata.album_artist,).await
+                                services::artist::create_artist(
+                                    &mut tx,
+                                    &id,
+                                    &metadata.album_artist,
+                                )
+                                .await
                             );
                             // Set create artist to false since we know its created now
                             create_artist = false;
@@ -379,7 +379,7 @@ impl Scanner {
                                 }
                             }
                             skip_fail!(
-                                Self::create_album(
+                                services::album::create_album(
                                     &mut tx,
                                     &id,
                                     cover,
@@ -403,7 +403,7 @@ impl Scanner {
                         }
                     }
                 }
-                skip_fail!(Self::create_song(&mut tx, &album_id, &metadata).await);
+                skip_fail!(services::song::create_song(&mut tx, &album_id, &metadata).await);
             }
         }
         tx.commit().await.unwrap();
@@ -431,105 +431,6 @@ impl Scanner {
         .bind(&init_time)
         .bind(&init_time)
         .execute(tx)
-        .await?)
-    }
-
-    async fn create_song(
-        tx: &mut Transaction<'_, Sqlite>,
-        album_id: &String,
-        metadata: &AudioMetadata,
-    ) -> Result<SqliteQueryResult, anyhow::Error> {
-        let id: Uuid = Uuid::new_v4();
-        let init_time: String = Utc::now().naive_local().to_string();
-        Ok(sqlx::query(
-            "INSERT OR REPLACE INTO songs (
-                id, 
-                path,
-                title,
-                disk,
-                artist,
-                albumName,
-                track,
-                year,
-                createdAt,
-                updatedAt,
-                duration,
-                albumId
-             )
-        VALUES (?, ? ,?,?,?,?,?,?,?,?,?,?)",
-        )
-        .bind(id.to_string())
-        .bind(&metadata.path)
-        .bind(&metadata.name)
-        .bind(metadata.number)
-        .bind(&metadata.album_artist)
-        .bind(&metadata.album)
-        .bind(metadata.track)
-        .bind(metadata.year)
-        .bind(&init_time)
-        .bind(&init_time)
-        .bind(metadata.duration)
-        .bind(album_id)
-        .execute(&mut *tx)
-        .await?)
-    }
-    async fn create_album(
-        tx: &mut Transaction<'_, Sqlite>,
-        id: &String,
-        cover: Option<String>,
-        artist_id: &String,
-        album_name: &String,
-        artist_name: &String,
-        path: &String,
-        year: &i32,
-    ) -> Result<SqliteQueryResult, anyhow::Error> {
-        let init_time: String = Utc::now().naive_local().to_string();
-        Ok(sqlx::query(
-            "INSERT OR REPLACE INTO albums (
-                id, 
-                name,
-                artistName,
-                cover,
-                path,
-                year,
-                createdAt,
-                updatedAt,
-                artistId
-             )
-        VALUES (?,?,?,?,?,?,?,?,?)",
-        )
-        .bind(id)
-        .bind(album_name)
-        .bind(artist_name)
-        .bind(cover.unwrap_or_default())
-        .bind(path)
-        .bind(year)
-        .bind(&init_time)
-        .bind(&init_time)
-        .bind(artist_id)
-        .execute(&mut *tx)
-        .await?)
-    }
-    async fn create_artist(
-        tx: &mut Transaction<'_, Sqlite>,
-        id: &String,
-        artist_name: &String,
-    ) -> Result<SqliteQueryResult, anyhow::Error> {
-        let init_time: String = Utc::now().naive_local().to_string();
-        Ok(sqlx::query(
-            "INSERT OR REPLACE INTO artists (
-                id, 
-                name,
-                createdAt,
-                updatedAt
-             )
-        VALUES (?,?,?,?)",
-        )
-        .bind(id)
-        .bind(artist_name)
-        .bind(&init_time)
-        .bind(&init_time)
-        .execute(&mut *tx)
         .await?)
     }
 }

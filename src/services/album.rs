@@ -1,11 +1,8 @@
 use anyhow::Ok;
 use chrono::Utc;
 use sea_orm::PaginatorTrait;
-use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait,
-    QueryFilter, Set,
-};
-use uuid::Uuid;
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
 
 pub async fn get_album_by_id(
     db: &DatabaseConnection,
@@ -58,51 +55,42 @@ pub async fn get_albums_paginate(
 ) -> anyhow::Result<Vec<entity::album::Model>> {
     let db_albums = entity::album::Entity::find().paginate(db, size);
     let albums = db_albums.fetch_page(page).await?;
-    //albums.Ok(albums)
     Ok(albums)
 }
 pub async fn create_album(
-    db: &DatabaseConnection,
-    album_name: String,
-    artist_name: String,
-    path: String,
-    year: Option<i32>,
-) -> anyhow::Result<Uuid> {
-    let db_album = entity::artist::Entity::find()
-        .filter(entity::artist::Column::Name.eq(artist_name.to_owned()))
-        .one(db)
-        .await?;
-
-    let id: Uuid = Uuid::new_v4();
+    tx: &mut Transaction<'_, Sqlite>,
+    id: &String,
+    cover: Option<String>,
+    artist_id: &String,
+    album_name: &String,
+    artist_name: &String,
+    path: &String,
+    year: &i32,
+) -> Result<SqliteQueryResult, anyhow::Error> {
     let init_time: String = Utc::now().naive_local().to_string();
-
-    let mut album = entity::album::ActiveModel {
-        id: Set(id.to_string()),
-        name: Set(album_name.to_owned()),
-        artist_name: Set(artist_name.to_owned()),
-        year: Set(year.unwrap_or_default()),
-        album_description: NotSet,
-        path: Set(path),
-        cover: NotSet,
-        created_at: Set(init_time.to_owned()),
-        updated_at: Set(init_time),
-        artist_id: NotSet,
-    };
-
-    if db_album.is_some() {
-        album.set(
-            entity::album::Column::ArtistId,
-            Set(db_album.unwrap().id).into_value().unwrap(),
-        )
-    } else {
-        let artist_id: Uuid = super::artist::create_artist(db, artist_name)
-            .await
-            .map_err(|e| anyhow::anyhow!(e))?;
-        album.set(
-            entity::album::Column::ArtistId,
-            Set(artist_id.to_string()).into_value().unwrap(),
-        )
-    }
-    album.insert(db).await.map_err(|e| anyhow::anyhow!(e))?;
-    Ok(id)
+    Ok(sqlx::query(
+        "INSERT OR REPLACE INTO albums (
+            id, 
+            name,
+            artistName,
+            cover,
+            path,
+            year,
+            createdAt,
+            updatedAt,
+            artistId
+         )
+    VALUES (?,?,?,?,?,?,?,?,?)",
+    )
+    .bind(id)
+    .bind(album_name)
+    .bind(artist_name)
+    .bind(cover.unwrap_or_default())
+    .bind(path)
+    .bind(year)
+    .bind(&init_time)
+    .bind(&init_time)
+    .bind(artist_id)
+    .execute(&mut *tx)
+    .await?)
 }

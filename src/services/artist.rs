@@ -1,24 +1,28 @@
 use chrono::Utc;
-use sea_orm::{
-    ActiveModelTrait, ActiveValue::NotSet, ColumnTrait, DatabaseConnection, EntityTrait,
-    QueryFilter, Set,
-};
-use uuid::Uuid;
-pub async fn create_artist(db: &DatabaseConnection, artist_name: String) -> anyhow::Result<Uuid> {
-    let id: Uuid = Uuid::new_v4();
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
+
+pub async fn create_artist(
+    tx: &mut Transaction<'_, Sqlite>,
+    id: &String,
+    artist_name: &String,
+) -> Result<SqliteQueryResult, anyhow::Error> {
     let init_time: String = Utc::now().naive_local().to_string();
-
-    let artist = entity::artist::ActiveModel {
-        id: Set(id.to_string()),
-        name: Set(artist_name.to_owned()),
-        image: NotSet,
-        bio: NotSet,
-        created_at: Set(init_time.to_owned()),
-        updated_at: Set(init_time),
-    };
-
-    artist.insert(db).await.map_err(|e| anyhow::anyhow!(e))?;
-    Ok(id)
+    Ok(sqlx::query(
+        "INSERT OR REPLACE INTO artists (
+            id, 
+            name,
+            createdAt,
+            updatedAt
+         )
+    VALUES (?,?,?,?)",
+    )
+    .bind(id)
+    .bind(artist_name)
+    .bind(&init_time)
+    .bind(&init_time)
+    .execute(&mut *tx)
+    .await?)
 }
 
 pub async fn find_by_name(
