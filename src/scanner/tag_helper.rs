@@ -17,7 +17,7 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
     let tag = Tag::read_from_path(&path)?;
     let vorbis: &VorbisComment = tag
         .vorbis_comments()
-        .with_context(|| format!("Failed to read file {}", path))?;
+        .with_context(|| format!("Failed to read tags for {}", path))?;
 
     let mut stream_info = tag.get_blocks(metaflac::BlockType::StreamInfo);
     let duration = match stream_info.next() {
