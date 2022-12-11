@@ -78,7 +78,7 @@ async fn main() -> Result<()> {
         .route("/albums/:id/cover", get(handlers::albums::get_cover))
         .route("/albums", get(handlers::albums::get_all_albums))
         .route("/artists/:id", get(handlers::artists::get_artist))
-        .route("/artists", get(handlers::artists::get_all_artists))
+        .route("/artists", get(handlers::artists::get_artists))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
