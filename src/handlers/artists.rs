@@ -47,8 +47,8 @@ pub async fn get_artist(
 }
 #[derive(Deserialize, Clone)]
 pub struct GetALlArtists {
-    limit: Option<u64>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
+    limit: Option<u64>,
     sort: Option<String>,
 }
 pub async fn get_artists(
