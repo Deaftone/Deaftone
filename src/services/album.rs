@@ -85,7 +85,7 @@ pub async fn create_album(
     .bind(id)
     .bind(album_name)
     .bind(artist_name)
-    .bind(cover.unwrap_or_default())
+    .bind(cover)
     .bind(path)
     .bind(year)
     .bind(&init_time)
