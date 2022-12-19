@@ -22,6 +22,7 @@ pub struct SongResponse {
     duration: u32,
     year: i32,
     album_id: String,
+    liked: bool,
 }
 
 pub async fn get_song(
@@ -42,6 +43,7 @@ pub async fn get_song(
             duration: f.duration,
             year: f.year.unwrap_or_default(),
             album_id: f.album_id.unwrap_or_default(),
+            liked: f.liked,
         })),
         None => Err((StatusCode::ACCEPTED, "Failed to find song".to_owned())),
     }
