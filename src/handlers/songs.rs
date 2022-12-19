@@ -46,7 +46,19 @@ pub async fn get_song(
         None => Err((StatusCode::ACCEPTED, "Failed to find song".to_owned())),
     }
 }
-
+#[derive(Serialize)]
+pub struct LikeResponse {
+    liked: bool,
+}
+pub async fn like_song(
+    State(state): State<AppState>,
+    Path(song_id): Path<String>,
+) -> Result<Json<LikeResponse>, (StatusCode, String)> {
+    let status = services::song::like_song(&state.database, song_id)
+        .await
+        .unwrap();
+    Ok(Json(LikeResponse { liked: status }))
+}
 pub async fn get_cover(
     State(state): State<AppState>,
     Path(song_id): Path<String>,

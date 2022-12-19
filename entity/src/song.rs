@@ -36,6 +36,7 @@ pub struct Model {
     pub updated_at: String,
     #[sea_orm(column_name = "albumId")]
     pub album_id: Option<String>,
+    pub liked: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
