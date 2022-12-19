@@ -21,8 +21,8 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
 
     let mut stream_info = tag.get_blocks(metaflac::BlockType::StreamInfo);
     let duration = match stream_info.next() {
-        Some(&metaflac::Block::StreamInfo(ref s)) => {
-            Some((s.total_samples as u32 / s.sample_rate) as u32)
+        Some(metaflac::Block::StreamInfo(s)) => {
+            Some(s.total_samples as u32 / s.sample_rate)
         }
         _ => None,
     };
