@@ -36,6 +36,19 @@ async fn main() -> Result<()> {
         .with(tracing_subscriber::EnvFilter::new(SETTINGS.logging.clone()))
         .with(tracing_subscriber::fmt::layer().with_writer(non_blocking))
         .init();
+    tracing::info!(
+        "
+██████╗ ███████╗ █████╗ ███████╗████████╗ ██████╗ ███╗   ██╗███████╗
+██╔══██╗██╔════╝██╔══██╗██╔════╝╚══██╔══╝██╔═══██╗████╗  ██║██╔════╝
+██║  ██║█████╗  ███████║█████╗     ██║   ██║   ██║██╔██╗ ██║█████╗  
+██║  ██║██╔══╝  ██╔══██║██╔══╝     ██║   ██║   ██║██║╚██╗██║██╔══╝  
+██████╔╝███████╗██║  ██║██║        ██║   ╚██████╔╝██║ ╚████║███████╗
+╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝        ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚══════╝
+Version: {:} | Media Directory: {:} | Database: {:}",
+        env!("CARGO_PKG_VERSION"),
+        SETTINGS.media_path.as_str(),
+        SETTINGS.db_path.as_str()
+    );
 
     // Setup config
 
@@ -56,7 +69,6 @@ async fn main() -> Result<()> {
     let mut scan: Scanner = scanner::Scanner::new().unwrap();
     scan.start_scan();
     // build our application with a route and state
-    db.test();
     let state = AppState {
         database: db.pool,
         scanner: scan,
@@ -82,12 +94,12 @@ async fn main() -> Result<()> {
 
     // run it
     let addr: SocketAddr = SocketAddr::from(([0, 0, 0, 0], 3030));
-    tracing::info!("listening on {}", addr);
+    tracing::debug!("Binding to socket");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await?;
-
+    tracing::info!("listening on {}", addr);
     Ok(())
 }
 
