@@ -261,9 +261,8 @@ impl Scanner {
                     .await;
                 match directory_exists {
                     Err(sqlx::Error::RowNotFound) => {
-                        tracing::info!("Creating directory");
                         Self::insert_directory(&path, &mtime, db).await?;
-                        tracing::info!("Creating directory {:}", &path);
+                        tracing::debug!("Created directory {:}", &path);
                         skip_fail!(Self::scan_dir(&path, db).await);
                     }
                     value => {
@@ -277,7 +276,7 @@ impl Scanner {
                             );
                             skip_fail!(Self::scan_dir(&path, db).await);
                         } else {
-                            tracing::info!(
+                            tracing::debug!(
                                 "Skipping directory {:} dtime: {:} ftime: {:}",
                                 &path,
                                 directory_mtime,
@@ -314,7 +313,7 @@ impl Scanner {
     // Scan dir function for a full directory scan missing check for seen songs
     async fn scan_dir(path: &String, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
         let mut tx = sqlite_pool.begin().await.unwrap();
-        tracing::info!("Scanning dir {:}", &path);
+        tracing::debug!("Scanning dir {:}", &path);
 
         let mut create_album = true;
         let mut create_artist = true;
