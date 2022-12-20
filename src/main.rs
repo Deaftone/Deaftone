@@ -5,7 +5,7 @@ mod services;
 mod settings;
 use crate::database::Test;
 use anyhow::{Ok, Result};
-use axum::{response::Html, routing::get, Router};
+use axum::{response::Html, routing::get, routing::post, Router};
 use database::Database;
 use lazy_static::lazy_static;
 use scanner::Scanner;
@@ -30,15 +30,11 @@ pub struct AppState {
 }
 #[tokio::main]
 async fn main() -> Result<()> {
-    env::set_var("RUST_LOG", "info");
-
     // Setup tracing logger
+    let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "example_tracing_aka_logging=debug,tower_http=debug".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::EnvFilter::new(SETTINGS.logging.clone()))
+        .with(tracing_subscriber::fmt::layer().with_writer(non_blocking))
         .init();
 
     // Setup config
@@ -75,7 +71,7 @@ async fn main() -> Result<()> {
         .route("/albums/:id", get(handlers::albums::get_album))
         .route("/songs/:id", get(handlers::songs::get_song))
         .route("/songs/:id/cover", get(handlers::songs::get_cover))
-        .route("/songs/:id/like", get(handlers::songs::like_song))
+        .route("/songs/:id/like", post(handlers::songs::like_song))
         .route("/albums/:id/cover", get(handlers::albums::get_cover))
         .route("/albums", get(handlers::albums::get_all_albums))
         .route("/artists/:id", get(handlers::artists::get_artist))
