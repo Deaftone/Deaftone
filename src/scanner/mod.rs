@@ -44,8 +44,6 @@ impl Scanner {
     }
 
     pub fn start_scan(&mut self) {
-        let start = Instant::now();
-
         tokio::spawn(async move {
             SCAN_STATUS
                 .lock()
@@ -68,7 +66,6 @@ impl Scanner {
                 .connect_with(connection_options)
                 .await
                 .unwrap();
-            let before: Instant = Instant::now();
 
             /*             let has_scanned_full =
                 sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
@@ -97,8 +94,9 @@ impl Scanner {
                 .execute(&sqlite_pool)
                 .await
                 .unwrap();
-
+            let before: Instant = Instant::now();
             Self::walk_full(&sqlite_pool).await.unwrap();
+            tracing::info!("Scan completed in: {:.2?}", before.elapsed());
             //Self::walk_partial(&sqlite_pool).await.unwrap();
 
             /*             sqlx::query("pragma temp_store = memory;")
@@ -123,8 +121,6 @@ impl Scanner {
                            .unwrap();
             */
 
-            tracing::info!("Scan completed in: {:.2?}", before.elapsed());
-
             // Cleanup orphans
             /*             db.execute(Statement::from_string(
                 db.get_database_backend(),
@@ -144,8 +140,6 @@ impl Scanner {
             ))
             .await
             .unwrap(); */
-            let duration = start.elapsed();
-            println!("Time elapsed in scan() is: {:?}", duration);
             SCAN_STATUS
                 .lock()
                 .unwrap()
@@ -242,7 +236,6 @@ impl Scanner {
     }
 
     pub async fn walk_full(db: &Pool<sqlx::Sqlite>) -> Result<()> {
-        tracing::info!("Starting scan");
         let current_dir: &str = SETTINGS.media_path.as_str();
         for entry in WalkDir::new(current_dir)
             .follow_links(true)
