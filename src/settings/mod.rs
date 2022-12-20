@@ -1,5 +1,3 @@
-
-
 use config::{Config, ConfigError};
 use serde::Deserialize;
 
