@@ -3,7 +3,7 @@ mod handlers;
 mod scanner;
 mod services;
 mod settings;
-use crate::database::Test;
+
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, routing::post, Router};
 use database::Database;
