@@ -62,6 +62,7 @@ impl Scanner {
                 .clone();
 
             let sqlite_pool = SqlitePoolOptions::new()
+                .min_connections(5)
                 .max_connections(10)
                 .connect_with(connection_options)
                 .await
