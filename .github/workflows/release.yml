@@ -32,14 +32,14 @@ jobs:
             os: ubuntu-latest
             container: rustembedded/cross:aarch64-unknown-linux-gnu-0.2.1
             target: aarch64-unknown-linux-gnu
-            dependencies: 'libssl-dev:arm64'
+            dependencies: 'libssl-dev libssl-dev:arm64'
             cross_arch: 'arm64'
             pkg_config_path: '/usr/lib/aarch64-linux-gnu/pkgconfig/'
           - build_target: linux-armhf
             os: ubuntu-latest
             container: rustembedded/cross:armv7-unknown-linux-gnueabihf-0.2.1
             target: armv7-unknown-linux-gnueabihf
-            dependencies: 'libssl-dev:armhf'
+            dependencies: 'libssl-dev libssl-dev:armhf'
             cross_arch: 'armhf'
             pkg_config_path: '/usr/lib/arm-linux-gnueabihf/pkgconfig/'
           - build_target: macos-x86_64
