@@ -18,79 +18,71 @@ jobs:
   dist:
     name: Dist
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
     strategy:
       fail-fast: false # don't fail other jobs if one fails
       matrix:
-        build: [x86_64-linux, aarch64-linux, x86_64-macos, x86_64-windows] #, x86_64-win-gnu, win32-msvc
+        build_target: [linux-x86_64, linux-arm64, linux-armhf, macos-x86_64, windows-x86_64]
         include:
-        - build: x86_64-linux
-          os: ubuntu-20.04
-          rust: stable
-          target: x86_64-unknown-linux-gnu
-          cross: false
-        - build: aarch64-linux
-          os: ubuntu-20.04
-          rust: stable
-          target: aarch64-unknown-linux-gnu
-          cross: true
-        - build: x86_64-macos
-          os: macos-latest
-          rust: stable
-          target: x86_64-apple-darwin
-          cross: false
-        - build: x86_64-windows
-          os: windows-2019
-          rust: stable
-          target: x86_64-pc-windows-msvc
-          cross: false
-        # - build: aarch64-macos
-        #   os: macos-latest
-        #   rust: stable
-        #   target: aarch64-apple-darwin
-        # - build: x86_64-win-gnu
-        #   os: windows-2019
-        #   rust: stable-x86_64-gnu
-        #   target: x86_64-pc-windows-gnu
-        # - build: win32-msvc
-        #   os: windows-2019
-        #   rust: stable
-        #   target: i686-pc-windows-msvc
+          - build_target: linux-x86_64
+            os: ubuntu-latest
+            container: rust
+            target: x86_64-unknown-linux-gnu
+          - build_target: linux-arm64
+            os: ubuntu-latest
+            container: rustembedded/cross:aarch64-unknown-linux-gnu-0.2.1
+            target: aarch64-unknown-linux-gnu
+            dependencies: 'libssl-dev:arm64'
+            cross_arch: 'arm64'
+            pkg_config_path: '/usr/lib/aarch64-linux-gnu/pkgconfig/'
+          - build_target: linux-armhf
+            os: ubuntu-latest
+            container: rustembedded/cross:armv7-unknown-linux-gnueabihf-0.2.1
+            target: armv7-unknown-linux-gnueabihf
+            dependencies: 'libssl-dev:armhf'
+            cross_arch: 'armhf'
+            pkg_config_path: '/usr/lib/arm-linux-gnueabihf/pkgconfig/'
+          - build_target: macos-x86_64
+            os: macos-latest
+            target: x86_64-apple-darwin
+          - build_target: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
 
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-        with:
-          submodules: true
-
-      - name: Install ${{ matrix.rust }} toolchain
+      - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          target: ${{ matrix.target }}
+          toolchain: stable
           override: true
-
-      - name: Run cargo test
+          target: ${{ matrix.target }}
+          profile: minimal
+      - name: Install macOS dependencies
+        if: matrix.os == 'macos-latest'
+        run: brew install portaudio pkg-config
+      - name: Set up cross compilation
+        if: matrix.cross_arch
+        run: |
+          dpkg --add-architecture ${{ matrix.cross_arch }}
+          echo "PKG_CONFIG_PATH=${{ matrix.pkg_config_path }}" >> $GITHUB_ENV
+          echo "PKG_CONFIG_ALLOW_CROSS=1" >> $GITHUB_ENV
+      - name: Install Linux dependencies
+        if: startsWith(matrix.build_target, 'linux-')
+        run: |
+          apt update
+          apt install -y ${{ matrix.dependencies }}
+      - name: Running Build
         uses: actions-rs/cargo@v1
         with:
-          use-cross: ${{ matrix.cross }}
-          command: test
-          args: --release --locked --target ${{ matrix.target }}
-
-      - name: Build release binary
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: ${{ matrix.cross }}
           command: build
-          args: --release --locked --target ${{ matrix.target }}
+          args: --locked --release --target ${{ matrix.target }}
       - name: Build archive
         shell: bash
         run: |
           mkdir dist
-          ls target/x86_64-pc-windows-msvc/release
           ls -alh
-          ls target
-          ls target/x86_64-pc-windows-msvc
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
             cp "target/${{ matrix.target }}/release/$BIN_NAME.exe" "dist/"
           else
@@ -159,47 +151,3 @@ jobs:
           file_glob: true
           tag: ${{ steps.tagname.outputs.val }}
           overwrite: true
-
-      - name: Extract version
-        id: extract-version
-        run: |
-          printf "::set-output name=%s::%s\n" tag-name "${GITHUB_REF#refs/tags/}"
-      - uses: mislav/bump-homebrew-formula-action@v1
-        with:
-          formula-path: ${{env.PROJECT_NAME}}.rb
-          homebrew-tap: ${{ env.BREW_TAP }}
-          download-url: "https://github.com/${{ env.REPO_NAME }}/releases/download/${{ steps.extract-version.outputs.tag-name }}/${{env.PROJECT_NAME}}-${{ steps.extract-version.outputs.tag-name }}-x86_64-macos.tar.xz"
-          commit-message: updating formula for ${{ env.PROJECT_NAME }}
-        env:
-          COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
-        #
-        # you can use this initial file in your homebrew-tap if you don't have an initial formula:
-        # <projectname>.rb
-        #
-        # class <Projectname capitalized> < Formula
-        #   desc "A test formula"
-        #   homepage "http://www.example.com"
-        #   url "-----"
-        #   version "-----"
-        #   sha256 "-----"
-
-        #   def install
-        #     bin.install "<bin-name>"
-        #   end
-        # end
-
-      
-      # Uncomment this section if you want to release your package to crates.io
-      # Before publishing, make sure you have filled out the following fields:
-      # license or license-file, description, homepage, documentation, repository, readme.
-      # Read more: https://doc.rust-lang.org/cargo/reference/publishing.html
-
-      # - name: Install ${{ matrix.rust }} toolchain
-      #   uses: actions-rs/toolchain@v1
-      #   with:
-      #     profile: minimal
-      #     toolchain: ${{ matrix.rust }}
-      #     target: ${{ matrix.target }}
-      # - run: cargo publish --token ${CRATES_TOKEN}
-      #  env:
-      #    CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
