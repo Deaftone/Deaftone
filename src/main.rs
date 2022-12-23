@@ -104,7 +104,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
 }
 
 async fn handler() -> Html<&'static str> {
-    println!("{:?}", SCAN_STATUS.lock().unwrap());
+    // println!("{:?}", SCAN_STATUS.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
 }
 
