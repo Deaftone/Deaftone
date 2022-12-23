@@ -83,23 +83,14 @@ jobs:
           use-cross: ${{ matrix.cross }}
           command: build
           args: --release --locked --target ${{ matrix.target }}
-
-      - name: Strip release binary (linux and macos)
-        if: matrix.build == 'x86_64-linux' || matrix.build == 'x86_64-macos'
-        run: strip "target/${{ matrix.target }}/release/$BIN_NAME"
-
-      - name: Strip release binary (arm)
-        if: matrix.build == 'aarch64-linux'
-        run: |
-          docker run --rm -v \
-            "$PWD/target:/target:Z" \
-            rustembedded/cross:${{ matrix.target }} \
-            aarch64-linux-gnu-strip \
-            /target/${{ matrix.target }}/release/$BIN_NAME
       - name: Build archive
         shell: bash
         run: |
           mkdir dist
+          ls target/x86_64-pc-windows-msvc/release
+          ls -alh
+          ls target
+          ls target/x86_64-pc-windows-msvc
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
             cp "target/${{ matrix.target }}/release/$BIN_NAME.exe" "dist/"
           else
