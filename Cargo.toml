@@ -1,9 +1,13 @@
 [package]
-name = "deaftone_rust"
-version = "0.1.0"
+name = "deaftone"
+version = "0.0.1"
 edition = "2021"
-
-
+[[bin]]
+name = "deaftone"
+path = "src/main.rs"
+[profile.release]
+lto = true
+codegen-units = 1
 [workspace]
 members = [".", "entity", "migration"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,11 +15,12 @@ members = [".", "entity", "migration"]
 [dependencies]
 entity = { path = "entity" }
 migration = { path = "migration" } 
-axum = "0.6.0-rc.2"
+axum = "0.6.1"
 tokio = { version = "1.20.0", features = ["full"] }
 tower-http = { version = "0.3.0", features = ["trace", "fs"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+tracing-appender = "0.2"
 chrono = "0.4.19"
 anyhow = "1.0.58"
 walkdir = "2.3.2"
@@ -24,12 +29,13 @@ tokio-util = "0.7.3"
 tower = "0.4.13"
 serde = { version = "1.0"}
 serde_json = { version = "1.0.71" }
-axum-macros = "0.2.3"
+axum-macros = "0.3.0"
 tokio-stream = "0.1.9"
 include_dir = "0.7.2"
 config = "0.13.2"
 lazy_static = "1.4.0"
 futures = "0.3.24"
+sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" ] }
 [dependencies.sea-orm]
 version = "=0.9.3" # sea-orm version
 features = [

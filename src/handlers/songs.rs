@@ -22,6 +22,7 @@ pub struct SongResponse {
     duration: u32,
     year: i32,
     album_id: String,
+    liked: bool,
 }
 
 pub async fn get_song(
@@ -42,11 +43,24 @@ pub async fn get_song(
             duration: f.duration,
             year: f.year.unwrap_or_default(),
             album_id: f.album_id.unwrap_or_default(),
+            liked: f.liked,
         })),
         None => Err((StatusCode::ACCEPTED, "Failed to find song".to_owned())),
     }
 }
-
+#[derive(Serialize)]
+pub struct LikeResponse {
+    liked: bool,
+}
+pub async fn like_song(
+    State(state): State<AppState>,
+    Path(song_id): Path<String>,
+) -> Result<Json<LikeResponse>, (StatusCode, String)> {
+    let status = services::song::like_song(&state.database, song_id)
+        .await
+        .unwrap();
+    Ok(Json(LikeResponse { liked: status }))
+}
 pub async fn get_cover(
     State(state): State<AppState>,
     Path(song_id): Path<String>,

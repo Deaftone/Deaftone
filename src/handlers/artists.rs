@@ -1,14 +1,16 @@
 use axum::{
+    extract::Query,
     extract::{Path, State},
     http::StatusCode,
     Json,
 };
-
-use sea_orm::{EntityTrait, QueryOrder};
+use sea_orm::{EntityTrait, QueryOrder, QuerySelect};
+use serde::Deserialize;
 use serde::Serialize;
 
 use crate::AppState;
-
+use serde::{de, Deserializer};
+use std::{fmt, str::FromStr};
 #[derive(Serialize)]
 pub struct ArtistResponse {
     id: String,
@@ -43,11 +45,64 @@ pub async fn get_artist(
         None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
     };
 }
+#[derive(Deserialize, Clone)]
+pub struct GetALlArtists {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    limit: Option<u64>,
+    sort: Option<String>,
+}
+pub async fn get_artists(
+    State(state): State<AppState>,
+    params: Query<GetALlArtists>,
+) -> Json<Vec<entity::artist::Model>> {
+    // Check for latest param
+    match params.sort.as_deref() {
+        Some("latest") => return get_latest_artists(&state, params.limit.unwrap_or(50)).await,
+        // Match for limit parma
+        _ => match params.limit {
+            Some(i) => Json(
+                entity::artist::Entity::find()
+                    .limit(params.limit.unwrap_or(i))
+                    .all(&state.database)
+                    .await
+                    .expect("Failed to get artists"),
+            ),
+            _ => Json(
+                entity::artist::Entity::find()
+                    .all(&state.database)
+                    .await
+                    .expect("Failed to get artists"),
+            ),
+        },
+    }
 
-pub async fn get_all_artists(State(state): State<AppState>) -> Json<Vec<entity::artist::Model>> {
+    /*     match params.sort.as_ref().unwrap().as_str() {
+        "latest" => get_latest_artists(&state, params.limit.unwrap_or(50)).await,
+        _ => {
+
+        }
+    } */
+}
+
+pub async fn get_latest_artists(state: &AppState, limit: u64) -> Json<Vec<entity::artist::Model>> {
     let artists: Vec<entity::artist::Model> = entity::artist::Entity::find()
+        .order_by_desc(entity::artist::Column::CreatedAt)
+        .limit(limit)
         .all(&state.database)
         .await
         .expect("Failed to get artists");
     Json(artists)
+}
+
+fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromStr,
+    T::Err: fmt::Display,
+{
+    let opt = Option::<String>::deserialize(de)?;
+    match opt.as_deref() {
+        None | Some("") => Ok(None),
+        Some(s) => FromStr::from_str(s).map_err(de::Error::custom).map(Some),
+    }
 }

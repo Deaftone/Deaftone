@@ -34,11 +34,3 @@ impl Database {
         Ok(())
     }
 }
-pub trait Test {
-    fn test(&self);
-}
-impl Test for Database {
-    fn test(&self) {
-        println!("Added test");
-    }
-}

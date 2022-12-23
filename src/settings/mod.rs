@@ -1,11 +1,9 @@
-use std::collections::HashMap;
-
 use config::{Config, ConfigError};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct Settings {
-    pub log_level: String,
+    pub logging: String,
     pub db_path: String,
     pub media_path: String,
 }
@@ -15,12 +13,12 @@ impl Settings {
         let s = Config::builder()
             .add_source(config::File::with_name("settings.toml"))
             .build()?;
-        println!(
+        /*         println!(
             "{:?}",
             s.to_owned()
                 .try_deserialize::<HashMap<String, String>>()
                 .unwrap()
-        );
+        ); */
         s.try_deserialize()
     }
 }
