@@ -90,7 +90,7 @@ jobs:
           fi
       - uses: actions/upload-artifact@v2.2.4
         with:
-          name: bins-${{ matrix.build }}
+          name: bins-${{ matrix.build_target }}
           path: dist
 
   publish:
