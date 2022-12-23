@@ -1,8 +1,10 @@
 [package]
 name = "deaftone"
-version = "0.0.2"
+version = "0.0.1"
 edition = "2021"
-
+[[bin]]
+name = "deaftone"
+path = "src/main.rs"
 [profile.release]
 lto = true
 codegen-units = 1
