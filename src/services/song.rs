@@ -40,7 +40,7 @@ pub async fn like_song(db: &DatabaseConnection, id: String) -> Result<bool, anyh
     }
     Ok(song.update(db).await?.liked)
 }
-pub async fn get_song_by_path(
+pub async fn _get_song_by_path(
     db: &DatabaseConnection,
     path: String,
 ) -> anyhow::Result<Option<entity::song::Model>> {

@@ -1,4 +1,3 @@
-use entity;
 use sea_orm_migration::{
     prelude::*,
     sea_orm::{ConnectionTrait, DbConn, EntityTrait, Schema},

@@ -25,7 +25,7 @@ pub async fn create_artist(
     .await?)
 }
 
-pub async fn find_by_name(
+pub async fn _find_by_name(
     db: &DatabaseConnection,
     artist_name: String,
 ) -> anyhow::Result<Option<entity::artist::Model>> {

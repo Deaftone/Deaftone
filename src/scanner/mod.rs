@@ -296,9 +296,9 @@ impl Scanner {
         Ok(())
     }
 
-    async fn scan_dir_partial(
+    async fn _scan_dir_partial(
         _entry: &walkdir::DirEntry,
-        _path: &String,
+        _path: &str,
         _sqlite_pool: &Pool<sqlx::Sqlite>,
     ) -> Result<()> {
         Ok(())
@@ -362,7 +362,6 @@ impl Scanner {
                             .await;
                     match album_exists {
                         Err(sqlx::Error::RowNotFound) => {
-                            let id: String = Uuid::new_v4().to_string();
                             // Searching for cover here allows us to not have to check every iteration of the album to find the cover. Rather we search the dir once. Which should already be cached by the system
                             let mut cover: Option<String> = None;
                             for entry in fs::read_dir(&path_parent)? {
@@ -371,10 +370,9 @@ impl Scanner {
                                     cover = Some(f_name);
                                 }
                             }
-                            skip_fail!(
+                            let id = skip_fail!(
                                 services::album::create_album(
                                     &mut tx,
-                                    &id,
                                     cover,
                                     &artist_id,
                                     &metadata.album,

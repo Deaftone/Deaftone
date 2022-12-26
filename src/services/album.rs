@@ -2,7 +2,8 @@ use anyhow::Ok;
 use chrono::Utc;
 use sea_orm::PaginatorTrait;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
-use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
+use sqlx::{Sqlite, Transaction};
+use uuid::Uuid;
 
 pub async fn get_album_by_id(
     db: &DatabaseConnection,
@@ -13,7 +14,7 @@ pub async fn get_album_by_id(
         .all(db)
         .await?)
 }
-pub async fn find_by_name(
+pub async fn _find_by_name(
     db: &DatabaseConnection,
     album_name: String,
 ) -> anyhow::Result<Option<entity::album::Model>> {
@@ -24,7 +25,7 @@ pub async fn find_by_name(
         .map_err(|e| anyhow::anyhow!(e))
 }
 
-pub async fn update_cover_for_path(
+pub async fn _update_cover_for_path(
     db: &DatabaseConnection,
     cover_path: String,
     album_path: String,
@@ -59,16 +60,16 @@ pub async fn get_albums_paginate(
 }
 pub async fn create_album(
     tx: &mut Transaction<'_, Sqlite>,
-    id: &String,
     cover: Option<String>,
     artist_id: &String,
     album_name: &String,
     artist_name: &String,
     path: &String,
     year: &i32,
-) -> Result<SqliteQueryResult, anyhow::Error> {
+) -> Result<String, anyhow::Error> {
+    let id: String = Uuid::new_v4().to_string();
     let init_time: String = Utc::now().naive_local().to_string();
-    Ok(sqlx::query(
+    sqlx::query(
         "INSERT OR REPLACE INTO albums (
             id, 
             name,
@@ -82,7 +83,7 @@ pub async fn create_album(
          )
     VALUES (?,?,?,?,?,?,?,?,?)",
     )
-    .bind(id)
+    .bind(&id)
     .bind(album_name)
     .bind(artist_name)
     .bind(cover)
@@ -92,5 +93,6 @@ pub async fn create_album(
     .bind(&init_time)
     .bind(artist_id)
     .execute(&mut *tx)
-    .await?)
+    .await?;
+    Ok(id)
 }

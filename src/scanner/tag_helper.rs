@@ -28,18 +28,18 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
         name: vorbis
             .title()
             .map(|v| v[0].clone())
-            .unwrap_or("FAILED TO READ TITLE DEAFTONE".to_string()),
+            .unwrap_or_else(|| "FAILED TO READ TITLE DEAFTONE".to_string()),
         number: vorbis.track().unwrap_or_default(),
         album: vorbis
             .album()
             .map(|v| v[0].clone())
-            .unwrap_or("FAILED TO READ ALBUM DEAFTONE".to_string()),
+            .unwrap_or_else(|| "FAILED TO READ ALBUM DEAFTONE".to_string()),
         album_artist: match vorbis.album_artist().map(|v| v[0].clone()) {
             Some(e) => e,
             None => vorbis
                 .artist()
                 .map(|v| v[0].clone())
-                .unwrap_or("FAILED TO READ ARTIST DEAFTONE".to_string()),
+                .unwrap_or_else(|| "FAILED TO READ ARTIST DEAFTONE".to_string()),
         },
         year: get_year(vorbis).with_context(|| "Failed to read year")?,
         track: vorbis.track().unwrap_or(0),

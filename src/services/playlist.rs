@@ -3,7 +3,7 @@ use chrono::Utc;
 use sea_orm::{DatabaseConnection, EntityTrait, Set};
 use uuid::Uuid;
 
-pub async fn create_playlist(db: &DatabaseConnection) -> anyhow::Result<()> {
+pub async fn _create_playlist(db: &DatabaseConnection) -> anyhow::Result<()> {
     let id: Uuid = Uuid::new_v4();
     let init_time: String = Utc::now().naive_local().to_string();
 
