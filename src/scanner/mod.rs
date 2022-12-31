@@ -44,11 +44,11 @@ impl Scanner {
     }
 
     pub fn start_scan(&mut self) {
+        SCAN_STATUS
+            .lock()
+            .unwrap()
+            .store(true, std::sync::atomic::Ordering::Relaxed);
         tokio::spawn(async move {
-            SCAN_STATUS
-                .lock()
-                .unwrap()
-                .store(true, std::sync::atomic::Ordering::Relaxed);
             let database_file = "deaftone.sqlite";
             let database_url = format!("sqlite://{}", database_file);
             let pool_timeout = Duration::from_secs(30);
