@@ -85,7 +85,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         .route("/songs/:id/cover", get(handlers::songs::get_cover))
         .route("/songs/:id/like", post(handlers::songs::like_song))
         .route("/albums/:id/cover", get(handlers::albums::get_cover))
-        .route("/albums", get(handlers::albums::get_all_albums))
+        .route("/albums", get(handlers::albums::get_albums))
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/artists", get(handlers::artists::get_artists))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
