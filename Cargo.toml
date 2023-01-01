@@ -36,6 +36,8 @@ config = "0.13.2"
 lazy_static = "1.4.0"
 futures = "0.3.24"
 sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" ] }
+hyper = "0.14.23"
+
 [dependencies.sea-orm]
 version = "=0.9.3" # sea-orm version
 features = [
