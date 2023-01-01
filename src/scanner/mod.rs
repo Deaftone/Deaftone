@@ -1,5 +1,4 @@
-use crate::SCAN_STATUS;
-use crate::{services, SETTINGS};
+use crate::{services, SCAN_STATUS, SETTINGS};
 use anyhow::Result;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::{
@@ -141,10 +140,10 @@ impl Scanner {
             ))
             .await
             .unwrap(); */
-            SCAN_STATUS
-                .lock()
-                .unwrap()
-                .store(false, std::sync::atomic::Ordering::Relaxed);
+            /*             SCAN_STATUS
+            .lock()
+            .unwrap()
+            .store(false, std::sync::atomic::Ordering::Relaxed); */
         });
     }
 

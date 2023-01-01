@@ -91,7 +91,8 @@ pub async fn get_cover(
         None => Err((StatusCode::NOT_FOUND, "Unable to find album".to_string())),
     }
 }
-pub async fn get_all_albums(
+
+pub async fn get_albums(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
 ) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {

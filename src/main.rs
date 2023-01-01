@@ -1,39 +1,18 @@
-mod database;
-mod handlers;
-mod scanner;
-mod services;
-mod settings;
-
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, routing::post, Router};
-use database::Database;
-use lazy_static::lazy_static;
-use scanner::Scanner;
-use sea_orm::DatabaseConnection;
+use deaftone::{database::Database, handlers, scanner::Scanner, AppState};
 use std::net::SocketAddr;
-use std::sync::atomic::AtomicBool;
-use std::{env, sync::Mutex};
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-lazy_static! {
-    static ref SCAN_STATUS: Mutex<AtomicBool> = Mutex::new(AtomicBool::new(false));
-    static ref SETTINGS: settings::Settings =
-        settings::Settings::new().expect("Failed to load config: ");
-}
-
-#[derive(Clone)]
-pub struct AppState {
-    pub database: DatabaseConnection,
-    pub scanner: Scanner,
-}
 #[tokio::main]
 async fn main() -> Result<()> {
     // Setup tracing logger
+    let settings = deaftone::settings::Settings::new().expect("Failed to load config: ");
     let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(SETTINGS.logging.clone()))
+        .with(tracing_subscriber::EnvFilter::new(settings.logging.clone()))
         .with(tracing_subscriber::fmt::layer().with_writer(non_blocking))
         .init();
     tracing::info!(
@@ -46,8 +25,8 @@ async fn main() -> Result<()> {
 ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝        ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚══════╝
 Version: {:} | Media Directory: {:} | Database: {:}",
         env!("CARGO_PKG_VERSION"),
-        SETTINGS.media_path.as_str(),
-        SETTINGS.db_path.as_str()
+        settings.media_path.as_str(),
+        settings.db_path.as_str()
     );
 
     // Setup config
@@ -66,7 +45,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     let db = Database::new().await?;
     /*     create_playlist(&db).await?;
      */
-    let mut scan: Scanner = scanner::Scanner::new().unwrap();
+    let mut scan: Scanner = Scanner::new().unwrap();
     scan.start_scan();
     // build our application with a route and state
     let state = AppState {
@@ -85,7 +64,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         .route("/songs/:id/cover", get(handlers::songs::get_cover))
         .route("/songs/:id/like", post(handlers::songs::like_song))
         .route("/albums/:id/cover", get(handlers::albums::get_cover))
-        .route("/albums", get(handlers::albums::get_all_albums))
+        .route("/albums", get(handlers::albums::get_albums))
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/artists", get(handlers::artists::get_artists))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
@@ -104,7 +83,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
 }
 
 async fn handler() -> Html<&'static str> {
-    // println!("{:?}", SCAN_STATUS.lock().unwrap());
+    //println!("{:?}", SCAN_STATUS.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
 }
 
