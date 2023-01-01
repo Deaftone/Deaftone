@@ -1,17 +1,17 @@
 use anyhow::Result;
+use entity::setting;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, DatabaseConnection};
 use std::{fs, time::Duration};
 
-use crate::SETTINGS;
-
+use crate::settings::Settings;
 #[derive(Clone)]
 pub struct Database {
     pub pool: DatabaseConnection,
 }
 impl Database {
-    pub async fn new() -> Result<Database, anyhow::Error> {
-        let db_path = SETTINGS.db_path.as_str();
+    pub async fn new(settings: &Settings) -> Result<Database, anyhow::Error> {
+        let db_path = settings.db_path.as_str();
         if fs::metadata(db_path).is_err() {
             fs::File::create(db_path).expect("Created file");
         }

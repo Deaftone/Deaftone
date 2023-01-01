@@ -1,5 +1,8 @@
-use crate::SCAN_STATUS;
-use crate::{services, SETTINGS};
+use crate::{
+    services,
+    settings::{self, Settings},
+    SCAN_STATUS,
+};
 use anyhow::Result;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::{
@@ -36,10 +39,12 @@ macro_rules! skip_fail {
 }
 
 #[derive(Clone)]
-pub struct Scanner {}
+pub struct Scanner {
+    settings: Settings,
+}
 impl Scanner {
-    pub fn new() -> Result<Scanner> {
-        let scanner: Scanner = Scanner {};
+    pub fn new(settings: Settings) -> Result<Scanner> {
+        let scanner: Scanner = Scanner { settings };
         Ok(scanner)
     }
 
@@ -48,6 +53,7 @@ impl Scanner {
             .lock()
             .unwrap()
             .store(true, std::sync::atomic::Ordering::Relaxed);
+        let settings = self.settings.clone();
         tokio::spawn(async move {
             let database_file = "deaftone.sqlite";
             let database_url = format!("sqlite://{}", database_file);
@@ -96,7 +102,8 @@ impl Scanner {
                 .await
                 .unwrap();
             let before: Instant = Instant::now();
-            Self::walk_full(&sqlite_pool).await.unwrap();
+            let current_dir = settings.media_path;
+            Self::walk_full(&sqlite_pool, current_dir).await.unwrap();
             tracing::info!("Scan completed in: {:.2?}", before.elapsed());
             //Self::walk_partial(&sqlite_pool).await.unwrap();
 
@@ -141,10 +148,10 @@ impl Scanner {
             ))
             .await
             .unwrap(); */
-            SCAN_STATUS
-                .lock()
-                .unwrap()
-                .store(false, std::sync::atomic::Ordering::Relaxed);
+            /*             SCAN_STATUS
+            .lock()
+            .unwrap()
+            .store(false, std::sync::atomic::Ordering::Relaxed); */
         });
     }
 
@@ -236,8 +243,7 @@ impl Scanner {
         Ok(())
     }
 
-    pub async fn walk_full(db: &Pool<sqlx::Sqlite>) -> Result<()> {
-        let current_dir: &str = SETTINGS.media_path.as_str();
+    pub async fn walk_full(db: &Pool<sqlx::Sqlite>, current_dir: String) -> Result<()> {
         for entry in WalkDir::new(current_dir)
             .follow_links(true)
             .into_iter()

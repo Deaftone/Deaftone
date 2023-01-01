@@ -1,7 +1,8 @@
 use config::{Config, ConfigError};
+use lazy_static::lazy_static;
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
     pub logging: String,
     pub db_path: String,
