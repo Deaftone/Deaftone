@@ -33,7 +33,6 @@ axum-macros = "0.3.0"
 tokio-stream = "0.1.9"
 include_dir = "0.7.2"
 config = "0.13.2"
-lazy_static = "1.4.0"
 futures = "0.3.24"
 sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" ] }
 hyper = "0.14.23"

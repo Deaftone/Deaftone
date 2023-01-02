@@ -13,6 +13,8 @@ use sqlx::{
     ConnectOptions, Pool, Row,
 };
 use std::result::Result::Ok;
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use std::time::SystemTime;
 use std::{
     fs::{self},
@@ -49,10 +51,7 @@ impl Scanner {
     }
 
     pub fn start_scan(&mut self) {
-        SCAN_STATUS
-            .lock()
-            .unwrap()
-            .store(true, std::sync::atomic::Ordering::Relaxed);
+        SCAN_STATUS.store(true, Ordering::Release);
         let settings = self.settings.clone();
         tokio::spawn(async move {
             let database_file = "deaftone.sqlite";
@@ -148,10 +147,7 @@ impl Scanner {
             ))
             .await
             .unwrap(); */
-            /*             SCAN_STATUS
-            .lock()
-            .unwrap()
-            .store(false, std::sync::atomic::Ordering::Relaxed); */
+            SCAN_STATUS.store(true, Ordering::Release);
         });
     }
 

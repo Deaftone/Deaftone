@@ -618,7 +618,6 @@ dependencies = [
  "futures",
  "hyper",
  "include_dir",
- "lazy_static",
  "metaflac",
  "migration",
  "sea-orm",
