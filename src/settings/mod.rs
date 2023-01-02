@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
-    pub logging: String,
+    pub log_level: String,
     pub db_path: String,
     pub media_path: String,
 }

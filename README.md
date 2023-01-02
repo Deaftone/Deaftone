@@ -42,7 +42,7 @@ https://github.com/Ortygia/Orpheus currently in early stages of development but 
 Currently to setup and install Deaftone you need to download the binarie in release for you platform or clone and build the repo.
 After you have your binary in the same folder you need to place a ``settings.toml`` with the following inside it
 ```
-logging="deaftone=info,tower_http=info"
+log_level="deaftone=info,tower_http=info"
 db_path="./deaftone.sqlite"
 media_path="H:\\aa"
 ```

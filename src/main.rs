@@ -12,7 +12,9 @@ async fn main() -> Result<()> {
     let settings = deaftone::settings::Settings::new().expect("Failed to load config: ");
     let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
     tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(settings.logging.clone()))
+        .with(tracing_subscriber::EnvFilter::new(
+            settings.log_level.clone(),
+        ))
         .with(tracing_subscriber::fmt::layer().with_writer(non_blocking))
         .init();
     tracing::info!(
