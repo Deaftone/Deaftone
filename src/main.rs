@@ -1,15 +1,21 @@
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, routing::post, Router};
 use deaftone::{database::Database, handlers, scanner::Scanner, AppState};
-use std::net::SocketAddr;
+use std::{fmt::Debug, net::SocketAddr};
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let settings = match deaftone::settings::Settings::new() {
+        std::result::Result::Ok(file) => file,
+        Err(err) => {
+            println!("Failed to load config {:}. Loading default config", err);
+            deaftone::settings::Settings::new_default().unwrap()
+        }
+    };
     // Setup tracing logger
-    let settings = deaftone::settings::Settings::new().expect("Failed to load config: ");
     let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(

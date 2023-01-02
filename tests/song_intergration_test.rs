@@ -3,8 +3,13 @@ use axum::{response::Html, routing::get, routing::post, Router};
 use deaftone::{database::Database, handlers, scanner::Scanner, AppState};
 use tower_http::trace::TraceLayer;
 async fn app() -> Router {
-    let settings = deaftone::settings::Settings::new().expect("Failed to load config: ");
-
+    let settings = match deaftone::settings::Settings::new() {
+        std::result::Result::Ok(file) => file,
+        Err(err) => {
+            println!("Failed to load config {:}. Loading default config", err);
+            deaftone::settings::Settings::new_default().unwrap()
+        }
+    };
     let db = Database::new(&settings).await.unwrap();
     /*     create_playlist(&db).await?;
      */

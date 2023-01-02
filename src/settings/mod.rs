@@ -1,4 +1,4 @@
-use config::{Config, ConfigError};
+use config::{Config, ConfigError, FileFormat};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
@@ -13,12 +13,20 @@ impl Settings {
         let s = Config::builder()
             .add_source(config::File::with_name("settings.toml"))
             .build()?;
-        /*         println!(
-            "{:?}",
-            s.to_owned()
-                .try_deserialize::<HashMap<String, String>>()
-                .unwrap()
-        ); */
+
+        s.try_deserialize()
+    }
+
+    pub fn new_default() -> Result<Self, ConfigError> {
+        tracing::info!("Failed to load settings.toml. Loaded default config");
+        let s = Config::builder()
+            .add_source(config::File::from_str(
+                "log_level= \"info\"
+            db_path=\"./deaftone.sqlite\"
+            media_path=\"./music\"",
+                FileFormat::Toml,
+            ))
+            .build()?;
         s.try_deserialize()
     }
 }
