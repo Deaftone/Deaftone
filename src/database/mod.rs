@@ -1,5 +1,5 @@
 use anyhow::Result;
-use entity::setting;
+
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, DatabaseConnection};
 use std::{fs, time::Duration};

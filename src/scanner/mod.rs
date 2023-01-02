@@ -1,6 +1,6 @@
 use crate::{
     services,
-    settings::{self, Settings},
+    settings::{Settings},
     SCAN_STATUS,
 };
 use anyhow::Result;
@@ -13,7 +13,7 @@ use sqlx::{
     ConnectOptions, Pool, Row,
 };
 use std::result::Result::Ok;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{Ordering};
 
 use std::time::SystemTime;
 use std::{
