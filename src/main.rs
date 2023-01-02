@@ -1,7 +1,7 @@
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, routing::post, Router};
 use deaftone::{database::Database, handlers, scanner::Scanner, AppState};
-use std::{fmt::Debug, net::SocketAddr};
+use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
