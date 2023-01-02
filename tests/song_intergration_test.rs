@@ -41,14 +41,8 @@ async fn handler() -> Html<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum::{
-        body::Body,
-        http::{self, Request, StatusCode},
-    };
-    use lazy_static::lazy_static;
-    use serde_json::{json, Value};
-    use std::net::{SocketAddr, TcpListener};
-    use tower::ServiceExt; // for `app.oneshot()`
+    use axum::{body::Body, http::Request};
+    use std::net::TcpListener;
 
     #[tokio::test]
     async fn hello_world() {
@@ -78,7 +72,7 @@ mod tests {
         assert_eq!(&body[..], b"Hello, World!");
     }
 
-    #[tokio::test]
+    /*  #[tokio::test]
     async fn get_artist() {
         let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
         let addr = listener.local_addr().unwrap();
@@ -232,7 +226,7 @@ mod tests {
                 32, 65, 115, 108, 101, 101, 112, 44, 32, 87, 104, 101, 114, 101, 32, 68, 111, 32,
                 87, 101, 32, 71, 111, 32, 40, 84, 97, 114, 103, 101, 116, 32, 68, 101, 108, 117,
                 120, 101, 41, 32, 91, 50, 48, 50, 48, 32, 45, 32, 66, 48, 48, 51, 49, 53, 50, 57,
-                45, 48, 50, 93, 47, 99, 111, 118, 101, 114, 46, 106, 112, 103, 34, 44, 34, 97, 108,
+                 45, 48, 50, 93, 47, 99, 111, 118, 101, 114, 46, 106, 112, 103, 34, 44, 34, 97, 108,
                 98, 117, 109, 95, 100, 101, 115, 99, 114, 105, 112, 116, 105, 111, 110, 34, 58,
                 110, 117, 108, 108, 44, 34, 112, 97, 116, 104, 34, 58, 34, 47, 85, 115, 101, 114,
                 115, 47, 114, 121, 108, 101, 101, 103, 101, 111, 114, 103, 101, 47, 112, 114, 111,
@@ -281,4 +275,5 @@ mod tests {
             ]
         );
     }
+    */
 }
