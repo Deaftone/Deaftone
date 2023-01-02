@@ -1,8 +1,4 @@
-use crate::{
-    services,
-    settings::{Settings},
-    SCAN_STATUS,
-};
+use crate::{services, settings::Settings, SCAN_STATUS};
 use anyhow::Result;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::{
@@ -13,7 +9,7 @@ use sqlx::{
     ConnectOptions, Pool, Row,
 };
 use std::result::Result::Ok;
-use std::sync::atomic::{Ordering};
+use std::sync::atomic::Ordering;
 
 use std::time::SystemTime;
 use std::{
