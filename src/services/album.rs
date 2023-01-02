@@ -51,8 +51,8 @@ pub async fn get_all_albums(db: &DatabaseConnection) -> anyhow::Result<Vec<entit
 }
 pub async fn get_albums_paginate(
     db: &DatabaseConnection,
-    page: usize,
-    size: usize,
+    page: u64,
+    size: u64,
 ) -> anyhow::Result<Vec<entity::album::Model>> {
     let db_albums = entity::album::Entity::find().paginate(db, size);
     let albums = db_albums.fetch_page(page).await?;

@@ -38,7 +38,7 @@ sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" ] }
 hyper = { version = "0.14", features = ["full"] }
 
 [dependencies.sea-orm]
-version = "=0.9.3" # sea-orm version
+version = "0.10.6" # sea-orm version
 features = [
   "debug-print",
   "runtime-tokio-native-tls",

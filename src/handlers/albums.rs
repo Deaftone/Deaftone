@@ -97,14 +97,14 @@ pub async fn get_albums(
     axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
 ) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
     if params.get("size").is_some() {
-        let size: usize = params.get("size").unwrap().parse::<usize>().unwrap_or(10);
+        let size: u64 = params.get("size").unwrap().parse::<u64>().unwrap_or(10);
         let albums: Result<Vec<entity::album::Model>, anyhow::Error> =
             services::album::get_albums_paginate(
                 &state.database,
                 params
                     .get("page")
                     .unwrap_or(&String::from("0"))
-                    .parse::<usize>()
+                    .parse::<u64>()
                     .unwrap_or(0),
                 size,
             )
