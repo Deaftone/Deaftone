@@ -116,7 +116,7 @@ pub async fn get_albums(
             )
             .await
         }
-        _ => services::album::get_all_albums(&state.database, params.size, params.sort).await,
+        _ => services::album::get_albums(&state.database, params.size, params.sort).await,
     };
     match albums {
         Ok(_albums) => Ok(Json(_albums)),
