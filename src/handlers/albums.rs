@@ -1,13 +1,12 @@
 use std::{fmt, str::FromStr};
 
 use axum::{
-    body::{boxed, Body, BoxBody, Full},
+    body::{boxed, Body, BoxBody},
     extract::{Path, State},
-    http::{header, Request, Response, StatusCode},
+    http::{Request, Response, StatusCode},
     Json,
 };
 
-use include_dir::{include_dir, Dir};
 use sea_orm::EntityTrait;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
@@ -16,7 +15,6 @@ use tower_http::services::ServeFile;
 
 use crate::{services, AppState};
 
-static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/resources");
 #[allow(non_snake_case)]
 #[derive(Serialize)]
 pub struct AlbumResponse {

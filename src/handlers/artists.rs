@@ -1,10 +1,8 @@
 use axum::{
-    extract::Query,
     extract::{Path, State},
     http::StatusCode,
     Json,
 };
-use sea_orm::{EntityTrait, QuerySelect};
 
 use crate::{services, AppState};
 use serde::{de, Deserialize, Deserializer};

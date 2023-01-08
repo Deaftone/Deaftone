@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use axum::{body::Body, http::Request};
-    use deaftone::test_util::test_util::app;
+    use deaftone::test_util::app;
     use std::net::TcpListener;
     #[tokio::test]
     async fn test_get_artists() {
