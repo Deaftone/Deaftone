@@ -1,8 +1,8 @@
+use anyhow::anyhow;
 use chrono::Utc;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use serde::Serialize;
 use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
-
 pub async fn create_artist(
     tx: &mut Transaction<'_, Sqlite>,
     id: &String,
@@ -33,7 +33,10 @@ pub struct DbArtist {
     bio: String,
     albums: Vec<entity::album::Model>,
 }
-pub async fn get_artist(db: &DatabaseConnection, artist_id: String) -> anyhow::Result<DbArtist> {
+pub async fn get_artist_by_id(
+    db: &DatabaseConnection,
+    artist_id: String,
+) -> anyhow::Result<DbArtist> {
     let artist_db = entity::artist::Entity::find_by_id(artist_id)
         .order_by_desc(entity::album::Column::Year)
         .find_with_related(entity::album::Entity)
@@ -49,6 +52,38 @@ pub async fn get_artist(db: &DatabaseConnection, artist_id: String) -> anyhow::R
         bio: artist_model.bio.unwrap_or_default(),
         albums,
     })
+}
+
+pub async fn get_artists(
+    db: &DatabaseConnection,
+    size: Option<u64>,
+    sort: Option<String>,
+) -> anyhow::Result<Vec<entity::artist::Model>> {
+    let order = match sort.as_deref() {
+        Some("name") => entity::artist::Column::Name,
+        Some("latest") => entity::artist::Column::CreatedAt,
+        _ => entity::artist::Column::Name,
+    };
+    let limit = size.unwrap_or(100);
+    let result = match order {
+        entity::artist::Column::CreatedAt => {
+            entity::artist::Entity::find()
+                .order_by_desc(order)
+                .limit(limit)
+                .all(db)
+                .await
+        }
+        _ => {
+            entity::artist::Entity::find()
+                .order_by_asc(order)
+                .limit(limit)
+                .all(db)
+                .await
+        }
+    }
+    .map_err(|e| anyhow!("Failed to get artists: {}", e))?;
+
+    Ok(result)
 }
 
 pub async fn get_latest_artist(
