@@ -66,7 +66,9 @@ pub async fn get_albums_paginate(
     page: u64,
     size: u64,
 ) -> anyhow::Result<Vec<entity::album::Model>> {
-    let db_albums = entity::album::Entity::find().paginate(db, size);
+    let db_albums = entity::album::Entity::find()
+        .order_by_asc(entity::album::Column::Name)
+        .paginate(db, size);
     Ok(db_albums.fetch_page(page).await?)
 }
 pub async fn create_album(
