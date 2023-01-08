@@ -58,39 +58,40 @@ pub async fn get_album(
 /* #[axum_macros::debug_handler]
  */
 pub async fn get_cover(
-    State(state): State<AppState>,
+    state: State<AppState>,
     Path(album_id): Path<String>,
 ) -> Result<Response<BoxBody>, (StatusCode, String)> {
-    let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-
-    let album: Option<entity::album::Model> = entity::album::Entity::find_by_id(album_id)
+    let album = entity::album::Entity::find_by_id(album_id)
         .one(&state.database)
         .await
-        .unwrap();
+        .map_err(|e| {
+            (
+                StatusCode::NOT_FOUND,
+                format!("Unable to find album: {}", e),
+            )
+        })?;
 
-    match album {
-        Some(f) => {
-            if f.cover.is_some() {
-                // Serve image from FS
-                match ServeFile::new(f.cover.unwrap()).oneshot(res).await {
-                    Ok(res) => Ok(res.map(boxed)),
-                    Err(err) => Err((
-                        StatusCode::NOT_FOUND,
-                        format!("Something went wrong: {}", err),
-                    )),
-                }
-            } else {
-                // Serve unknown album image
-                let unknown_album = ASSETS.get_file("unknown_album.jpg").unwrap();
-                let body = boxed(Full::from(unknown_album.contents()));
-                Ok(Response::builder()
-                    .header(header::CONTENT_TYPE, "image/jpg")
-                    .body(body)
-                    .unwrap())
-            }
-        }
-        None => Err((StatusCode::NOT_FOUND, "Unable to find album".to_string())),
-    }
+    let cover_path = album
+        .unwrap()
+        .cover
+        .ok_or((StatusCode::NOT_FOUND, "Album has no cover".to_string()))?;
+
+    let res = Request::builder()
+        .uri("/")
+        .body(Body::empty())
+        .map_err(|e| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Error creating request: {}", e),
+            )
+        })?;
+    let response = ServeFile::new(cover_path).oneshot(res).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error serving file: {}", e),
+        )
+    })?;
+    Ok(response.map(boxed))
 }
 #[derive(Deserialize, Clone)]
 pub struct GetAllAlbums {
