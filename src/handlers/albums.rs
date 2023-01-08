@@ -105,36 +105,30 @@ pub async fn get_albums(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,
 ) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
-    if params.size.is_some() {
-        let size: u64 = params.size.unwrap_or(10);
-        let albums: Result<Vec<entity::album::Model>, anyhow::Error> =
-            services::album::get_albums_paginate(&state.database, params.page.unwrap_or(0), size)
-                .await;
-        match albums {
-            Ok(_albums) => Ok(Json(_albums)),
-            Err(err) => Err((
-                StatusCode::ACCEPTED,
-                format!("Failed to get albums {}", err),
-            )),
-        }
-    } else {
-        let albums: Result<Vec<entity::album::Model>, anyhow::Error> = match params.sort.as_deref()
-        {
-            Some("latest") => {
-                services::album::get_latest_albums(&state.database, params.size).await
-            }
-            _ => services::album::get_all_albums(&state.database).await,
-        };
-
-        match albums {
-            Ok(_albums) => Ok(Json(_albums)),
-            Err(err) => Err((
-                StatusCode::ACCEPTED,
-                format!("Failed to get albums {}", err),
-            )),
-        }
+    let albums = services::album::get_all_albums(&state.database, params.size, params.sort).await;
+    match albums {
+        Ok(_albums) => Ok(Json(_albums)),
+        Err(err) => Err((
+            StatusCode::ACCEPTED,
+            format!("Failed to get albums {}", err),
+        )),
     }
+    //}
 }
+
+/* else if params.size.is_some() {
+    let size: u64 = params.size.unwrap_or(10);
+    albums =
+        services::album::get_albums_paginate(&state.database, params.page.unwrap_or(0), size)
+            .await;
+    match albums {
+        Ok(_albums) => Ok(Json(_albums)),
+        Err(err) => Err((
+            StatusCode::ACCEPTED,
+            format!("Failed to get albums {}", err),
+        )),
+    }
+} */
 /* pub async fn get_album_page(
     Extension(ref db): Extension<DatabaseConnection>,
     axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,

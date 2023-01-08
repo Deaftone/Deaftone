@@ -44,11 +44,33 @@ pub async fn _update_cover_for_path(
     Ok(())
 }
 
-pub async fn get_all_albums(db: &DatabaseConnection) -> anyhow::Result<Vec<entity::album::Model>> {
-    Ok(entity::album::Entity::find()
-        .all(db)
-        .await
-        .expect("Failed to get albums"))
+pub async fn get_all_albums(
+    db: &DatabaseConnection,
+    size: Option<u64>,
+    sort: Option<String>,
+) -> anyhow::Result<Vec<entity::album::Model>> {
+    let order = match sort.unwrap_or_default().as_str() {
+        "name" => entity::album::Column::Name,
+        "artist_name" => entity::album::Column::ArtistName,
+        "year" => entity::album::Column::Year,
+        "latest" => entity::album::Column::CreatedAt,
+        _ => entity::album::Column::Name,
+    };
+
+    match order {
+        entity::album::Column::CreatedAt => Ok(entity::album::Entity::find()
+            .order_by_desc(order)
+            .limit(size.unwrap_or(u64::MAX))
+            .all(db)
+            .await
+            .expect("Failed to get albums")),
+        _ => Ok(entity::album::Entity::find()
+            .order_by_asc(order)
+            .limit(size.unwrap_or(u64::MAX))
+            .all(db)
+            .await
+            .expect("Failed to get albums")),
+    }
 }
 
 pub async fn get_latest_albums(
@@ -57,7 +79,6 @@ pub async fn get_latest_albums(
 ) -> anyhow::Result<Vec<entity::album::Model>> {
     Ok(entity::album::Entity::find()
         .order_by_desc(entity::album::Column::CreatedAt)
-        .limit(size.unwrap_or(50))
         .all(db)
         .await?)
 }
