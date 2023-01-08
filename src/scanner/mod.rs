@@ -35,7 +35,6 @@ macro_rules! skip_fail {
         }
     };
 }
-
 #[derive(Clone)]
 pub struct Scanner {
     settings: Settings,
@@ -101,48 +100,6 @@ impl Scanner {
             Self::walk_full(&sqlite_pool, current_dir).await.unwrap();
             tracing::info!("Scan completed in: {:.2?}", before.elapsed());
             //Self::walk_partial(&sqlite_pool).await.unwrap();
-
-            /*             sqlx::query("pragma temp_store = memory;")
-                           .execute(&sqlite_pool)
-                           .await
-                           .unwrap();
-                       sqlx::query("pragma mmap_size = 30000000000;")
-                           .execute(&sqlite_pool)
-                           .await
-                           .unwrap();
-                       sqlx::query("pragma synchronous = normal;")
-                           .execute(&sqlite_pool)
-                           .await
-                           .unwrap();
-                       sqlx::query("pragma page_size = 4096;")
-                           .execute(&sqlite_pool)
-                           .await
-                           .unwrap();
-                       sqlx::query("PRAGMA foreign_keys = ON;")
-                           .execute(&sqlite_pool)
-                           .await
-                           .unwrap();
-            */
-
-            // Cleanup orphans
-            /*             db.execute(Statement::from_string(
-                db.get_database_backend(),
-                "delete from albums where id not in (
-                select albumId from songs
-              )"
-                .to_owned(),
-            ))
-            .await
-            .unwrap();
-            db.execute(Statement::from_string(
-                db.get_database_backend(),
-                "delete from artists where id not in (
-                select artistId from albums
-              )"
-                .to_owned(),
-            ))
-            .await
-            .unwrap(); */
             SCAN_STATUS.store(true, Ordering::Release);
         });
     }
@@ -240,6 +197,11 @@ impl Scanner {
             .follow_links(true)
             .into_iter()
             .filter_map(|e| e.ok())
+            .filter(|f| {
+                !f.path()
+                    .iter()
+                    .any(|s| s.to_str().map(|x| x.starts_with('.')).unwrap_or(false))
+            })
         {
             if entry.file_type().is_dir() {
                 let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
@@ -392,6 +354,7 @@ impl Scanner {
                         }
                     }
                 }
+                tracing::info!("Creating song \"{:}\"", metadata.name);
                 skip_fail!(services::song::create_song(&mut tx, &album_id, &metadata).await);
             }
         }
