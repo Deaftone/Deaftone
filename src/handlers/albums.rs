@@ -67,12 +67,12 @@ pub async fn get_cover(
         .map_err(|e| {
             (
                 StatusCode::NOT_FOUND,
-                format!("Unable to find album: {}", e),
+                format!("Failed to get Album from Db: {}", e),
             )
         })?;
 
     let cover_path = album
-        .unwrap()
+        .ok_or((StatusCode::NOT_FOUND, "Album not found".to_string()))?
         .cover
         .ok_or((StatusCode::NOT_FOUND, "Album has no cover".to_string()))?;
 
