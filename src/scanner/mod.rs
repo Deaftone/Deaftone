@@ -1,5 +1,5 @@
 use crate::{services, settings::Settings, SCAN_STATUS};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::{
     sqlite::{
@@ -266,13 +266,15 @@ impl Scanner {
 
     // Scan dir function for a full directory scan missing check for seen songs
     async fn scan_dir(path: &String, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
-        let mut tx = sqlite_pool.begin().await.unwrap();
-        tracing::debug!("Scanning dir {:}", &path);
-
+        let mut tx = sqlite_pool
+            .begin()
+            .await
+            .map_err(|e| anyhow!("Error beginning transaction: {}", e))?;
+        tracing::debug!("Scanning dir {:}", path);
         let mut create_album = true;
         let mut create_artist = true;
-        let mut album_id: String = String::new();
-        let mut artist_id: String = String::new();
+        let mut album_id = String::new();
+        let mut artist_id = String::new();
 
         for entry in fs::read_dir(path)? {
             // Is assigning here bad? Since in a large collection it could be alot of allocations
