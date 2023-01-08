@@ -1,5 +1,5 @@
 use chrono::Utc;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
 
 pub async fn create_artist(
@@ -23,6 +23,17 @@ pub async fn create_artist(
     .bind(&init_time)
     .execute(&mut *tx)
     .await?)
+}
+
+pub async fn get_latest_albums(
+    db: &DatabaseConnection,
+    size: Option<u64>,
+) -> anyhow::Result<Vec<entity::artist::Model>> {
+    Ok(entity::artist::Entity::find()
+        .order_by_desc(entity::artist::Column::CreatedAt)
+        .limit(size.unwrap_or(50))
+        .all(db)
+        .await?)
 }
 
 pub async fn _find_by_name(

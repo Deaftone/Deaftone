@@ -5,11 +5,9 @@ use axum::{
     Json,
 };
 use sea_orm::{EntityTrait, QueryOrder, QuerySelect};
-use serde::Deserialize;
-use serde::Serialize;
 
-use crate::AppState;
-use serde::{de, Deserializer};
+use crate::{services, AppState};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use std::{fmt, str::FromStr};
 #[derive(Serialize)]
 pub struct ArtistResponse {
@@ -84,14 +82,12 @@ pub async fn get_artists(
     } */
 }
 
-pub async fn get_latest_artists(state: &AppState, limit: u64) -> Json<Vec<entity::artist::Model>> {
-    let artists: Vec<entity::artist::Model> = entity::artist::Entity::find()
-        .order_by_desc(entity::artist::Column::CreatedAt)
-        .limit(limit)
-        .all(&state.database)
-        .await
-        .expect("Failed to get artists");
-    Json(artists)
+pub async fn get_latest_artists(state: &AppState, size: u64) -> Json<Vec<entity::artist::Model>> {
+    Json(
+        services::artist::get_latest_albums(&state.database, Some(size))
+            .await
+            .unwrap(),
+    )
 }
 
 fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
