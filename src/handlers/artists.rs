@@ -31,7 +31,7 @@ pub struct GetArtists {
     #[serde(default, deserialize_with = "empty_string_as_none")]
     size: Option<u64>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
-    page: Option<u64>,
+    _page: Option<u64>,
 }
 pub async fn get_artists(
     State(state): State<AppState>,
