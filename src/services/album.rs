@@ -1,4 +1,4 @@
-use anyhow::Ok;
+use anyhow::anyhow;
 use chrono::Utc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
@@ -11,10 +11,12 @@ pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
 ) -> anyhow::Result<Vec<(entity::album::Model, Vec<entity::song::Model>)>> {
-    Ok(entity::album::Entity::find_by_id(album_id)
-        .find_with_related(entity::song::Entity)
-        .all(db)
-        .await?)
+    anyhow::Ok(
+        entity::album::Entity::find_by_id(album_id)
+            .find_with_related(entity::song::Entity)
+            .all(db)
+            .await?,
+    )
 }
 pub async fn _find_by_name(
     db: &DatabaseConnection,
@@ -49,27 +51,34 @@ pub async fn get_albums(
     size: Option<u64>,
     sort: Option<String>,
 ) -> anyhow::Result<Vec<entity::album::Model>> {
-    let order = match sort.unwrap_or_default().as_str() {
-        "name" => entity::album::Column::Name,
-        "artist_name" => entity::album::Column::ArtistName,
-        "year" => entity::album::Column::Year,
-        "latest" => entity::album::Column::CreatedAt,
+    let order = match sort.as_deref() {
+        Some("name") => entity::album::Column::Name,
+        Some("artist_name") => entity::album::Column::ArtistName,
+        Some("year") => entity::album::Column::Year,
+        Some("latest") => entity::album::Column::CreatedAt,
         _ => entity::album::Column::Name,
     };
-    match order {
-        entity::album::Column::CreatedAt => Ok(entity::album::Entity::find()
-            .order_by_desc(order)
-            .limit(size.unwrap_or(100)) // FIXME: Either remove this and add the hack. Or implement sea-orm None for limit
-            .all(db)
-            .await
-            .expect("Failed to get albums")),
-        _ => Ok(entity::album::Entity::find()
-            .order_by_asc(order)
-            .limit(size.unwrap_or(100)) // FIXME: Either remove this and add the hack. Or implement sea-orm None for limit
-            .all(db)
-            .await
-            .expect("Failed to get albums")),
+
+    let limit = size.unwrap_or(100);
+    let result = match order {
+        entity::album::Column::CreatedAt => {
+            entity::album::Entity::find()
+                .order_by_desc(order)
+                .limit(limit)
+                .all(db)
+                .await
+        }
+        _ => {
+            entity::album::Entity::find()
+                .order_by_asc(order)
+                .limit(limit)
+                .all(db)
+                .await
+        }
     }
+    .map_err(|e| anyhow!("Failed to get albums: {}", e))?;
+
+    Ok(result)
 }
 
 pub async fn get_albums_paginate(
