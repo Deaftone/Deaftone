@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, DatabaseConnection};
@@ -13,7 +13,7 @@ impl Database {
     pub async fn new(settings: &Settings) -> Result<Database, anyhow::Error> {
         let db_path = settings.db_path.as_str();
         if fs::metadata(db_path).is_err() {
-            fs::File::create(db_path).expect("Created file");
+            fs::File::create(db_path).map_err(|e| anyhow!("Error creating file: {}", e))?;
         }
         let mut opt: ConnectOptions = ConnectOptions::new(format!("sqlite://{}?mode=rwc", db_path));
         opt.max_connections(100)
@@ -29,7 +29,7 @@ impl Database {
         Ok(db)
     }
 
-    async fn migrate_up(&self) -> Result<()> {
+    async fn migrate_up(&self) -> Result<(), anyhow::Error> {
         Migrator::up(&self.pool, None).await?;
         Ok(())
     }
