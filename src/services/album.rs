@@ -1,7 +1,9 @@
 use anyhow::Ok;
 use chrono::Utc;
-use sea_orm::PaginatorTrait;
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
+};
+use sea_orm::{PaginatorTrait, QuerySelect};
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
 
@@ -43,11 +45,21 @@ pub async fn _update_cover_for_path(
 }
 
 pub async fn get_all_albums(db: &DatabaseConnection) -> anyhow::Result<Vec<entity::album::Model>> {
-    let albums: Vec<entity::album::Model> = entity::album::Entity::find()
+    Ok(entity::album::Entity::find()
         .all(db)
         .await
-        .expect("Failed to get albums");
-    Ok(albums)
+        .expect("Failed to get albums"))
+}
+
+pub async fn get_latest_albums(
+    db: &DatabaseConnection,
+    size: Option<u64>,
+) -> anyhow::Result<Vec<entity::album::Model>> {
+    Ok(entity::album::Entity::find()
+        .order_by_desc(entity::album::Column::CreatedAt)
+        .limit(size.unwrap_or(50))
+        .all(db)
+        .await?)
 }
 pub async fn get_albums_paginate(
     db: &DatabaseConnection,
@@ -55,8 +67,7 @@ pub async fn get_albums_paginate(
     size: u64,
 ) -> anyhow::Result<Vec<entity::album::Model>> {
     let db_albums = entity::album::Entity::find().paginate(db, size);
-    let albums = db_albums.fetch_page(page).await?;
-    Ok(albums)
+    Ok(db_albums.fetch_page(page).await?)
 }
 pub async fn create_album(
     tx: &mut Transaction<'_, Sqlite>,

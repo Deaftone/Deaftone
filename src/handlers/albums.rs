@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{fmt, str::FromStr};
 
 use axum::{
     body::{boxed, Body, BoxBody, Full},
@@ -9,7 +9,8 @@ use axum::{
 
 use include_dir::{include_dir, Dir};
 use sea_orm::EntityTrait;
-use serde::Serialize;
+use serde::{de, Deserialize, Deserializer, Serialize};
+
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
 
@@ -91,24 +92,24 @@ pub async fn get_cover(
         None => Err((StatusCode::NOT_FOUND, "Unable to find album".to_string())),
     }
 }
-
+#[derive(Deserialize, Clone)]
+pub struct GetAllAlbums {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    sort: Option<String>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    size: Option<u64>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    page: Option<u64>,
+}
 pub async fn get_albums(
     State(state): State<AppState>,
-    axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
+    axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,
 ) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
-    if params.get("size").is_some() {
-        let size: u64 = params.get("size").unwrap().parse::<u64>().unwrap_or(10);
+    if params.size.is_some() {
+        let size: u64 = params.size.unwrap_or(10);
         let albums: Result<Vec<entity::album::Model>, anyhow::Error> =
-            services::album::get_albums_paginate(
-                &state.database,
-                params
-                    .get("page")
-                    .unwrap_or(&String::from("0"))
-                    .parse::<u64>()
-                    .unwrap_or(0),
-                size,
-            )
-            .await;
+            services::album::get_albums_paginate(&state.database, params.page.unwrap_or(0), size)
+                .await;
         match albums {
             Ok(_albums) => Ok(Json(_albums)),
             Err(err) => Err((
@@ -117,8 +118,14 @@ pub async fn get_albums(
             )),
         }
     } else {
-        let albums: Result<Vec<entity::album::Model>, anyhow::Error> =
-            services::album::get_all_albums(&state.database).await;
+        let albums: Result<Vec<entity::album::Model>, anyhow::Error> = match params.sort.as_deref()
+        {
+            Some("latest") => {
+                services::album::get_latest_albums(&state.database, params.size).await
+            }
+            _ => services::album::get_all_albums(&state.database).await,
+        };
+
         match albums {
             Ok(_albums) => Ok(Json(_albums)),
             Err(err) => Err((
@@ -147,3 +154,15 @@ pub async fn get_albums(
         )),
     }
 } */
+fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromStr,
+    T::Err: fmt::Display,
+{
+    let opt = Option::<String>::deserialize(de)?;
+    match opt.as_deref() {
+        None | Some("") => Ok(None),
+        Some(s) => FromStr::from_str(s).map_err(de::Error::custom).map(Some),
+    }
+}
