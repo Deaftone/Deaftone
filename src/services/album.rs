@@ -73,24 +73,29 @@ pub async fn get_all_albums(
     }
 }
 
-pub async fn get_latest_albums(
-    db: &DatabaseConnection,
-    size: Option<u64>,
-) -> anyhow::Result<Vec<entity::album::Model>> {
-    Ok(entity::album::Entity::find()
-        .order_by_desc(entity::album::Column::CreatedAt)
-        .all(db)
-        .await?)
-}
 pub async fn get_albums_paginate(
     db: &DatabaseConnection,
-    page: u64,
-    size: u64,
+    page: Option<u64>,
+    size: Option<u64>,
+    sort: Option<String>,
 ) -> anyhow::Result<Vec<entity::album::Model>> {
-    let db_albums = entity::album::Entity::find()
-        .order_by_asc(entity::album::Column::Name)
-        .paginate(db, size);
-    Ok(db_albums.fetch_page(page).await?)
+    let order = match sort.unwrap_or_default().as_str() {
+        "name" => entity::album::Column::Name,
+        "artist_name" => entity::album::Column::ArtistName,
+        "year" => entity::album::Column::Year,
+        "latest" => entity::album::Column::CreatedAt,
+        _ => entity::album::Column::Name,
+    };
+
+    let db_albums = match order {
+        entity::album::Column::CreatedAt => entity::album::Entity::find()
+            .order_by_desc(order)
+            .paginate(db, size.unwrap_or(u64::MAX)),
+        _ => entity::album::Entity::find()
+            .order_by_asc(order)
+            .paginate(db, size.unwrap_or(u64::MAX)),
+    };
+    Ok(db_albums.fetch_page(page.unwrap_or(0)).await?)
 }
 pub async fn create_album(
     tx: &mut Transaction<'_, Sqlite>,

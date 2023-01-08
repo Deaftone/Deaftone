@@ -105,7 +105,36 @@ pub async fn get_albums(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,
 ) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
-    let albums = services::album::get_all_albums(&state.database, params.size, params.sort).await;
+    let albums = match params.page.is_some() {
+        true => {
+            services::album::get_albums_paginate(
+                &state.database,
+                params.page,
+                params.size,
+                params.sort,
+            )
+            .await
+        }
+        _ => services::album::get_all_albums(&state.database, params.size, params.sort).await,
+    };
+    match albums {
+        Ok(_albums) => Ok(Json(_albums)),
+        Err(err) => Err((
+            StatusCode::ACCEPTED,
+            format!("Failed to get albums {}", err),
+        )),
+    }
+
+    //}
+}
+
+/* pub async fn get_albums_paginate(
+    State(state): State<AppState>,
+    axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,
+    Path(page): Path<u64>,
+) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
+    let albums =
+        services::album::get_albums_paginate(&state.database, page, params.size, params.sort).await;
     match albums {
         Ok(_albums) => Ok(Json(_albums)),
         Err(err) => Err((
@@ -114,8 +143,7 @@ pub async fn get_albums(
         )),
     }
     //}
-}
-
+} */
 /* else if params.size.is_some() {
     let size: u64 = params.size.unwrap_or(10);
     albums =
