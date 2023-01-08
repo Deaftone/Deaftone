@@ -4,44 +4,25 @@ use axum::{
     http::StatusCode,
     Json,
 };
-use sea_orm::{EntityTrait, QueryOrder, QuerySelect};
+use sea_orm::{EntityTrait, QuerySelect};
 
 use crate::{services, AppState};
-use serde::{de, Deserialize, Deserializer, Serialize};
+use serde::{de, Deserialize, Deserializer};
 use std::{fmt, str::FromStr};
-#[derive(Serialize)]
-pub struct ArtistResponse {
-    id: String,
-    name: String,
-    image: String,
-    bio: String,
-    albums: Vec<entity::album::Model>,
-}
+
 pub async fn get_artist(
     Path(artist_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Json<ArtistResponse>, (StatusCode, String)> {
-    let artist = entity::artist::Entity::find_by_id(artist_id)
-        .order_by_desc(entity::album::Column::Year)
-        .find_with_related(entity::album::Entity)
-        .all(&state.database)
-        .await
-        .expect("Failed to get album");
+) -> Result<Json<services::artist::DbArtist>, (StatusCode, String)> {
+    let artist = services::artist::get_artist(&state.database, artist_id).await;
 
-    return match artist.first() {
-        Some(f) => {
-            let artist_model = f.0.to_owned();
-            let albums = f.1.to_owned();
-            Ok(Json(ArtistResponse {
-                id: artist_model.id,
-                name: artist_model.name,
-                image: artist_model.image.unwrap_or_default(),
-                bio: artist_model.bio.unwrap_or_default(),
-                albums,
-            }))
-        }
-        None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
-    };
+    match artist {
+        Ok(_artist) => Ok(Json(_artist)),
+        Err(err) => Err((
+            StatusCode::ACCEPTED,
+            format!("Failed to get artist {}", err),
+        )),
+    }
 }
 #[derive(Deserialize, Clone)]
 pub struct GetALlArtists {
@@ -73,13 +54,6 @@ pub async fn get_artists(
             ),
         },
     }
-
-    /*     match params.sort.as_ref().unwrap().as_str() {
-        "latest" => get_latest_artists(&state, params.limit.unwrap_or(50)).await,
-        _ => {
-
-        }
-    } */
 }
 
 pub async fn get_latest_artists(state: &AppState, size: u64) -> Json<Vec<entity::artist::Model>> {

@@ -1,5 +1,6 @@
 use chrono::Utc;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
+use serde::Serialize;
 use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
 
 pub async fn create_artist(
@@ -23,6 +24,31 @@ pub async fn create_artist(
     .bind(&init_time)
     .execute(&mut *tx)
     .await?)
+}
+#[derive(Serialize)]
+pub struct DbArtist {
+    id: String,
+    name: String,
+    image: String,
+    bio: String,
+    albums: Vec<entity::album::Model>,
+}
+pub async fn get_artist(db: &DatabaseConnection, artist_id: String) -> anyhow::Result<DbArtist> {
+    let artist_db = entity::artist::Entity::find_by_id(artist_id)
+        .order_by_desc(entity::album::Column::Year)
+        .find_with_related(entity::album::Entity)
+        .all(db)
+        .await?;
+    let artist = artist_db.first().expect("No artist found");
+    let artist_model = artist.0.to_owned();
+    let albums = artist.1.to_owned();
+    Ok(DbArtist {
+        id: artist_model.id,
+        name: artist_model.name,
+        image: artist_model.image.unwrap_or_default(),
+        bio: artist_model.bio.unwrap_or_default(),
+        albums,
+    })
 }
 
 pub async fn get_latest_artist(
