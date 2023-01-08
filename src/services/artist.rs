@@ -25,7 +25,7 @@ pub async fn create_artist(
     .await?)
 }
 
-pub async fn get_latest_albums(
+pub async fn get_latest_artist(
     db: &DatabaseConnection,
     size: Option<u64>,
 ) -> anyhow::Result<Vec<entity::artist::Model>> {

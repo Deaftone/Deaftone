@@ -84,7 +84,7 @@ pub async fn get_artists(
 
 pub async fn get_latest_artists(state: &AppState, size: u64) -> Json<Vec<entity::artist::Model>> {
     Json(
-        services::artist::get_latest_albums(&state.database, Some(size))
+        services::artist::get_latest_artist(&state.database, Some(size))
             .await
             .unwrap(),
     )
