@@ -1,12 +1,13 @@
 use std::{fmt, str::FromStr};
 
 use axum::{
-    body::{boxed, Body, BoxBody},
+    body::{boxed, Body, BoxBody, Full},
     extract::{Path, State},
-    http::{Request, Response, StatusCode},
+    http::{header, Request, Response, StatusCode},
     Json,
 };
 
+use include_dir::{include_dir, Dir};
 use sea_orm::EntityTrait;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
@@ -15,6 +16,7 @@ use tower_http::services::ServeFile;
 
 use crate::{services, AppState};
 
+static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/resources");
 #[allow(non_snake_case)]
 #[derive(Serialize)]
 pub struct AlbumResponse {
@@ -53,43 +55,40 @@ pub async fn get_album(
         None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
     }
 }
-/* #[axum_macros::debug_handler]
- */
 pub async fn get_cover(
-    state: State<AppState>,
+    State(state): State<AppState>,
     Path(album_id): Path<String>,
 ) -> Result<Response<BoxBody>, (StatusCode, String)> {
-    let album = entity::album::Entity::find_by_id(album_id)
+    let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
+
+    let album: Option<entity::album::Model> = entity::album::Entity::find_by_id(album_id)
         .one(&state.database)
         .await
-        .map_err(|e| {
-            (
-                StatusCode::NOT_FOUND,
-                format!("Failed to get Album from Db: {}", e),
-            )
-        })?;
+        .unwrap();
 
-    let cover_path = album
-        .ok_or((StatusCode::NOT_FOUND, "Album not found".to_string()))?
-        .cover
-        .ok_or((StatusCode::NOT_FOUND, "Album has no cover".to_string()))?;
-
-    let res = Request::builder()
-        .uri("/")
-        .body(Body::empty())
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Error creating request: {}", e),
-            )
-        })?;
-    let response = ServeFile::new(cover_path).oneshot(res).await.map_err(|e| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Error serving file: {}", e),
-        )
-    })?;
-    Ok(response.map(boxed))
+    match album {
+        Some(f) => {
+            if f.cover.is_some() {
+                // Serve image from FS
+                match ServeFile::new(f.cover.unwrap()).oneshot(res).await {
+                    Ok(res) => Ok(res.map(boxed)),
+                    Err(err) => Err((
+                        StatusCode::NOT_FOUND,
+                        format!("Something went wrong: {}", err),
+                    )),
+                }
+            } else {
+                // Serve unknown album image
+                let unknown_album = ASSETS.get_file("unknown_album.jpg").unwrap();
+                let body = boxed(Full::from(unknown_album.contents()));
+                Ok(Response::builder()
+                    .header(header::CONTENT_TYPE, "image/jpg")
+                    .body(body)
+                    .unwrap())
+            }
+        }
+        None => Err((StatusCode::NOT_FOUND, "Unable to find album".to_string())),
+    }
 }
 #[derive(Deserialize, Clone)]
 pub struct GetAllAlbums {
