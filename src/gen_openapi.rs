@@ -1,4 +1,3 @@
-use deaftone::handlers::albums::*;
 use std::fs;
 use utoipa::OpenApi;
 fn main() {
