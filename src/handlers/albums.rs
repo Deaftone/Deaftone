@@ -146,58 +146,8 @@ pub async fn get_albums(
             format!("Failed to get albums {}", err),
         )),
     }
-
-    //}
 }
 
-/* pub async fn get_albums_paginate(
-    State(state): State<AppState>,
-    axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,
-    Path(page): Path<u64>,
-) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
-    let albums =
-        services::album::get_albums_paginate(&state.database, page, params.size, params.sort).await;
-    match albums {
-        Ok(_albums) => Ok(Json(_albums)),
-        Err(err) => Err((
-            StatusCode::ACCEPTED,
-            format!("Failed to get albums {}", err),
-        )),
-    }
-    //}
-} */
-/* else if params.size.is_some() {
-    let size: u64 = params.size.unwrap_or(10);
-    albums =
-        services::album::get_albums_paginate(&state.database, params.page.unwrap_or(0), size)
-            .await;
-    match albums {
-        Ok(_albums) => Ok(Json(_albums)),
-        Err(err) => Err((
-            StatusCode::ACCEPTED,
-            format!("Failed to get albums {}", err),
-        )),
-    }
-} */
-/* pub async fn get_album_page(
-    Extension(ref db): Extension<DatabaseConnection>,
-    axum::extract::Query(params): axum::extract::Query<HashMap<String, String>>,
-) -> Result<Json<Vec<entity::album::Model>>, (StatusCode, String)> {
-    println!("{:?}", params);
-    let albums = services::album::get_albums_paginate(
-        db,
-        0,
-        params.get("size").unwrap().parse::<usize>().unwrap(),
-    )
-    .await;
-    match albums {
-        Ok(_albums) => return Ok(Json(_albums)),
-        Err(err) => Err((
-            StatusCode::ACCEPTED,
-            format!("Failed to get albums {}", err),
-        )),
-    }
-} */
 fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
 where
     D: Deserializer<'de>,
