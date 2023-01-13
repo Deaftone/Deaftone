@@ -118,7 +118,7 @@ pub async fn get_albums(
     match albums {
         Ok(_albums) => Ok(Json(_albums)),
         Err(err) => Err((
-            StatusCode::ACCEPTED,
+            StatusCode::NOT_FOUND,
             format!("Failed to get albums {}", err),
         )),
     }
