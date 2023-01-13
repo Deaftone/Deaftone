@@ -11,7 +11,7 @@ use std::{fmt, str::FromStr};
 pub async fn get_artist(
     Path(artist_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Json<services::artist::DbArtist>, (StatusCode, String)> {
+) -> Result<Json<services::DbArtist>, (StatusCode, String)> {
     let artist = services::artist::get_artist_by_id(&state.database, artist_id).await;
 
     match artist {

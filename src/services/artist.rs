@@ -3,6 +3,7 @@ use chrono::Utc;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use serde::Serialize;
 use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
+use super::{DbArtist, DeaftoneSelect};
 pub async fn create_artist(
     tx: &mut Transaction<'_, Sqlite>,
     id: &String,
@@ -64,19 +65,18 @@ pub async fn get_artists(
         Some("latest") => entity::artist::Column::CreatedAt,
         _ => entity::artist::Column::Name,
     };
-    let limit = size.unwrap_or(100);
     let result = match order {
         entity::artist::Column::CreatedAt => {
             entity::artist::Entity::find()
                 .order_by_desc(order)
-                .limit(limit)
+                .limit_option(size)
                 .all(db)
                 .await
         }
         _ => {
             entity::artist::Entity::find()
                 .order_by_asc(order)
-                .limit(limit)
+                .limit_option(size)
                 .all(db)
                 .await
         }
