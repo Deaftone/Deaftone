@@ -1,9 +1,11 @@
+use super::{DbArtist, DeaftoneSelect};
 use anyhow::anyhow;
 use chrono::Utc;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
-use serde::Serialize;
+use sea_orm::{
+    ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder,
+    QuerySelect,
+};
 use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
-use super::{DbArtist, DeaftoneSelect};
 pub async fn create_artist(
     tx: &mut Transaction<'_, Sqlite>,
     id: &String,
@@ -25,14 +27,6 @@ pub async fn create_artist(
     .bind(&init_time)
     .execute(&mut *tx)
     .await?)
-}
-#[derive(Serialize)]
-pub struct DbArtist {
-    id: String,
-    name: String,
-    image: String,
-    bio: String,
-    albums: Vec<entity::album::Model>,
 }
 pub async fn get_artist_by_id(
     db: &DatabaseConnection,
