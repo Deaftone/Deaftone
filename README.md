@@ -1,7 +1,10 @@
 <p align="center">
   <img src="https://user-images.githubusercontent.com/13013625/212359431-231687c0-4aae-4712-aae5-49c5fc6c6bbf.png" alt="Deaftione logo" title="navidrome" align="center" height="340" width="340" />
+
 </p>
-<div align="center">
+
+<h1 align="center">Deaftone</h1>
+<div align="center"
 
 [![license](https://img.shields.io/github/license/Ortygia/Deaftone)](https://github.com/Ortygia/Deaftone/blob/master/LICENSE)
 [![CI](https://github.com/Ortygia/Deaftone/actions/workflows/build.yml/badge.svg)](https://github.com/Ortygia/Deaftone/actions/workflows/build.yml)
