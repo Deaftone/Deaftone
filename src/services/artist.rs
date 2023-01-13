@@ -86,6 +86,29 @@ pub async fn get_artists(
     Ok(result)
 }
 
+pub async fn get_artists_paginate(
+    db: &DatabaseConnection,
+    page: Option<u64>,
+    size: Option<u64>,
+    sort: Option<String>,
+) -> anyhow::Result<Vec<entity::artist::Model>> {
+    let order = match sort.unwrap_or_default().as_str() {
+        "name" => entity::artist::Column::Name,
+        "latest" => entity::artist::Column::CreatedAt,
+        _ => entity::artist::Column::Name,
+    };
+
+    let db_artist = match order {
+        entity::artist::Column::CreatedAt => entity::artist::Entity::find()
+            .order_by_desc(order)
+            .paginate(db, size.unwrap_or(u64::MAX)),
+        _ => entity::artist::Entity::find()
+            .order_by_asc(order)
+            .paginate(db, size.unwrap_or(u64::MAX)),
+    };
+    Ok(db_artist.fetch_page(page.unwrap_or(0)).await?)
+}
+
 pub async fn get_latest_artist(
     db: &DatabaseConnection,
     size: Option<u64>,

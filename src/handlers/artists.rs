@@ -35,11 +35,18 @@ pub async fn get_artists(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<GetArtists>,
 ) -> Result<Json<Vec<entity::artist::Model>>, (StatusCode, String)> {
-    let artists = services::artist::get_artists(&state.database, params.size, params.sort).await;
-    /* = match params.page.is_some() {
-        true => services::artist::get_artists(&state.database, params.size, params.sort).await,
-        _ => ,
-    }; */
+    let artists = match params.page.is_some() {
+        true => {
+            services::artist::get_artists_paginate(
+                &state.database,
+                params.page,
+                params.size,
+                params.sort,
+            )
+            .await
+        }
+        _ => services::artist::get_artists(&state.database, params.size, params.sort).await,
+    };
     match artists {
         Ok(artists) => Ok(Json(artists)),
         Err(err) => Err((
