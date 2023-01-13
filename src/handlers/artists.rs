@@ -3,11 +3,22 @@ use axum::{
     http::StatusCode,
     Json,
 };
+use utoipa::{IntoParams, ToSchema};
 
 use crate::{services, AppState};
 use serde::{de, Deserialize, Deserializer};
 use std::{fmt, str::FromStr};
 
+#[utoipa::path(
+    get,
+    path = "/artists/{id}",
+    params(
+        ("id" = String, Path, description = "Artist Id")
+    ),
+    responses(
+        (status = 200, description = "List containing albums", body = [entity::album::Model])
+    )
+)]
 pub async fn get_artist(
     Path(artist_id): Path<String>,
     State(state): State<AppState>,
@@ -22,18 +33,30 @@ pub async fn get_artist(
         )),
     }
 }
-#[derive(Deserialize, Clone)]
-pub struct GetArtists {
+#[derive(Deserialize, Clone, IntoParams, ToSchema)]
+pub struct GetAllArtists {
     #[serde(default, deserialize_with = "empty_string_as_none")]
+    #[schema(example = "sort = name | latest")]
     sort: Option<String>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
     size: Option<u64>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
     page: Option<u64>,
 }
+
+#[utoipa::path(
+    get,
+    path = "/artists",
+    params(
+        GetAllArtists
+    ),
+    responses(
+        (status = 200, description = "List containing artists", body = [entity::artist::Model])
+    )
+)]
 pub async fn get_artists(
     State(state): State<AppState>,
-    axum::extract::Query(params): axum::extract::Query<GetArtists>,
+    axum::extract::Query(params): axum::extract::Query<GetAllArtists>,
 ) -> Result<Json<Vec<entity::artist::Model>>, (StatusCode, String)> {
     let artists = match params.page.is_some() {
         true => {

@@ -11,14 +11,14 @@ use include_dir::{include_dir, Dir};
 use sea_orm::EntityTrait;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
+use crate::{services, AppState};
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
-
-use crate::{services, AppState};
+use utoipa::{IntoParams, ToSchema};
 
 static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/resources");
 #[allow(non_snake_case)]
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct AlbumResponse {
     id: String,
     name: String,
@@ -29,6 +29,17 @@ pub struct AlbumResponse {
     songCount: i32,
     songs: Vec<entity::song::Model>,
 }
+
+#[utoipa::path(
+    get,
+    path = "/albums/{id}",
+    params(
+        ("id" = String, Path, description = "Album Id")
+    ),
+    responses(
+        (status = 200, description = "Returns a album", body = AlbumResponse)
+    )
+)]
 pub async fn get_album(
     Path(album_id): Path<String>,
     State(state): State<AppState>,
@@ -90,15 +101,28 @@ pub async fn get_cover(
         None => Err((StatusCode::NOT_FOUND, "Unable to find album".to_string())),
     }
 }
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, IntoParams, ToSchema)]
 pub struct GetAllAlbums {
     #[serde(default, deserialize_with = "empty_string_as_none")]
+    #[schema(example = "sort = name | artist_name | year | latest")]
     sort: Option<String>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
     size: Option<u64>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
     page: Option<u64>,
 }
+
+#[utoipa::path(
+    get,
+    path = "/albums",
+    params(
+        GetAllAlbums
+    ),
+    responses(
+        (status = 200, description = "List containing albums", body = [Vec<entity::album::Model>]),
+        (status = 404, description = "Album not found")
+    )
+)]
 pub async fn get_albums(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,

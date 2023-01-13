@@ -2,11 +2,13 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, Deserialize, Serialize, ToSchema)]
 #[sea_orm(table_name = "artists")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
+    #[schema(example = "Artist")]
     pub id: String,
     #[sea_orm(unique)]
     pub name: String,

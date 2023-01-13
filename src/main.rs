@@ -5,9 +5,36 @@ use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    #[derive(OpenApi)]
+    #[openapi(
+        paths(
+            deaftone::handlers::albums::get_albums,
+            deaftone::handlers::albums::get_album,
+            deaftone::handlers::artists::get_artists,
+            deaftone::handlers::artists::get_artist
+        ),
+        components(
+            schemas(
+                deaftone::handlers::albums::GetAllAlbums,
+                deaftone::handlers::albums::AlbumResponse,
+                entity::album::Model,
+                deaftone::handlers::artists::GetAllArtists,
+                entity::artist::Model,
+            )
+        ),
+        tags(
+            (name = "deaftone::handlers::albums", description = "Deaftone Albums API"),
+            (name = "deaftone::handlers::artists", description = "Deaftone Artists API")
+            //(name = "deaftone", description = "Deaftone API")
+        )
+    )]
+    struct ApiDoc;
+
     let settings = match deaftone::settings::Settings::new() {
         std::result::Result::Ok(file) => file,
         Err(err) => {
@@ -61,6 +88,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         scanner: scan,
     };
     let app = Router::new()
+        .merge(SwaggerUi::new("/swagger-ui").url("/api-doc/openapi.json", ApiDoc::openapi()))
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::stream::stream_handler))
         .route(

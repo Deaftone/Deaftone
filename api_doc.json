@@ -1,0 +1,318 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "deaftone",
+    "description": "",
+    "contact": {
+      "name": ""
+    },
+    "license": {
+      "name": ""
+    },
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/albums": {
+      "get": {
+        "tags": [
+          "deaftone::handlers::albums"
+        ],
+        "description": "",
+        "operationId": "get_albums",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List containing albums",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Vec"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Album not found"
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/albums/{id}": {
+      "get": {
+        "tags": [
+          "deaftone::handlers::albums"
+        ],
+        "description": "",
+        "operationId": "get_album",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Album Id",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a album",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumResponse"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/artists": {
+      "get": {
+        "tags": [
+          "deaftone::handlers::artists"
+        ],
+        "description": "",
+        "operationId": "get_artists",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List containing artists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/entity.artist.Model"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/artists/{id}": {
+      "get": {
+        "tags": [
+          "deaftone::handlers::artists"
+        ],
+        "description": "",
+        "operationId": "get_artist",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Artist Id",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List containing albums",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/entity.album.Model"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlbumResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "artist",
+          "artistId",
+          "albumDescription",
+          "year",
+          "songCount",
+          "songs"
+        ],
+        "properties": {
+          "albumDescription": {
+            "type": "string"
+          },
+          "artist": {
+            "type": "string"
+          },
+          "artistId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "songCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "songs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/entity.song.Model"
+            }
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GetAllAlbums": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "type": "string",
+            "example": "sort = name | artist_name | year | latest"
+          }
+        }
+      },
+      "GetAllArtists": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sort": {
+            "type": "string",
+            "example": "sort = name | latest"
+          }
+        }
+      },
+      "Model": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "bio": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "example": "Artist"
+          },
+          "image": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "deaftone::handlers::albums",
+      "description": "Deaftone Albums API"
+    },
+    {
+      "name": "deaftone::handlers::artists",
+      "description": "Deaftone Artists API"
+    }
+  ]
+}

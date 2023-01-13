@@ -6,6 +6,7 @@ use sea_orm::{
     QuerySelect,
 };
 use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
+
 pub async fn create_artist(
     tx: &mut Transaction<'_, Sqlite>,
     id: &String,
@@ -28,6 +29,7 @@ pub async fn create_artist(
     .execute(&mut *tx)
     .await?)
 }
+
 pub async fn get_artist_by_id(
     db: &DatabaseConnection,
     artist_id: String,

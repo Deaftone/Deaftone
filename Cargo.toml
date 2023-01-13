@@ -2,9 +2,13 @@
 name = "deaftone"
 version = "0.0.1"
 edition = "2021"
+default-run = "deaftone"
 [[bin]]
 name = "deaftone"
 path = "src/main.rs"
+[[bin]]
+name = "gen-openapi"
+path = "src/gen_openapi.rs"
 [profile.release]
 lto = true
 codegen-units = 1
@@ -36,7 +40,8 @@ config = "0.13.2"
 futures = "0.3.24"
 sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" ] }
 hyper = { version = "0.14", features = ["full"] }
-
+utoipa = { version = "2.4.2", features = ["axum_extras"] }
+utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
 [dependencies.sea-orm]
 version = "0.10.6" # sea-orm version
 features = [

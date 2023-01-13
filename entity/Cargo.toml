@@ -11,3 +11,5 @@ path = "src/lib.rs"
 [dependencies]
 sea-orm = { version = "0.10.6" }
 serde = { version = "1", features = ["derive"] }
+utoipa = { version = "2.4.2", features = ["axum_extras"] }
+serde_json = { version = "1.0.71" }
