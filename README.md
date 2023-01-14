@@ -52,5 +52,5 @@ db_path is where to save the database
 and logging is for change the log level of the application
 
 # Building from Source
-When building Deaftone from source your MSRV (Minimum supported Rust version) is ``1.65``
+When building Deaftone from source your MSRV (Minimum supported Rust version) is ``1.65 or newer``
 
