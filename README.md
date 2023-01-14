@@ -51,4 +51,6 @@ Where media_path is the location of your media
 db_path is where to save the database
 and logging is for change the log level of the application
 
+# Building from Source
+When building Deaftone from source your MSRV (Minimum supported Rust version) is ``1.65``
 
