@@ -43,7 +43,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: ${{ matrix.rust }}
+          toolchain: stable
           override: true
 
       - uses: Swatinem/rust-cache@v1
@@ -85,7 +85,7 @@ jobs:
           args: -- -D warnings
 
   coverage:
-    name: coverage
+    name: Coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
