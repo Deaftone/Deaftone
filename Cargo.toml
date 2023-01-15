@@ -14,8 +14,6 @@ lto = true
 codegen-units = 1
 [workspace]
 members = [".", "entity", "migration"]
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 entity = { path = "entity" }
 migration = { path = "migration" } 
@@ -41,7 +39,6 @@ futures = "0.3.24"
 sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" ] }
 hyper = { version = "0.14", features = ["full"] }
 utoipa = { version = "2.4.2", features = ["axum_extras"] }
-utoipa-swagger-ui = { version = "3.0.1", features = ["axum"] }
 [dependencies.sea-orm]
 version = "0.10.6" # sea-orm version
 features = [
@@ -49,7 +46,6 @@ features = [
   "runtime-tokio-native-tls",
   "sqlx-sqlite",
 ]
-
 [dependencies.uuid]
 version = "1.1.2"
 features = [

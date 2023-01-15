@@ -5,12 +5,10 @@ use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    #[derive(OpenApi)]
+    /*     #[derive(OpenApi)]
     #[openapi(
         paths(
             deaftone::handlers::albums::get_albums,
@@ -33,7 +31,7 @@ async fn main() -> Result<()> {
             //(name = "deaftone", description = "Deaftone API")
         )
     )]
-    struct ApiDoc;
+    struct ApiDoc; */
 
     let settings = match deaftone::settings::Settings::new() {
         std::result::Result::Ok(file) => file,
@@ -88,7 +86,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         scanner: scan,
     };
     let app = Router::new()
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-doc/openapi.json", ApiDoc::openapi()))
+        // .merge(SwaggerUi::new("/swagger-ui").url("/api-doc/openapi.json", ApiDoc::openapi()))
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::stream::stream_handler))
         .route(
