@@ -6,7 +6,7 @@ use sqlx::{
         SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
         SqliteSynchronous,
     },
-    ConnectOptions, Pool, Row,
+    ConnectOptions, Pool, Row, Sqlite,
 };
 use std::result::Result::Ok;
 use std::sync::atomic::Ordering;
@@ -45,28 +45,36 @@ impl Scanner {
         Ok(scanner)
     }
 
+    pub async fn connect_db() -> Result<Pool<Sqlite>, sqlx::Error> {
+        println!("Connecting to db");
+        let database_file = "deaftone.sqlite";
+        let database_url = format!("sqlite://{}", database_file);
+        let pool_timeout = Duration::from_secs(30);
+        let connection_options = SqliteConnectOptions::from_str(&database_url)
+            .unwrap()
+            .create_if_missing(true)
+            .journal_mode(SqliteJournalMode::Wal)
+            .synchronous(SqliteSynchronous::Normal)
+            .busy_timeout(pool_timeout)
+            .disable_statement_logging()
+            .clone();
+        SqlitePoolOptions::new()
+            .min_connections(5)
+            .max_connections(10)
+            .connect_with(connection_options)
+            .await
+    }
+
     pub fn start_scan(&mut self) {
         SCAN_STATUS.store(true, Ordering::Release);
         let settings = self.settings.clone();
         tokio::spawn(async move {
-            let database_file = "deaftone.sqlite";
-            let database_url = format!("sqlite://{}", database_file);
-            let pool_timeout = Duration::from_secs(30);
-            let connection_options = SqliteConnectOptions::from_str(&database_url)
-                .unwrap()
-                .create_if_missing(true)
-                .journal_mode(SqliteJournalMode::Wal)
-                .synchronous(SqliteSynchronous::Normal)
-                .busy_timeout(pool_timeout)
-                .disable_statement_logging()
-                .clone();
-
-            let sqlite_pool = SqlitePoolOptions::new()
-                .min_connections(5)
-                .max_connections(10)
-                .connect_with(connection_options)
-                .await
-                .unwrap();
+            // This is a hack because sometimes when starting Deaftone running migrations then instantly running the scanner.
+            // The database is locked so we just try and connect again on error
+            let sqlite_pool = match Self::connect_db().await {
+                Ok(pool) => pool,
+                Err(_) => Self::connect_db().await.unwrap(),
+            };
 
             /*             let has_scanned_full =
                 sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
