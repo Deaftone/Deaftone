@@ -62,19 +62,6 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         settings.db_path.as_str()
     );
 
-    // Setup config
-
-    /*    let mut s = Settings::new
-
-    match settings {
-        core::result::Result::Ok(config) => {}
-        Err(e) => {
-            tracing::error!("Failed to load config.json. Error: {}", e);
-            std::process::exit(0);
-        }
-    } */
-    // Connecting SQLite
-
     let db = Database::new(&settings).await?;
     /*     create_playlist(&db).await?;
      */
