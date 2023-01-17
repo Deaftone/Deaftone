@@ -79,7 +79,7 @@ pub async fn create_song(
     .bind(id.to_string())
     .bind(&metadata.path)
     .bind(&metadata.name)
-    .bind(metadata.number)
+    .bind(metadata.disc)
     .bind(&metadata.album_artist)
     .bind(&metadata.album)
     .bind(metadata.track)

@@ -3,11 +3,11 @@ use metaflac::{block::VorbisComment, Tag};
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AudioMetadata {
     pub name: String,
-    pub number: u32,
+    pub track: u32,
     pub album: String,
     pub album_artist: String,
     pub year: i32,
-    pub track: u32,
+    pub disc: u32,
     pub path: String,
     pub lossless: bool,
     pub duration: u32,
@@ -29,7 +29,7 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
             .title()
             .map(|v| v[0].clone())
             .unwrap_or_else(|| "FAILED TO READ TITLE DEAFTONE".to_string()),
-        number: vorbis.track().unwrap_or_default(),
+        track: vorbis.track().unwrap_or(0),
         album: vorbis
             .album()
             .map(|v| v[0].clone())
@@ -42,7 +42,10 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
                 .unwrap_or_else(|| "FAILED TO READ ARTIST DEAFTONE".to_string()),
         },
         year: get_year(vorbis).with_context(|| "Failed to read year")?,
-        track: vorbis.track().unwrap_or(0),
+        disc: vorbis
+            .get("DISCNUMBER")
+            .and_then(|d| d[0].parse::<u32>().ok())
+            .unwrap_or_default(),
         path,
         lossless: true,
         duration: duration.unwrap_or_default(),
