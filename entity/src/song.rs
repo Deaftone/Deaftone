@@ -11,19 +11,19 @@ pub struct Model {
     #[sea_orm(unique)]
     pub path: String,
     pub title: String,
-    pub disk: Option<i32>,
     pub artist: String,
     #[sea_orm(column_name = "albumName")]
     pub album_name: String,
+    pub track: Option<i32>,
+    pub disk: Option<i32>,
     pub codec: Option<String>,
     pub duration: u32,
+    pub year: Option<i32>,
+    pub label: Option<String>,
     #[sea_orm(column_name = "sampleRate")]
     pub sample_rate: Option<String>,
     #[sea_orm(column_name = "bitsPerSample")]
     pub bits_per_sample: Option<i32>,
-    pub track: Option<i32>,
-    pub year: Option<i32>,
-    pub label: Option<String>,
     #[sea_orm(column_name = "musicBrainzRecordingId")]
     pub music_brainz_recording_id: Option<String>,
     #[sea_orm(column_name = "musicBrainzArtistId")]

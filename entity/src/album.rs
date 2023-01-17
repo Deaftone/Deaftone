@@ -9,12 +9,12 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     #[schema(example = "Album")]
     pub id: String,
+    pub path: String,
     pub name: String,
     #[sea_orm(column_name = "artistName")]
     pub artist_name: String,
     pub cover: Option<String>,
     pub album_description: Option<String>,
-    pub path: String,
     pub year: i32,
     #[sea_orm(column_name = "createdAt")]
     pub created_at: String,
