@@ -37,7 +37,7 @@ include_dir = "0.7.2"
 config = "0.13.2"
 futures = "0.3.24"
 sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" ] }
-hyper = { version = "0.14", features = ["full"] }
+hyper = { version = "0.14", features = ["client"] }
 utoipa = { version = "2.4.2", features = ["axum_extras"] }
 [dependencies.sea-orm]
 version = "0.10.6" # sea-orm version
