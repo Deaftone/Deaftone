@@ -1,5 +1,5 @@
 use sea_orm::{EntityTrait, QuerySelect, Select};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 pub mod album;
 pub mod artist;
@@ -22,11 +22,11 @@ where
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct DbArtist {
-    id: String,
-    name: String,
-    image: String,
-    bio: String,
-    albums: Vec<entity::album::Model>,
+    pub id: String,
+    pub name: String,
+    pub image: String,
+    pub bio: String,
+    pub albums: Vec<entity::album::Model>,
 }

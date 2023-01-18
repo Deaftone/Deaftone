@@ -24,7 +24,6 @@ pub async fn get_artist(
     State(state): State<AppState>,
 ) -> Result<Json<services::DbArtist>, (StatusCode, String)> {
     let artist = services::artist::get_artist_by_id(&state.database, artist_id).await;
-
     match artist {
         Ok(_artist) => Ok(Json(_artist)),
         Err(err) => Err((
