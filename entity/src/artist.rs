@@ -15,9 +15,9 @@ pub struct Model {
     pub image: Option<String>,
     pub bio: Option<String>,
     #[sea_orm(column_name = "createdAt")]
-    pub created_at: String,
+    pub created_at: DateTime,
     #[sea_orm(column_name = "updatedAt")]
-    pub updated_at: String,
+    pub updated_at: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

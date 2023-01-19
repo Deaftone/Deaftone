@@ -31,9 +31,9 @@ pub struct Model {
     #[sea_orm(column_name = "musicBrainzTrackId")]
     pub music_brainz_track_id: Option<String>,
     #[sea_orm(column_name = "createdAt")]
-    pub created_at: String,
+    pub created_at: DateTime,
     #[sea_orm(column_name = "updatedAt")]
-    pub updated_at: String,
+    pub updated_at: DateTime,
     #[sea_orm(column_name = "albumId")]
     pub album_id: Option<String>,
     pub liked: bool,
