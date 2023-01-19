@@ -58,5 +58,5 @@ pub async fn seed_test_db(db: &DatabaseConnection) -> Result<ExecResult, DbErr> 
     let exec_res: ExecResult = db
         .execute(Statement::from_string(DatabaseBackend::Sqlite, seed))
         .await?;
-    return Ok(exec_res);
+    Ok(exec_res)
 }
