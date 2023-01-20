@@ -26,10 +26,6 @@ Currently scans 34,000 songs in ~14 mins. My testing is done on a USB Desktop HD
 * Very low system resource usage
 * Multi-platform. Currently building for macOS, Windows, Linux, Arm and Armhf 
 
-# Clients
-* Tauri Desktop client for macOS, Windows and Linux
-https://github.com/Ortygia/Orpheus currently in early stages of development but usable
-* Android based application possibly native or using Tauri Mobile
 
 # Roadmap
 * Built-in metadata scrapping of sources such as MusicBrainz, LastFM and AllMusic
@@ -38,6 +34,19 @@ https://github.com/Ortygia/Orpheus currently in early stages of development but 
 * Recommendation engine
 * ReplayGain support 
 * Radio mode
+
+
+# Documentation
+All documentation can be found in the project's website: https://deaftone.org/intro. Here are some useful direct links:
+- [Overview](https://www.navidrome.org/docs/overview/)
+- [Clients](https://deaftone.org/clients)
+- [Installation](https://deaftone.org/setup/installation)
+- [API](https://deaftone.org/api)
+
+# Clients
+* Tauri Desktop client for macOS, Windows and Linux
+https://github.com/Ortygia/Orpheus currently in early stages of development but usable
+* Android based application possibly native or using Tauri Mobile
 
 # Installation
 Currently to setup and install Deaftone you need to download the binarie in release for you platform or clone and build the repo.
