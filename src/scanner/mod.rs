@@ -273,7 +273,7 @@ impl Scanner {
     }
 
     // Scan dir function for a full directory scan missing check for seen songs
-    async fn scan_dir(path: &String, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
+    async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
         let mut tx = sqlite_pool
             .begin()
             .await
@@ -372,7 +372,7 @@ impl Scanner {
         Ok(())
     }
     async fn insert_directory(
-        path: &String,
+        path: &str,
         mtime: &DateTime<Utc>,
         tx: &Pool<sqlx::Sqlite>,
     ) -> Result<SqliteQueryResult, anyhow::Error> {

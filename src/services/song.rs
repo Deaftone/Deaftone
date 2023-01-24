@@ -53,7 +53,7 @@ pub async fn _get_song_by_path(
 }
 pub async fn create_song(
     tx: &mut Transaction<'_, Sqlite>,
-    album_id: &String,
+    album_id: &str,
     metadata: &AudioMetadata,
 ) -> Result<SqliteQueryResult, anyhow::Error> {
     let id: Uuid = Uuid::new_v4();

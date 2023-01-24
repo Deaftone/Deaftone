@@ -108,10 +108,10 @@ pub async fn get_albums_paginate(
 pub async fn create_album(
     tx: &mut Transaction<'_, Sqlite>,
     cover: Option<String>,
-    artist_id: &String,
-    album_name: &String,
-    artist_name: &String,
-    path: &String,
+    artist_id: &str,
+    album_name: &str,
+    artist_name: &str,
+    path: &str,
     year: &i32,
 ) -> Result<String, anyhow::Error> {
     let id: String = Uuid::new_v4().to_string();

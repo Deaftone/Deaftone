@@ -9,8 +9,8 @@ use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
 
 pub async fn create_artist(
     tx: &mut Transaction<'_, Sqlite>,
-    id: &String,
-    artist_name: &String,
+    id: &str,
+    artist_name: &str,
 ) -> Result<SqliteQueryResult, anyhow::Error> {
     let init_time: String = Utc::now().naive_local().to_string();
     Ok(sqlx::query(
