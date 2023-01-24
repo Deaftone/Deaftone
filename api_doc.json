@@ -9,7 +9,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.0.1"
+    "version": "0.0.2"
   },
   "paths": {
     "/albums": {
@@ -55,14 +55,21 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Vec"
+                    "$ref": "#/components/schemas/AlbumModel"
                   }
                 }
               }
             }
           },
-          "404": {
-            "description": "Album not found"
+          "500": {
+            "description": "Failed to get albums",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "deprecated": false
@@ -94,6 +101,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AlbumResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Album not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -145,8 +162,18 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/entity.artist.Model"
+                    "$ref": "#/components/schemas/ArtistModel"
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to get albums ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -176,14 +203,21 @@
         ],
         "responses": {
           "200": {
-            "description": "List containing albums",
+            "description": "Returns a Artist",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/entity.album.Model"
-                  }
+                  "$ref": "#/components/schemas/ArtistResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Failed to get artist ",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -195,6 +229,54 @@
   },
   "components": {
     "schemas": {
+      "AlbumModel": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "name",
+          "artist_name",
+          "year",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "album_description": {
+            "type": "string"
+          },
+          "artist_id": {
+            "type": "string"
+          },
+          "artist_name": {
+            "type": "string"
+          },
+          "cover": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "example": "Album"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "AlbumResponse": {
         "type": "object",
         "required": [
@@ -230,12 +312,74 @@
           "songs": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/entity.song.Model"
+              "$ref": "#/components/schemas/SongModel"
             }
           },
           "year": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "ArtistModel": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "bio": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "example": "Artist"
+          },
+          "image": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ArtistResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "image",
+          "bio",
+          "albums"
+        ],
+        "properties": {
+          "albums": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlbumModel"
+            }
+          },
+          "bio": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
           }
         }
       },
@@ -273,33 +417,86 @@
           }
         }
       },
-      "Model": {
+      "SongModel": {
         "type": "object",
         "required": [
           "id",
-          "name",
+          "path",
+          "title",
+          "artist",
+          "album_name",
+          "duration",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "liked"
         ],
         "properties": {
-          "bio": {
+          "album_id": {
+            "type": "string"
+          },
+          "album_name": {
+            "type": "string"
+          },
+          "artist": {
+            "type": "string"
+          },
+          "bits_per_sample": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "codec": {
             "type": "string"
           },
           "created_at": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
+          },
+          "disk": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "duration": {
+            "type": "integer",
+            "format": "int32"
           },
           "id": {
-            "type": "string",
-            "example": "Artist"
-          },
-          "image": {
             "type": "string"
           },
-          "name": {
+          "label": {
             "type": "string"
+          },
+          "liked": {
+            "type": "boolean"
+          },
+          "music_brainz_artist_id": {
+            "type": "string"
+          },
+          "music_brainz_recording_id": {
+            "type": "string"
+          },
+          "music_brainz_track_id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "sample_rate": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "track": {
+            "type": "integer",
+            "format": "int32"
           },
           "updated_at": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       }
