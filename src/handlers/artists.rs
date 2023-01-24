@@ -12,7 +12,7 @@ use axum::{
         ("id" = String, Path, description = "Artist Id")
     ),
     responses(
-        (status = 200, description = "Returns a Artist", body = ArtistModel),
+        (status = 200, description = "Returns a Artist", body = ArtistResponse),
         (status = 404, description = "Failed to get artist ", body = String)
 
     )
