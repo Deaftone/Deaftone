@@ -5,25 +5,12 @@ use axum::{
     Json,
 };
 
+use crate::{services, AppState};
 use sea_orm::EntityTrait;
-use serde::Serialize;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
 
-use crate::{services, AppState};
-#[derive(Serialize)]
-pub struct SongResponse {
-    id: String,
-    path: String,
-    title: String,
-    disk: i32,
-    artist: String,
-    album_name: String,
-    duration: u32,
-    year: i32,
-    album_id: String,
-    liked: bool,
-}
+use super::{LikeResponse, SongResponse};
 
 pub async fn get_song(
     Path(song_id): Path<String>,
@@ -48,10 +35,7 @@ pub async fn get_song(
         None => Err((StatusCode::ACCEPTED, "Failed to find song".to_owned())),
     }
 }
-#[derive(Serialize)]
-pub struct LikeResponse {
-    liked: bool,
-}
+
 pub async fn like_song(
     State(state): State<AppState>,
     Path(song_id): Path<String>,

@@ -24,11 +24,13 @@ fn gen_my_openapi() -> std::string::String {
         ),
         components(
             schemas(
-                deaftone::handlers::albums::GetAllAlbums,
-                deaftone::handlers::albums::AlbumResponse,
-                entity::album::Model,
-                deaftone::handlers::artists::GetAllArtists,
-                entity::artist::Model,
+                deaftone::handlers::GetAllAlbums,
+                deaftone::handlers::AlbumResponse,
+                deaftone::handlers::ArtistResponse,
+                deaftone::handlers::GetAllArtists,
+                entity::album::Model as AlbumModel,
+                entity::song::Model as SongModel,
+                entity::artist::Model as ArtistModel,
             )
         ),
         tags(
@@ -37,7 +39,7 @@ fn gen_my_openapi() -> std::string::String {
             //(name = "deaftone", description = "Deaftone API")
         )
     )]
-    #[openapi(
+    /*     #[openapi(
         paths(
             get_albums,
             get_album,
@@ -46,15 +48,15 @@ fn gen_my_openapi() -> std::string::String {
             schemas(
                 deaftone::handlers::albums::GetAllAlbumsQuery,
                 deaftone::handlers::albums::AlbumResponse,
-                entity::album::Model,
+                entity::album::Model as AlbumModel,
                 deaftone::handlers::artists::GetArtistsQuery,
-                entity::artist::Model,
+                entity::artist::Model as ArtistModel,
             )
         ),
         tags(
             (name = "Album Api", description = "Deaftone API")
         )
-    )]
+    )] */
     struct ApiDoc;
     ApiDoc::openapi().to_pretty_json().unwrap()
 }

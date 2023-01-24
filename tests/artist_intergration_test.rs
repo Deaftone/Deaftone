@@ -2,7 +2,7 @@
 mod tests {
     use axum::{body::Body, http::Request, Server};
     use chrono::{NaiveDateTime, Utc};
-    use deaftone::{services::DbArtist, test_util::app};
+    use deaftone::{handlers::ArtistResponse, test_util::app};
     use hyper::{body::to_bytes, Client, StatusCode};
     use serde_json::from_slice;
     use std::net::TcpListener;
@@ -107,7 +107,7 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::OK);
         let body = to_bytes(resp.into_body()).await.unwrap();
-        let artist: DbArtist = from_slice(&body).unwrap();
+        let artist: ArtistResponse = from_slice(&body).unwrap();
         assert!(artist.id == r#"51a114b1-9d02-4fab-95ec-42d0bb972569"#);
         assert!(artist.name == String::from("Akon"));
         assert!(artist.albums.len() == 6);

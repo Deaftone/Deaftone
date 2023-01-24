@@ -1,20 +1,12 @@
+use super::PlayListResponse;
+use crate::AppState;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
     Json,
 };
-
 use sea_orm::EntityTrait;
-use serde::Serialize;
 
-use crate::AppState;
-
-#[derive(Serialize)]
-pub struct PlayListResponse {
-    id: String,
-    name: String,
-    songs: Vec<entity::song::Model>,
-}
 pub async fn get_playlist(
     Path(playlist_id): Path<String>,
     State(state): State<AppState>,

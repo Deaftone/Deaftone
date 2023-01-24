@@ -1,34 +1,17 @@
-use std::{fmt, str::FromStr};
-
+use super::{AlbumResponse, GetAllAlbums};
+use crate::{services, AppState};
 use axum::{
     body::{boxed, Body, BoxBody, Full},
     extract::{Path, State},
     http::{header, Request, Response, StatusCode},
+    response::ErrorResponse,
     Json,
 };
-
 use include_dir::{include_dir, Dir};
 use sea_orm::EntityTrait;
-use serde::{de, Deserialize, Deserializer, Serialize};
-
-use crate::{services, AppState};
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
-use utoipa::{IntoParams, ToSchema};
-
 static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/resources");
-#[allow(non_snake_case)]
-#[derive(Serialize, ToSchema)]
-pub struct AlbumResponse {
-    id: String,
-    name: String,
-    artist: String,
-    artistId: String,
-    albumDescription: String,
-    year: i32,
-    songCount: i32,
-    songs: Vec<entity::song::Model>,
-}
 
 #[utoipa::path(
     get,
@@ -37,13 +20,15 @@ pub struct AlbumResponse {
         ("id" = String, Path, description = "Album Id")
     ),
     responses(
-        (status = 200, description = "Returns a album", body = AlbumResponse)
+        (status = 200, description = "Returns a album", body = AlbumResponse),
+        (status = 404, description = "Album not found", body = String)
+
     )
 )]
 pub async fn get_album(
     Path(album_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Json<AlbumResponse>, (StatusCode, String)> {
+) -> Result<Json<AlbumResponse>, ErrorResponse> {
     let album = services::album::get_album_by_id(&state.database, album_id).await;
     match album.ok() {
         Some(_album) => match _album.first() {
@@ -61,9 +46,9 @@ pub async fn get_album(
                     songs,
                 }))
             }
-            None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
+            None => Err((StatusCode::NOT_FOUND, "Failed to find album".to_owned()).into()),
         },
-        None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
+        None => Err((StatusCode::NOT_FOUND, "Failed to find album".to_owned()).into()),
     }
 }
 pub async fn get_cover(
@@ -101,16 +86,6 @@ pub async fn get_cover(
         None => Err((StatusCode::NOT_FOUND, "Unable to find album".to_string())),
     }
 }
-#[derive(Deserialize, Clone, IntoParams, ToSchema)]
-pub struct GetAllAlbums {
-    #[serde(default, deserialize_with = "empty_string_as_none")]
-    #[schema(example = "sort = name | artist_name | year | latest")]
-    sort: Option<String>,
-    #[serde(default, deserialize_with = "empty_string_as_none")]
-    size: Option<u64>,
-    #[serde(default, deserialize_with = "empty_string_as_none")]
-    page: Option<u64>,
-}
 
 #[utoipa::path(
     get,
@@ -119,8 +94,8 @@ pub struct GetAllAlbums {
         GetAllAlbums
     ),
     responses(
-        (status = 200, description = "List containing albums", body = [Vec<entity::album::Model>]),
-        (status = 404, description = "Album not found")
+        (status = 200, description = "List containing albums", body = [AlbumModel]),
+        (status = 500, description = "Failed to get albums", body = String)
     )
 )]
 pub async fn get_albums(
@@ -142,21 +117,8 @@ pub async fn get_albums(
     match albums {
         Ok(_albums) => Ok(Json(_albums)),
         Err(err) => Err((
-            StatusCode::NOT_FOUND,
+            StatusCode::INTERNAL_SERVER_ERROR,
             format!("Failed to get albums {}", err),
         )),
-    }
-}
-
-fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
-where
-    D: Deserializer<'de>,
-    T: FromStr,
-    T::Err: fmt::Display,
-{
-    let opt = Option::<String>::deserialize(de)?;
-    match opt.as_deref() {
-        None | Some("") => Ok(None),
-        Some(s) => FromStr::from_str(s).map_err(de::Error::custom).map(Some),
     }
 }
