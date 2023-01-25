@@ -291,8 +291,6 @@ impl Scanner {
 
             if path.extension() == Some(std::ffi::OsStr::new("flac")) {
                 let metadata = skip_fail!(tag_helper::get_metadata(path));
-                    path.as_path().to_string_lossy().to_string()
-                ));
                 // Check if album has been created. This is a nice speedup since we can assume that when we are in a folder of tracks the they are all from the same album
                 if create_artist {
                     let artists_exists = sqlx::query("SELECT * FROM artists WHERE name = ?")
@@ -302,19 +300,17 @@ impl Scanner {
                         .await;
                     match artists_exists {
                         Err(sqlx::Error::RowNotFound) => {
-                            let id: String = Uuid::new_v4().to_string();
-                            skip_fail!(
+                            artist_id = skip_fail!(
                                 services::artist::create_artist(
                                     &mut tx,
-                                    &id,
                                     &metadata.album_artist,
+                                    &metadata.musicbrainz_artist_id
                                 )
                                 .await
                             );
                             // Set create artist to false since we know its created now
                             create_artist = false;
                             // Set artist_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
-                            artist_id = id;
                             tracing::info!("Creating artists \"{:}\"", metadata.album_artist)
                         }
                         value => {

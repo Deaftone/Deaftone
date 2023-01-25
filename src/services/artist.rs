@@ -5,29 +5,34 @@ use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder,
     QuerySelect,
 };
-use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
+use sqlx::{Sqlite, Transaction};
+use uuid::Uuid;
 
 pub async fn create_artist(
     tx: &mut Transaction<'_, Sqlite>,
-    id: &str,
     artist_name: &str,
-) -> Result<SqliteQueryResult, anyhow::Error> {
+    musicbrainz_artist_id: &str
+) -> Result<String, anyhow::Error> {
+    let id: String = Uuid::new_v4().to_string();
     let init_time: String = Utc::now().naive_local().to_string();
-    Ok(sqlx::query(
+    sqlx::query(
         "INSERT OR REPLACE INTO artists (
             id, 
             name,
+            musicBrainzArtistId,
             createdAt,
             updatedAt
          )
     VALUES (?,?,?,?)",
     )
-    .bind(id)
-    .bind(artist_name)
+    .bind(&id)
+    .bind(&artist_name)
+    .bind(&musicbrainz_artist_id)
     .bind(&init_time)
     .bind(&init_time)
     .execute(&mut *tx)
-    .await?)
+    .await?;
+    Ok(id)
 }
 pub async fn get_artist_by_id(
     db: &DatabaseConnection,
