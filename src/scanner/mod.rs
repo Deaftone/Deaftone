@@ -304,7 +304,7 @@ impl Scanner {
                                 services::artist::create_artist(
                                     &mut tx,
                                     &metadata.album_artist,
-                                    &metadata.musicbrainz_artist_id
+                                    &metadata.mb_artist_id
                                 )
                                 .await
                             );

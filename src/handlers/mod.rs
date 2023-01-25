@@ -11,16 +11,15 @@ pub mod playlist;
 pub mod songs;
 pub mod stream;
 
-#[allow(non_snake_case)]
 #[derive(Serialize, ToSchema)]
 pub struct AlbumResponse {
     id: String,
     name: String,
     artist: String,
     artist_id: String,
-    albumDescription: String,
+    album_description: String,
     year: i32,
-    songCount: i32,
+    song_count: i32,
     songs: Vec<SongModel>,
 }
 

@@ -39,10 +39,10 @@ pub async fn get_album(
                     id: album_model.id,
                     name: album_model.name,
                     artist: album_model.artist_name,
-                    albumDescription: album_model.album_description.unwrap_or_default(),
+                    album_description: album_model.album_description.unwrap_or_default(),
                     artist_id: album_model.artist_id.unwrap_or_default(),
                     year: album_model.year,
-                    songCount: songs.len() as i32,
+                    song_count: songs.len() as i32,
                     songs,
                 }))
             }
