@@ -51,6 +51,19 @@ pub async fn get_album(
         None => Err((StatusCode::NOT_FOUND, "Failed to find album".to_owned()).into()),
     }
 }
+
+#[utoipa::path(
+    get,
+    path = "/albums/{id}/cover",
+    params(
+        ("id" = String, Path, description = "Album Id")
+    ),
+    responses(
+        (status = 200, description = "Returns a album cover"),
+        (status = 404, description = "Album not found", body = String)
+
+    )
+)]
 pub async fn get_cover(
     State(state): State<AppState>,
     Path(album_id): Path<String>,

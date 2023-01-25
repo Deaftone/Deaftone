@@ -19,14 +19,17 @@ fn gen_my_openapi() -> std::string::String {
         paths(
             deaftone::handlers::albums::get_albums,
             deaftone::handlers::albums::get_album,
+            deaftone::handlers::albums::get_cover,
             deaftone::handlers::artists::get_artists,
-            deaftone::handlers::artists::get_artist
+            deaftone::handlers::artists::get_artist,
+            deaftone::handlers::songs::get_song,
         ),
         components(
             schemas(
                 deaftone::handlers::GetAllAlbums,
                 deaftone::handlers::AlbumResponse,
                 deaftone::handlers::ArtistResponse,
+                deaftone::handlers::SongResponse,
                 deaftone::handlers::GetAllArtists,
                 entity::album::Model as AlbumModel,
                 entity::song::Model as SongModel,
