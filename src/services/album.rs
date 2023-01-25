@@ -9,6 +9,44 @@ use uuid::Uuid;
 
 use crate::scanner::tag_helper::AudioMetadata;
 
+pub async fn create_album(
+    tx: &mut Transaction<'_, Sqlite>,
+    cover: Option<String>,
+    artist_id: &String,
+    metadata: &AudioMetadata,
+) -> Result<String, anyhow::Error> {
+    let id: String = Uuid::new_v4().to_string();
+    let init_time: String = Utc::now().naive_local().to_string();
+    sqlx::query(
+        "INSERT OR REPLACE INTO albums (
+            id, 
+            name,
+            artist_name,
+            cover,
+            path,
+            year,
+            mb_artist_id,            
+            created_at,
+            updated_at,
+            artist_id
+         )
+    VALUES (?,?,?,?,?,?,?,?,?,?)",
+    )
+    .bind(&id)
+    .bind(&metadata.album)
+    .bind(&metadata.album_artist)
+    .bind(cover)
+    .bind(&metadata.parent_path)
+    .bind(metadata.year)
+    .bind(&metadata.mb_artist_id)
+    .bind(&init_time)
+    .bind(&init_time)
+    .bind(artist_id)
+    .execute(&mut *tx)
+    .await?;
+    Ok(id)
+}
+
 pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
@@ -106,41 +144,4 @@ pub async fn get_albums_paginate(
             .paginate(db, size.unwrap_or(u64::MAX)),
     };
     Ok(db_albums.fetch_page(page.unwrap_or(0)).await?)
-}
-pub async fn create_album(
-    tx: &mut Transaction<'_, Sqlite>,
-    cover: Option<String>,
-    artist_id: &String,
-    metadata: &AudioMetadata,
-) -> Result<String, anyhow::Error> {
-    let id: String = Uuid::new_v4().to_string();
-    let init_time: String = Utc::now().naive_local().to_string();
-    sqlx::query(
-        "INSERT OR REPLACE INTO albums (
-            id, 
-            name,
-            artist_name,
-            cover,
-            path,
-            year,
-            mb_artist_id,            
-            created_at,
-            updated_at,
-            artist_id
-         )
-    VALUES (?,?,?,?,?,?,?,?,?,?)",
-    )
-    .bind(&id)
-    .bind(&metadata.album)
-    .bind(&metadata.album_artist)
-    .bind(cover)
-    .bind(&metadata.path)
-    .bind(metadata.year)
-    .bind(&metadata.mb_artist_id)
-    .bind(&init_time)
-    .bind(&init_time)
-    .bind(artist_id)
-    .execute(&mut *tx)
-    .await?;
-    Ok(id)
 }
