@@ -45,7 +45,7 @@ pub struct LikeResponse {
     liked: bool,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct SongResponse {
     id: String,
     path: String,

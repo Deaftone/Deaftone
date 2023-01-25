@@ -12,6 +12,18 @@ use tower_http::services::ServeFile;
 
 use super::{LikeResponse, SongResponse};
 
+#[utoipa::path(
+    get,
+    path = "/song/{id}",
+    params(
+        ("id" = String, Path, description = "Song Id")
+    ),
+    responses(
+        (status = 200, description = "Returns a song", body = SongResponse),
+        (status = 404, description = "Song not found", body = String)
+
+    )
+)]
 pub async fn get_song(
     Path(song_id): Path<String>,
     State(state): State<AppState>,
@@ -32,7 +44,7 @@ pub async fn get_song(
             album_id: f.album_id.unwrap_or_default(),
             liked: f.liked,
         })),
-        None => Err((StatusCode::ACCEPTED, "Failed to find song".to_owned())),
+        None => Err((StatusCode::NOT_FOUND, "Failed to find song".to_owned())),
     }
 }
 
