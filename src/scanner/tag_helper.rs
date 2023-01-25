@@ -6,6 +6,7 @@ use metaflac::{block::VorbisComment, Tag};
 pub struct AudioMetadata {
     pub name: String,
     pub track: u32,
+    pub artist: String,
     pub album: String,
     pub album_artist: String,
     pub year: i32,
@@ -14,7 +15,7 @@ pub struct AudioMetadata {
     pub parent_path: String,
     pub lossless: bool,
     pub duration: u32,
-    pub mb_artist_id: String,
+    pub mb_artist_id: Option<String>,
 }
 
 pub fn get_metadata(path: PathBuf) -> Result<AudioMetadata> {
@@ -34,6 +35,10 @@ pub fn get_metadata(path: PathBuf) -> Result<AudioMetadata> {
             .map(|v| v[0].clone())
             .unwrap_or_else(|| "FAILED TO READ TITLE DEAFTONE".to_string()),
         track: vorbis.track().unwrap_or(0),
+        artist: vorbis
+            .artist()
+            .map(|v| v[0].clone())
+            .unwrap_or_else(|| "FAILED TO READ ARTIST DEAFTONE".to_string()),
         album: vorbis
             .album()
             .map(|v| v[0].clone())
@@ -56,8 +61,7 @@ pub fn get_metadata(path: PathBuf) -> Result<AudioMetadata> {
         duration: duration.unwrap_or_default(),
         mb_artist_id: vorbis
             .get("MUSICBRAINZ_ARTISTID")
-            .and_then(|d| d[0].parse::<String>().ok())
-            .unwrap_or_default(),
+            .and_then(|d| d[0].parse::<String>().ok()),
     };
     Ok(metadata)
 }
