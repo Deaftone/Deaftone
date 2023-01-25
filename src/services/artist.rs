@@ -26,7 +26,7 @@ pub async fn create_artist(
     VALUES (?,?,?,?,?)",
     )
     .bind(&id)
-    .bind(&artist_name)
+    .bind(artist_name)
     .bind(mb_artist_id)
     .bind(&init_time)
     .bind(&init_time)

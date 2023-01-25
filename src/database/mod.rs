@@ -15,7 +15,7 @@ impl Database {
         if fs::metadata(db_path).is_err() {
             fs::File::create(db_path).map_err(|e| anyhow!("Error creating file: {}", e))?;
         }
-        let mut opt: ConnectOptions = ConnectOptions::new(format!("sqlite://{}?mode=rwc", db_path));
+        let mut opt: ConnectOptions = ConnectOptions::new(format!("sqlite://{db_path}?mode=rwc"));
         opt.max_connections(100)
             .min_connections(5)
             .connect_timeout(Duration::from_secs(8))

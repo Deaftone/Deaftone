@@ -36,7 +36,7 @@ async fn main() -> Result<()> {
     let settings = match deaftone::settings::Settings::new() {
         std::result::Result::Ok(file) => file,
         Err(err) => {
-            println!("Failed to load config {:}. Loading default config", err);
+            println!("Failed to load config {err}. Loading default config");
             deaftone::settings::Settings::new_default().unwrap()
         }
     };

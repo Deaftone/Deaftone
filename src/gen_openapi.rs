@@ -6,8 +6,8 @@ fn main() {
         Ok(_) => {
             println!("Successfully write api_doc.json")
         }
-        Err(e) => {
-            println!("Failed to write api_doc.json {:}", e)
+        Err(err) => {
+            println!("Failed to write api_doc.json {err}")
         }
     }
 }

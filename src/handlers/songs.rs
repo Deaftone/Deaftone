@@ -79,7 +79,7 @@ pub async fn get_cover(
                 Ok(res) => Ok(res.map(boxed)),
                 Err(err) => Err((
                     StatusCode::NOT_FOUND,
-                    format!("Something went wrong: {}", err),
+                    format!("Something went wrong: {err}"),
                 )),
             }
         }

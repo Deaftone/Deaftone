@@ -83,7 +83,7 @@ pub async fn get_cover(
                     Ok(res) => Ok(res.map(boxed)),
                     Err(err) => Err((
                         StatusCode::NOT_FOUND,
-                        format!("Something went wrong: {}", err),
+                        format!("Something went wrong: {err}"),
                     )),
                 }
             } else {
@@ -131,7 +131,7 @@ pub async fn get_albums(
         Ok(_albums) => Ok(Json(_albums)),
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to get albums {}", err),
+            format!("Failed to get albums {err}"),
         )),
     }
 }

@@ -27,7 +27,7 @@ pub async fn stream_handler(
             Ok(res) => Ok(res.map(boxed)),
             Err(err) => Err((
                 StatusCode::NOT_FOUND,
-                format!("Something went wrong: {}", err),
+                format!("Something went wrong: {err}"),
             )),
         },
         None => Err((StatusCode::NOT_FOUND, "Unable to find song".to_string())),

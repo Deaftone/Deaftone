@@ -48,7 +48,7 @@ impl Scanner {
     pub async fn connect_db() -> Result<Pool<Sqlite>, sqlx::Error> {
         println!("Connecting to db");
         let database_file = "deaftone.sqlite";
-        let database_url = format!("sqlite://{}", database_file);
+        let database_url = format!("sqlite://{database_file}");
         let pool_timeout = Duration::from_secs(30);
         let connection_options = SqliteConnectOptions::from_str(&database_url)
             .unwrap()
