@@ -14,7 +14,7 @@ pub struct AudioMetadata {
     pub parent_path: String,
     pub lossless: bool,
     pub duration: u32,
-    pub musicbrainz_artist_id: String,
+    pub mb_artist_id: String,
 }
 
 pub fn get_metadata(path: PathBuf) -> Result<AudioMetadata> {
@@ -54,7 +54,7 @@ pub fn get_metadata(path: PathBuf) -> Result<AudioMetadata> {
         parent_path: path.parent().unwrap().to_string_lossy().to_string(),
         lossless: true,
         duration: duration.unwrap_or_default(),
-        musicbrainz_artist_id: vorbis
+        mb_artist_id: vorbis
             .get("MUSICBRAINZ_ARTISTID")
             .and_then(|d| d[0].parse::<String>().ok())
             .unwrap_or_default(),

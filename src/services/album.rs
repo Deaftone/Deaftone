@@ -136,7 +136,7 @@ pub async fn create_album(
     .bind(cover)
     .bind(&metadata.path)
     .bind(&metadata.year)
-    .bind(&metadata.musicbrainz_artist_id)
+    .bind(&metadata.mb_artist_id)
     .bind(&init_time)
     .bind(&init_time)
     .bind(artist_id)

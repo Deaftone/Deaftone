@@ -11,7 +11,7 @@ use uuid::Uuid;
 pub async fn create_artist(
     tx: &mut Transaction<'_, Sqlite>,
     artist_name: &str,
-    musicbrainz_artist_id: &str,
+    mb_artist_id: &str,
 ) -> Result<String, anyhow::Error> {
     let id: String = Uuid::new_v4().to_string();
     let init_time: String = Utc::now().naive_local().to_string();
@@ -27,7 +27,7 @@ pub async fn create_artist(
     )
     .bind(&id)
     .bind(&artist_name)
-    .bind(&musicbrainz_artist_id)
+    .bind(mb_artist_id)
     .bind(&init_time)
     .bind(&init_time)
     .execute(&mut *tx)
