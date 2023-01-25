@@ -55,6 +55,7 @@ impl Scanner {
             .create_if_missing(true)
             .journal_mode(SqliteJournalMode::Wal)
             .synchronous(SqliteSynchronous::Normal)
+            .foreign_keys(false)
             .busy_timeout(pool_timeout)
             .disable_statement_logging()
             .clone();
