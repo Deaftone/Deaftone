@@ -119,14 +119,14 @@ pub async fn create_album(
         "INSERT OR REPLACE INTO albums (
             id, 
             name,
-            artistName,
+            artist_name,
             cover,
             path,
             year,
-            musicBrainzArtistId,            
-            createdAt,
-            updatedAt,
-            artistId
+            mb_artist_id,            
+            created_at,
+            updated_at,
+            artist_id
          )
     VALUES (?,?,?,?,?,?,?,?,?,?)",
     )

@@ -10,9 +10,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub path: String,
     pub mtime: DateTime,
-    #[sea_orm(column_name = "createdAt")]
     pub created_at: DateTime,
-    #[sea_orm(column_name = "updatedAt")]
     pub updated_at: DateTime,
 }
 

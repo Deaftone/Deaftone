@@ -17,7 +17,7 @@ pub struct AlbumResponse {
     id: String,
     name: String,
     artist: String,
-    artistId: String,
+    artist_id: String,
     albumDescription: String,
     year: i32,
     songCount: i32,

@@ -13,7 +13,6 @@ pub struct Model {
     pub path: String,
     pub title: String,
     pub artist: String,
-    #[sea_orm(column_name = "albumName")]
     pub album_name: String,
     pub track: Option<i32>,
     pub disk: Option<i32>,
@@ -21,21 +20,13 @@ pub struct Model {
     pub duration: u32,
     pub year: Option<i32>,
     pub label: Option<String>,
-    #[sea_orm(column_name = "sampleRate")]
     pub sample_rate: Option<String>,
-    #[sea_orm(column_name = "bitsPerSample")]
     pub bits_per_sample: Option<i32>,
-    #[sea_orm(column_name = "musicBrainzRecordingId")]
-    pub music_brainz_recording_id: Option<String>,
-    #[sea_orm(column_name = "musicBrainzArtistId")]
-    pub music_brainz_artist_id: Option<String>,
-    #[sea_orm(column_name = "musicBrainzTrackId")]
-    pub music_brainz_track_id: Option<String>,
-    #[sea_orm(column_name = "createdAt")]
+    pub mb_recording_id: Option<String>,
+    pub mb_artist_id: Option<String>,
+    pub mb_track_id: Option<String>,
     pub created_at: DateTime,
-    #[sea_orm(column_name = "updatedAt")]
     pub updated_at: DateTime,
-    #[sea_orm(column_name = "albumId")]
     pub album_id: Option<String>,
     pub liked: bool,
 }

@@ -11,18 +11,13 @@ pub struct Model {
     pub id: String,
     pub path: String,
     pub name: String,
-    #[sea_orm(column_name = "artistName")]
     pub artist_name: String,
     pub cover: Option<String>,
     pub album_description: Option<String>,
     pub year: i32,
-    #[sea_orm(column_name = "musicBrainzArtistId")]
-    pub musicbrainz_artist_id: Option<String>,
-    #[sea_orm(column_name = "createdAt")]
+    pub mb_artist_id: Option<String>,
     pub created_at: DateTime,
-    #[sea_orm(column_name = "updatedAt")]
     pub updated_at: DateTime,
-    #[sea_orm(column_name = "artistId")]
     pub artist_id: Option<String>,
 }
 

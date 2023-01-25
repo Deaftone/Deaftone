@@ -65,13 +65,13 @@ pub async fn create_song(
             title,
             disk,
             artist,
-            albumName,
+            album_name,
             track,
             year,
-            createdAt,
-            updatedAt,
+            created_at,
+            updated_at,
             duration,
-            albumId,
+            album_id,
             liked
          )
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",

@@ -372,8 +372,8 @@ impl Scanner {
                     id,
                     path,
                     mtime,
-                    createdAt,
-                    updatedAt
+                    created_at,
+                    updated_at
                 )
                 VALUES (?,?,?,?,?)",
         )
