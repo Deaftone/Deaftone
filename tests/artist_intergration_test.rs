@@ -96,7 +96,7 @@ mod tests {
             .request(
                 Request::builder()
                     .uri(format!(
-                        "http://{}/artists/51a114b1-9d02-4fab-95ec-42d0bb972569",
+                        "http://{}/artists/dce36ffc-4fcd-4448-900a-4b377063cd50",
                         addr
                     ))
                     .body(Body::empty())
@@ -108,8 +108,8 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::OK);
         let body = to_bytes(resp.into_body()).await.unwrap();
         let artist: ArtistResponse = from_slice(&body).unwrap();
-        assert!(artist.id == r#"51a114b1-9d02-4fab-95ec-42d0bb972569"#);
-        assert!(artist.name == String::from("Akon"));
-        assert!(artist.albums.len() == 6);
+        assert!(artist.id == r#"dce36ffc-4fcd-4448-900a-4b377063cd50"#);
+        assert!(artist.name == String::from("Sabaton"));
+        assert!(artist.albums.len() == 16);
     }
 }
