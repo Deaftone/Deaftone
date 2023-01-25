@@ -119,6 +119,43 @@
         "deprecated": false
       }
     },
+    "/albums/{id}/cover": {
+      "get": {
+        "tags": [
+          "deaftone::handlers::albums"
+        ],
+        "description": "",
+        "operationId": "get_cover",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Album Id",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a album cover"
+          },
+          "404": {
+            "description": "Album not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
+    },
     "/artists": {
       "get": {
         "tags": [
@@ -225,6 +262,50 @@
         },
         "deprecated": false
       }
+    },
+    "/song/{id}": {
+      "get": {
+        "tags": [
+          "deaftone::handlers::songs"
+        ],
+        "description": "",
+        "operationId": "get_song",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Song Id",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a song",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SongResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Song not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
     }
   },
   "components": {
@@ -261,6 +342,9 @@
             "type": "string",
             "example": "Album"
           },
+          "mb_artist_id": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -283,20 +367,20 @@
           "id",
           "name",
           "artist",
-          "artistId",
-          "albumDescription",
+          "artist_id",
+          "album_description",
           "year",
-          "songCount",
+          "song_count",
           "songs"
         ],
         "properties": {
-          "albumDescription": {
+          "album_description": {
             "type": "string"
           },
           "artist": {
             "type": "string"
           },
-          "artistId": {
+          "artist_id": {
             "type": "string"
           },
           "id": {
@@ -305,7 +389,7 @@
           "name": {
             "type": "string"
           },
-          "songCount": {
+          "song_count": {
             "type": "integer",
             "format": "int32"
           },
@@ -342,6 +426,9 @@
             "example": "Artist"
           },
           "image": {
+            "type": "string"
+          },
+          "mb_artist_id": {
             "type": "string"
           },
           "name": {
@@ -468,13 +555,13 @@
           "liked": {
             "type": "boolean"
           },
-          "music_brainz_artist_id": {
+          "mb_artist_id": {
             "type": "string"
           },
-          "music_brainz_recording_id": {
+          "mb_recording_id": {
             "type": "string"
           },
-          "music_brainz_track_id": {
+          "mb_track_id": {
             "type": "string"
           },
           "path": {
@@ -493,6 +580,56 @@
           "updated_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "SongResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "title",
+          "disk",
+          "artist",
+          "album_name",
+          "duration",
+          "year",
+          "album_id",
+          "liked"
+        ],
+        "properties": {
+          "album_id": {
+            "type": "string"
+          },
+          "album_name": {
+            "type": "string"
+          },
+          "artist": {
+            "type": "string"
+          },
+          "disk": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "duration": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "id": {
+            "type": "string"
+          },
+          "liked": {
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
           },
           "year": {
             "type": "integer",
