@@ -15,7 +15,7 @@ where
 
     match db.execute(stmt).await {
         Ok(_) => println!("Migrated {}", entity.table_name()),
-        Err(e) => println!("Error: {}", e),
+        Err(e) => println!("Error: {e}"),
     }
 }
 
