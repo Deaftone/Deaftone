@@ -8,31 +8,6 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    /*     #[derive(OpenApi)]
-    #[openapi(
-        paths(
-            deaftone::handlers::albums::get_albums,
-            deaftone::handlers::albums::get_album,
-            deaftone::handlers::artists::get_artists,
-            deaftone::handlers::artists::get_artist
-        ),
-        components(
-            schemas(
-                deaftone::handlers::albums::GetAllAlbums,
-                deaftone::handlers::albums::AlbumResponse,
-                entity::album::Model,
-                deaftone::handlers::artists::GetAllArtists,
-                entity::artist::Model,
-            )
-        ),
-        tags(
-            (name = "deaftone::handlers::albums", description = "Deaftone Albums API"),
-            (name = "deaftone::handlers::artists", description = "Deaftone Artists API")
-            //(name = "deaftone", description = "Deaftone API")
-        )
-    )]
-    struct ApiDoc; */
-
     let settings = match deaftone::settings::Settings::new() {
         std::result::Result::Ok(file) => file,
         Err(err) => {
@@ -73,21 +48,20 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         scanner: scan,
     };
     let app = Router::new()
-        // .merge(SwaggerUi::new("/swagger-ui").url("/api-doc/openapi.json", ApiDoc::openapi()))
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::stream::stream_handler))
         .route(
             "/stream/transcode/:id",
             get(handlers::stream::transcode_stream_handler),
         )
-        .route("/albums/:id", get(handlers::albums::get_album))
         .route("/songs/:id", get(handlers::songs::get_song))
         .route("/songs/:id/cover", get(handlers::songs::get_cover))
         .route("/songs/:id/like", post(handlers::songs::like_song))
-        .route("/albums/:id/cover", get(handlers::albums::get_cover))
         .route("/albums", get(handlers::albums::get_albums))
-        .route("/artists/:id", get(handlers::artists::get_artist))
+        .route("/albums/:id", get(handlers::albums::get_album))
+        .route("/albums/:id/cover", get(handlers::albums::get_cover))
         .route("/artists", get(handlers::artists::get_artists))
+        .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
         .layer(TraceLayer::new_for_http())
         .with_state(state);
