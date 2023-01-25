@@ -290,7 +290,7 @@ impl Scanner {
             let path_parent = path.parent().unwrap().to_string_lossy().to_string();
 
             if path.extension() == Some(std::ffi::OsStr::new("flac")) {
-                let metadata = skip_fail!(tag_helper::get_metadata(
+                let metadata = skip_fail!(tag_helper::get_metadata(path));
                     path.as_path().to_string_lossy().to_string()
                 ));
                 // Check if album has been created. This is a nice speedup since we can assume that when we are in a folder of tracks the they are all from the same album
@@ -342,14 +342,7 @@ impl Scanner {
                             }
                             let id = skip_fail!(
                                 services::album::create_album(
-                                    &mut tx,
-                                    cover,
-                                    &artist_id,
-                                    &metadata.album,
-                                    &metadata.album_artist,
-                                    &metadata.musicbrainz_artist_id,
-                                    &path_parent,
-                                    &metadata.year,
+                                    &mut tx, cover, &artist_id, &metadata
                                 )
                                 .await
                             );

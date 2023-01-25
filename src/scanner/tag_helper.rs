@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::{Context, Result};
 use metaflac::{block::VorbisComment, Tag};
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -9,16 +11,17 @@ pub struct AudioMetadata {
     pub year: i32,
     pub disc: u32,
     pub path: String,
+    pub parent_path: String,
     pub lossless: bool,
     pub duration: u32,
     pub musicbrainz_artist_id: String,
 }
 
-pub fn get_metadata(path: String) -> Result<AudioMetadata> {
+pub fn get_metadata(path: PathBuf) -> Result<AudioMetadata> {
     let tag = Tag::read_from_path(&path)?;
     let vorbis: &VorbisComment = tag
         .vorbis_comments()
-        .with_context(|| format!("Failed to read tags for {}", path))?;
+        .with_context(|| format!("Failed to read tags for {}", path.to_str().unwrap()))?;
 
     let mut stream_info = tag.get_blocks(metaflac::BlockType::StreamInfo);
     let duration = match stream_info.next() {
@@ -47,7 +50,8 @@ pub fn get_metadata(path: String) -> Result<AudioMetadata> {
             .get("DISCNUMBER")
             .and_then(|d| d[0].parse::<u32>().ok())
             .unwrap_or_default(),
-        path,
+        path: path.to_string_lossy().to_string(),
+        parent_path: path.parent().unwrap().to_string_lossy().to_string(),
         lossless: true,
         duration: duration.unwrap_or_default(),
         musicbrainz_artist_id: vorbis

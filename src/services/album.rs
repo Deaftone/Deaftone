@@ -7,6 +7,8 @@ use sea_orm::{PaginatorTrait, QuerySelect};
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
 
+use crate::scanner::tag_helper::AudioMetadata;
+
 pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
@@ -108,12 +110,8 @@ pub async fn get_albums_paginate(
 pub async fn create_album(
     tx: &mut Transaction<'_, Sqlite>,
     cover: Option<String>,
-    artist_id: &str,
-    album_name: &str,
-    artist_name: &str,
-    musicbrainz_artist_id: &str,
-    path: &str,
-    year: &i32,
+    artist_id: &String,
+    metadata: &AudioMetadata,
 ) -> Result<String, anyhow::Error> {
     let id: String = Uuid::new_v4().to_string();
     let init_time: String = Utc::now().naive_local().to_string();
@@ -133,12 +131,12 @@ pub async fn create_album(
     VALUES (?,?,?,?,?,?,?,?,?,?)",
     )
     .bind(&id)
-    .bind(album_name)
-    .bind(artist_name)
+    .bind(&metadata.album)
+    .bind(&metadata.album_artist)
     .bind(cover)
-    .bind(path)
-    .bind(year)
-    .bind(musicbrainz_artist_id)
+    .bind(&metadata.path)
+    .bind(&metadata.year)
+    .bind(&metadata.musicbrainz_artist_id)
     .bind(&init_time)
     .bind(&init_time)
     .bind(artist_id)
