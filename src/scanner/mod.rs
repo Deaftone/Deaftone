@@ -347,8 +347,9 @@ impl Scanner {
                                     &artist_id,
                                     &metadata.album,
                                     &metadata.album_artist,
+                                    &metadata.musicbrainz_artist_id,
                                     &path_parent,
-                                    &metadata.year
+                                    &metadata.year,
                                 )
                                 .await
                             );

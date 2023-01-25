@@ -111,6 +111,7 @@ pub async fn create_album(
     artist_id: &str,
     album_name: &str,
     artist_name: &str,
+    musicbrainz_artist_id: &str,
     path: &str,
     year: &i32,
 ) -> Result<String, anyhow::Error> {
@@ -124,11 +125,12 @@ pub async fn create_album(
             cover,
             path,
             year,
+            musicBrainzArtistId,            
             createdAt,
             updatedAt,
             artistId
          )
-    VALUES (?,?,?,?,?,?,?,?,?)",
+    VALUES (?,?,?,?,?,?,?,?,?,?)",
     )
     .bind(&id)
     .bind(album_name)
@@ -136,6 +138,7 @@ pub async fn create_album(
     .bind(cover)
     .bind(path)
     .bind(year)
+    .bind(musicbrainz_artist_id)
     .bind(&init_time)
     .bind(&init_time)
     .bind(artist_id)
