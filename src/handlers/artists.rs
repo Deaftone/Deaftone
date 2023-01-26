@@ -24,7 +24,10 @@ pub async fn get_artist(
     let artist = services::artist::get_artist_by_id(&state.database, artist_id).await;
     match artist {
         Ok(_artist) => Ok(Json(_artist)),
-        Err(err) => Err((StatusCode::NOT_FOUND, format!("Failed to get artist {err}"))),
+        Err(err) => Err((
+            StatusCode::NOT_FOUND,
+            format!("Failed to get artist. \"{err}\""),
+        )),
     }
 }
 

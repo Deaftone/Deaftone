@@ -37,22 +37,27 @@ pub async fn create_artist(
 pub async fn get_artist_by_id(
     db: &DatabaseConnection,
     artist_id: String,
-) -> anyhow::Result<DbArtist> {
-    let artist_db = entity::artist::Entity::find_by_id(artist_id)
+) -> anyhow::Result<DbArtist, anyhow::Error> {
+    let artist_db = entity::artist::Entity::find_by_id(artist_id.clone())
         .order_by_desc(entity::album::Column::Year)
         .find_with_related(entity::album::Entity)
         .all(db)
         .await?;
-    let artist = artist_db.first().expect("No artist found");
-    let artist_model = artist.0.to_owned();
-    let albums = artist.1.to_owned();
-    Ok(DbArtist {
-        id: artist_model.id,
-        name: artist_model.name,
-        image: artist_model.image.unwrap_or_default(),
-        bio: artist_model.bio.unwrap_or_default(),
-        albums,
-    })
+
+    match artist_db.first() {
+        Some(artist) => {
+            let artist_model = artist.0.to_owned();
+            let albums = artist.1.to_owned();
+            Ok(DbArtist {
+                id: artist_model.id,
+                name: artist_model.name,
+                image: artist_model.image.unwrap_or_default(),
+                bio: artist_model.bio.unwrap_or_default(),
+                albums,
+            })
+        }
+        None => anyhow::bail!("No artist found with ID {:}", artist_id),
+    }
 }
 
 pub async fn get_artists(
