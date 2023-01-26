@@ -25,7 +25,7 @@ pub async fn create_album(
             cover,
             path,
             year,
-            mb_artist_id,            
+            mb_artist_id,
             created_at,
             updated_at,
             artist_id
