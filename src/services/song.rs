@@ -1,4 +1,3 @@
-use anyhow::Ok;
 use chrono::Utc;
 
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
@@ -10,13 +9,14 @@ use crate::scanner::tag_helper::AudioMetadata;
 pub async fn get_song(
     db: &DatabaseConnection,
     id: String,
-) -> anyhow::Result<Option<entity::song::Model>> {
-    let song: Option<entity::song::Model> = entity::song::Entity::find_by_id(id.to_owned())
+) -> anyhow::Result<Option<entity::song::Model>, anyhow::Error> {
+    match entity::song::Entity::find_by_id(id.to_owned())
         .one(db)
         .await
-        .map_err(|e| anyhow::anyhow!(e))?;
-
-    Ok(song)
+    {
+        Ok(model) => Ok(model),
+        Err(err) => anyhow::bail!("Failed to get song: {:}", err),
+    }
 }
 
 pub async fn like_song(db: &DatabaseConnection, id: String) -> Result<bool, anyhow::Error> {
