@@ -31,20 +31,13 @@ pub enum Relation {
         on_delete = "SetNull"
     )]
     Artist,
-    #[sea_orm(
-        belongs_to = "super::artist::Entity",
-        from = "Column::MbArtistId",
-        to = "super::artist::Column::MbArtistId"
-    )]
-    MbArtist,
     #[sea_orm(has_many = "super::song::Entity")]
     Song,
 }
 
 impl Related<super::artist::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Artist.def();
-        Relation::MbArtist.def()
+        Relation::Artist.def()
     }
 }
 
