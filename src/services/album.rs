@@ -51,12 +51,10 @@ pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
 ) -> anyhow::Result<Vec<(entity::album::Model, Vec<entity::song::Model>)>> {
-    anyhow::Ok(
-        entity::album::Entity::find_by_id(album_id)
-            .find_with_related(entity::song::Entity)
-            .all(db)
-            .await?,
-    )
+    Ok(entity::album::Entity::find_by_id(album_id)
+        .find_with_related(entity::song::Entity)
+        .all(db)
+        .await?)
 }
 pub async fn _find_by_name(
     db: &DatabaseConnection,
