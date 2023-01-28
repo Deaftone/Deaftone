@@ -46,7 +46,7 @@ pub async fn get_song(
         },
         Err(err) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Failed to read from DB {:}", err),
+            format!("Failed to read from DB {err}"),
         )),
     }
 }
