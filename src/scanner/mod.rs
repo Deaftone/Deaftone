@@ -1,4 +1,4 @@
-use crate::{services, settings::Settings, SCAN_STATUS};
+use crate::{services, SCAN_STATUS, SETTINGS};
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::{
@@ -36,17 +36,14 @@ macro_rules! skip_fail {
     };
 }
 #[derive(Clone)]
-pub struct Scanner {
-    settings: Settings,
-}
+pub struct Scanner {}
 impl Scanner {
-    pub fn new(settings: Settings) -> Result<Scanner> {
-        let scanner: Scanner = Scanner { settings };
+    pub fn new() -> Result<Scanner> {
+        let scanner: Scanner = Scanner {};
         Ok(scanner)
     }
 
     pub async fn connect_db() -> Result<Pool<Sqlite>, sqlx::Error> {
-        println!("Connecting to db");
         let database_file = "deaftone.sqlite";
         let database_url = format!("sqlite://{database_file}");
         let pool_timeout = Duration::from_secs(30);
@@ -59,6 +56,7 @@ impl Scanner {
             .busy_timeout(pool_timeout)
             .disable_statement_logging()
             .clone();
+
         SqlitePoolOptions::new()
             .min_connections(5)
             .max_connections(10)
@@ -66,51 +64,52 @@ impl Scanner {
             .await
     }
 
-    pub fn start_scan(&mut self) {
+    pub async fn start_scan(&mut self) {
         SCAN_STATUS.store(true, Ordering::Release);
-        let settings = self.settings.clone();
-        tokio::spawn(async move {
-            // This is a hack because sometimes when starting Deaftone running migrations then instantly running the scanner.
-            // The database is locked so we just try and connect again on error
-            let sqlite_pool = match Self::connect_db().await {
-                Ok(pool) => pool,
-                Err(_) => Self::connect_db().await.unwrap(),
-            };
 
-            /*             let has_scanned_full =
-                sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
-                    .fetch_one(&sqlite_pool)
-                    .await;
-            match has_scanned_full {
-                Err(sqlx::Error::RowNotFound) => Self::walk_full(&sqlite_pool).await.unwrap(),
-                value => match value.unwrap().value == "1" {
-                    true => {
-                        tracing::info!("Starting partial scan");
-                        Self::walk_partial(&sqlite_pool).await.unwrap();
-                    }
-                    _ => Self::walk_full(&sqlite_pool).await.unwrap(),
-                },
-            } */
+        tracing::info!("Starting scan");
+        // This is a hack because sometimes when starting Deaftone running migrations then instantly running the scanner.
+        // The database is locked so we just try and connect again on error
+        tracing::debug!("Connecting to DB");
+        let sqlite_pool = match Self::connect_db().await {
+            Ok(pool) => pool,
+            Err(_) => Self::connect_db().await.unwrap(),
+        };
+        tracing::debug!("Connected DB");
 
-            sqlx::query("pragma temp_store = memory;")
-                .execute(&sqlite_pool)
-                .await
-                .unwrap();
-            sqlx::query("pragma mmap_size = 30000000000;")
-                .execute(&sqlite_pool)
-                .await
-                .unwrap();
-            sqlx::query("pragma page_size = 4096;")
-                .execute(&sqlite_pool)
-                .await
-                .unwrap();
-            let before: Instant = Instant::now();
-            let current_dir = settings.media_path;
-            Self::walk_full(&sqlite_pool, current_dir).await.unwrap();
-            tracing::info!("Scan completed in: {:.2?}", before.elapsed());
-            //Self::walk_partial(&sqlite_pool).await.unwrap();
-            SCAN_STATUS.store(true, Ordering::Release);
-        });
+        /*             let has_scanned_full =
+            sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
+                .fetch_one(&sqlite_pool)
+                .await;
+        match has_scanned_full {
+            Err(sqlx::Error::RowNotFound) => Self::walk_full(&sqlite_pool).await.unwrap(),
+            value => match value.unwrap().value == "1" {
+                true => {
+                    tracing::info!("Starting partial scan");
+                    Self::walk_partial(&sqlite_pool).await.unwrap();
+                }
+                _ => Self::walk_full(&sqlite_pool).await.unwrap(),
+            },
+        } */
+
+        sqlx::query("pragma temp_store = memory;")
+            .execute(&sqlite_pool)
+            .await
+            .unwrap();
+        sqlx::query("pragma mmap_size = 30000000000;")
+            .execute(&sqlite_pool)
+            .await
+            .unwrap();
+        sqlx::query("pragma page_size = 4096;")
+            .execute(&sqlite_pool)
+            .await
+            .unwrap();
+        let before: Instant = Instant::now();
+        let current_dir = SETTINGS.media_path.clone();
+        Self::walk_full(&sqlite_pool, current_dir).await.unwrap();
+        tracing::info!("Scan completed in: {:.2?}", before.elapsed());
+        //Self::walk_partial(&sqlite_pool).await.unwrap();
+        SCAN_STATUS.store(true, Ordering::Release);
     }
 
     pub async fn walk_partial(pool: &Pool<sqlx::Sqlite>) -> Result<()> {

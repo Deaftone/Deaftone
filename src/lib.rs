@@ -3,15 +3,19 @@ pub mod handlers;
 pub mod scanner;
 pub mod services;
 pub mod settings;
+pub mod task_service;
 pub mod test_util;
 use lazy_static::lazy_static;
 use sea_orm::DatabaseConnection;
 use std::sync::atomic::AtomicBool;
+use task_service::TaskType;
+use tokio::sync::mpsc::Sender;
+
 use crate::settings::Settings;
 #[derive(Clone)]
 pub struct AppState {
     pub database: DatabaseConnection,
-    pub scanner: Scanner,
+    pub task_service: Sender<TaskType>,
 }
 
 lazy_static! {

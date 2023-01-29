@@ -10,11 +10,12 @@ use tower_http::trace::TraceLayer;
 pub async fn app() -> Router {
     let db = new_seaorm_db().await.unwrap();
     seed_test_db(&db.pool).await.unwrap();
-    let scan: Scanner = Scanner::new(settings).unwrap();
+    let (tasks_send, _tasks_receiver) = tokio::sync::mpsc::channel::<task_service::TaskType>(10);
+
     //scan.start_scan();
     let state = AppState {
         database: db.pool,
-        scanner: scan,
+        task_service: tasks_send,
     };
     Router::new()
         .route("/stream/:id", get(handlers::stream::stream_handler))

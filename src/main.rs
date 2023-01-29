@@ -1,7 +1,13 @@
-use anyhow::{Ok, Result};
-use axum::{response::Html, routing::get, routing::post, Router};
-use deaftone::{database::Database, handlers, scanner::Scanner, AppState};
+use anyhow::Result;
+use axum::{extract::State, response::Html, routing::get, routing::post, Router};
+use core::panic;
+use deaftone::{
+    database::Database,
+    handlers,
+    scanner::Scanner,
+    task_service::{self, TaskType},
     AppState, SETTINGS,
+};
 use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
@@ -33,14 +39,16 @@ Version: {:} | Media Directory: {:} | Database: {:}",
 
     let db = Database::new().await?;
     // Create task service
-     */
+    let (tasks_send, tasks_receiver) = tokio::sync::mpsc::channel::<task_service::TaskType>(10);
     let mut task_manager = task_service::TaskService::new(tasks_receiver, Scanner::new().unwrap());
     // Spawn task service
-    // build our application with a route and state
+    let _task_manager_thread = tokio::spawn(async move { task_manager.run().await });
+    // Build app state
     let state = AppState {
         database: db.pool,
-        scanner: scan,
+        task_service: tasks_send.clone(),
     };
+
     let app = Router::new()
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::stream::stream_handler))
@@ -63,15 +71,27 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     // run it
     let addr: SocketAddr = SocketAddr::from(([0, 0, 0, 0], 3030));
     tracing::debug!("Binding to socket");
+    tracing::info!("listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await?;
-    tracing::info!("listening on {}", addr);
+    // Send shutdown signal to tasks service\
+    match tasks_send.send(TaskType::Shutdown).await {
+        Ok(_e) => {
+            tracing::info!("Shutting Down TaskService. Please wait for Task queue completion")
+        }
+        Err(err) => {
+            tracing::error!("Failed to send shutdown command to TaskService {:}", err);
+            panic!("Failed to shutdown TaskService")
+        }
+    };
+    tracing::info!("Goodbye!");
     Ok(())
 }
 
-async fn handler() -> Html<&'static str> {
+async fn handler(State(state): State<AppState>) -> Html<&'static str> {
+    state.task_service.send(TaskType::ScanLibrary).await;
     //println!("{:?}", SCAN_STATUS.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
 }
@@ -98,5 +118,5 @@ async fn shutdown_signal() {
         _ = ctrl_c => {},
         _ = terminate => {},
     }
-    tracing::info!("Shutting down");
+    tracing::info!("Shutting Down http service");
 }

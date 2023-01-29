@@ -4,14 +4,14 @@ use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, DatabaseConnection};
 use std::{fs, time::Duration};
 
-use crate::settings::Settings;
+use crate::SETTINGS;
 #[derive(Clone)]
 pub struct Database {
     pub pool: DatabaseConnection,
 }
 impl Database {
-    pub async fn new(settings: &Settings) -> Result<Database, anyhow::Error> {
-        let db_path = settings.db_path.as_str();
+    pub async fn new() -> Result<Database, anyhow::Error> {
+        let db_path = SETTINGS.db_path.as_str();
         if fs::metadata(db_path).is_err() {
             fs::File::create(db_path).map_err(|e| anyhow!("Error creating file: {}", e))?;
         }
