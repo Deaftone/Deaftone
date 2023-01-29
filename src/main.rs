@@ -1,6 +1,7 @@
 use anyhow::{Ok, Result};
 use axum::{response::Html, routing::get, routing::post, Router};
 use deaftone::{database::Database, handlers, scanner::Scanner, AppState};
+    AppState, SETTINGS,
 use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
@@ -8,18 +9,11 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let settings = match deaftone::settings::Settings::new() {
-        std::result::Result::Ok(file) => file,
-        Err(err) => {
-            println!("Failed to load config {err}. Loading default config");
-            deaftone::settings::Settings::new_default().unwrap()
-        }
-    };
     // Setup tracing logger
     let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
     tracing_subscriber::registry()
         .with(tracing_subscriber::EnvFilter::new(
-            settings.log_level.clone(),
+            SETTINGS.log_level.clone(),
         ))
         .with(tracing_subscriber::fmt::layer().with_writer(non_blocking))
         .init();
@@ -33,15 +27,15 @@ async fn main() -> Result<()> {
 ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝        ╚═╝    ╚═════╝ ╚═╝  ╚═══╝╚══════╝
 Version: {:} | Media Directory: {:} | Database: {:}",
         env!("CARGO_PKG_VERSION"),
-        settings.media_path.as_str(),
-        settings.db_path.as_str()
+        SETTINGS.media_path.as_str(),
+        SETTINGS.db_path.as_str()
     );
 
-    let db = Database::new(&settings).await?;
-    /*     create_playlist(&db).await?;
+    let db = Database::new().await?;
+    // Create task service
      */
-    let mut scan: Scanner = Scanner::new(settings).unwrap();
-    scan.start_scan();
+    let mut task_manager = task_service::TaskService::new(tasks_receiver, Scanner::new().unwrap());
+    // Spawn task service
     // build our application with a route and state
     let state = AppState {
         database: db.pool,

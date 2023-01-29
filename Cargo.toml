@@ -39,6 +39,7 @@ futures = "0.3.24"
 sqlx = { version = "0.6", features = [ "runtime-tokio-native-tls" ] }
 hyper = { version = "0.14", features = ["client"] }
 utoipa = { version = "2.4.2", features = ["axum_extras", "chrono", "uuid"] }
+lazy_static = "1.4.0"
 [dependencies.sea-orm]
 version = "0.10.6" # sea-orm version
 features = [

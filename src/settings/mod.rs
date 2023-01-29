@@ -9,12 +9,23 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn new() -> Result<Self, ConfigError> {
+    pub fn new() -> Self {
         let s = Config::builder()
             .add_source(config::File::with_name("settings.toml"))
-            .build()?;
-
-        s.try_deserialize()
+            .build();
+        match s {
+            Ok(s) => match s.try_deserialize::<Self>() {
+                Ok(file) => file,
+                Err(err) => {
+                    println!("Failed to load config loading default {:}", err);
+                    Self::new_default().unwrap()
+                }
+            },
+            Err(err) => {
+                println!("Failed to build config loading default {:}", err);
+                Self::new_default().unwrap()
+            }
+        }
     }
 
     pub fn new_default() -> Result<Self, ConfigError> {

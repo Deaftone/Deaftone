@@ -8,7 +8,6 @@ use sea_orm::{ConnectOptions, ConnectionTrait, DatabaseBackend, ExecResult, Stat
 use tower_http::trace::TraceLayer;
 
 pub async fn app() -> Router {
-    let settings = settings::Settings::new_default().unwrap();
     let db = new_seaorm_db().await.unwrap();
     seed_test_db(&db.pool).await.unwrap();
     let scan: Scanner = Scanner::new(settings).unwrap();
