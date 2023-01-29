@@ -14,11 +14,11 @@ pub struct TaskService {
     scanner: Scanner,
 }
 impl TaskService {
-    pub fn new(receiver: Receiver<TaskType>, scanner: Scanner) -> TaskService {
+    pub fn new(receiver: Receiver<TaskType>) -> TaskService {
         TaskService {
             task_queue: Vec::new(),
             receiver,
-            scanner,
+            scanner: Scanner::default(),
         }
     }
     pub async fn run(&mut self) {
