@@ -91,7 +91,14 @@ Version: {:} | Media Directory: {:} | Database: {:}",
 }
 
 async fn handler(State(state): State<AppState>) -> Html<&'static str> {
-    state.task_service.send(TaskType::ScanLibrary).await;
+    match state.task_service.send(TaskType::ScanLibrary).await {
+        Ok(_) => {
+            tracing::error!("Command sent TaskService");
+        }
+        Err(err) => {
+            tracing::error!("Failed to send command to TaskService {:}", err);
+        }
+    }
     //println!("{:?}", SCAN_STATUS.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
 }
