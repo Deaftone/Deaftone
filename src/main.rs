@@ -75,7 +75,8 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         .serve(app.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
         .await?;
-    // Send shutdown signal to tasks service\
+
+    // Send shutdown signal to tasks service
     match tasks_send.send(TaskType::Shutdown).await {
         Ok(_e) => {
             tracing::info!("Shutting Down TaskService. Please wait for Task queue completion")
@@ -92,7 +93,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
 async fn handler(State(state): State<AppState>) -> Html<&'static str> {
     match state.task_service.send(TaskType::ScanLibrary).await {
         Ok(_) => {
-            tracing::error!("Command sent TaskService");
+            tracing::info!("Command sent to TaskService");
         }
         Err(err) => {
             tracing::error!("Failed to send command to TaskService {:}", err);
@@ -124,5 +125,5 @@ async fn shutdown_signal() {
         _ = ctrl_c => {},
         _ = terminate => {},
     }
-    tracing::info!("Shutting Down http service");
+    tracing::info!("Shutting Down Http service");
 }
