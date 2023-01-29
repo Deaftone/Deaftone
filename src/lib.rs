@@ -19,6 +19,6 @@ pub struct AppState {
 }
 
 lazy_static! {
-    pub static ref SETTINGS: Settings = Settings::new();
+    pub static ref SETTINGS: Settings = Settings::default();
 }
 static SCAN_STATUS: AtomicBool = AtomicBool::new(false);

@@ -41,3 +41,8 @@ impl Settings {
         s.try_deserialize()
     }
 }
+impl Default for Settings {
+    fn default() -> Self {
+        Settings::new()
+    }
+}

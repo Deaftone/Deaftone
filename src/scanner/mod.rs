@@ -36,14 +36,13 @@ macro_rules! skip_fail {
     };
 }
 #[derive(Clone)]
-pub struct Scanner {}
+pub struct Scanner;
 impl Scanner {
-    pub fn new() -> Result<Scanner> {
-        let scanner: Scanner = Scanner {};
-        Ok(scanner)
+    pub fn new() -> Self {
+        Self
     }
 
-    pub async fn connect_db() -> Result<Pool<Sqlite>, sqlx::Error> {
+    async fn connect_db() -> Result<Pool<Sqlite>, sqlx::Error> {
         let database_file = "deaftone.sqlite";
         let database_url = format!("sqlite://{database_file}");
         let pool_timeout = Duration::from_secs(30);
@@ -384,5 +383,11 @@ impl Scanner {
         .bind(&init_time)
         .execute(tx)
         .await?)
+    }
+}
+
+impl Default for Scanner {
+    fn default() -> Self {
+        Scanner::new()
     }
 }

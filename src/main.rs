@@ -40,7 +40,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     let db = Database::new().await?;
     // Create task service
     let (tasks_send, tasks_receiver) = tokio::sync::mpsc::channel::<task_service::TaskType>(10);
-    let mut task_manager = task_service::TaskService::new(tasks_receiver, Scanner::new().unwrap());
+    let mut task_manager = task_service::TaskService::new(tasks_receiver, Scanner::default());
     // Spawn task service
     let _task_manager_thread = tokio::spawn(async move { task_manager.run().await });
     // Build app state
