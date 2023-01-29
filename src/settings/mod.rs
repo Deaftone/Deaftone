@@ -17,12 +17,12 @@ impl Settings {
             Ok(s) => match s.try_deserialize::<Self>() {
                 Ok(file) => file,
                 Err(err) => {
-                    println!("Failed to load config loading default {:}", err);
+                    println!("Failed to load config loading default {err}");
                     Self::new_default().unwrap()
                 }
             },
             Err(err) => {
-                println!("Failed to build config loading default {:}", err);
+                println!("Failed to build config loading default {err}");
                 Self::new_default().unwrap()
             }
         }
