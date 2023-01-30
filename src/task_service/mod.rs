@@ -1,7 +1,8 @@
 use std::time::Duration;
 use tokio::sync::mpsc::Receiver;
 
-use crate::scanner::Scanner;
+use crate::scanner;
+
 #[derive(Debug)]
 pub enum TaskType {
     ScanLibrary,
@@ -11,14 +12,12 @@ pub enum TaskType {
 pub struct TaskService {
     pub task_queue: Vec<TaskType>,
     receiver: Receiver<TaskType>,
-    scanner: Scanner,
 }
 impl TaskService {
     pub fn new(receiver: Receiver<TaskType>) -> TaskService {
         TaskService {
             task_queue: Vec::new(),
             receiver,
-            scanner: Scanner::default(),
         }
     }
     pub async fn run(&mut self) {
@@ -28,7 +27,7 @@ impl TaskService {
                 tracing::info!("Running task: {:?}", TaskType::ScanLibrary);
 
                 match task {
-                    TaskType::ScanLibrary => self.scanner.start_scan().await,
+                    TaskType::ScanLibrary => scanner::start_scan().await,
                     TaskType::Shutdown => break,
                 }
             }
