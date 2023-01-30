@@ -1,11 +1,7 @@
 use anyhow::Result;
 use axum::{extract::State, response::Html, routing::get, routing::post, Router};
 use core::panic;
-use deaftone::{
-    handlers,
-    task_service::{self, TaskType},
-    AppState, SETTINGS,
-};
+use deaftone::{handlers, services::task::TaskType, AppState, SETTINGS};
 use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::TraceLayer;
@@ -35,10 +31,11 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         SETTINGS.db_path.as_str()
     );
 
-    let db = deaftone::database::new().await?;
+    let db = deaftone::database::connect_to_db().await?;
     // Create task service
-    let (tasks_send, tasks_receiver) = tokio::sync::mpsc::channel::<task_service::TaskType>(10);
-    let mut task_manager = task_service::TaskService::new(tasks_receiver);
+    let (tasks_send, tasks_receiver) =
+        tokio::sync::mpsc::channel::<deaftone::services::task::TaskType>(10);
+    let mut task_manager = deaftone::services::task::TaskService::new(tasks_receiver);
     // Spawn task service
     let _task_manager_thread = tokio::spawn(async move { task_manager.run().await });
     // Build app state

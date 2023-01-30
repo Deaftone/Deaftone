@@ -6,6 +6,7 @@ pub mod album;
 pub mod artist;
 pub mod playlist;
 pub mod song;
+pub mod task;
 
 trait DeaftoneSelect {
     fn limit_option(self, limit: Option<u64>) -> Self;

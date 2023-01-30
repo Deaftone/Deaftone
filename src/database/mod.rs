@@ -6,7 +6,7 @@ use std::{fs, time::Duration};
 
 use crate::SETTINGS;
 
-pub async fn new() -> Result<DatabaseConnection, anyhow::Error> {
+pub async fn connect_to_db() -> Result<DatabaseConnection, anyhow::Error> {
     let db_path = SETTINGS.db_path.as_str();
     if fs::metadata(db_path).is_err() {
         fs::File::create(db_path).map_err(|e| anyhow!("Error creating file: {}", e))?;
