@@ -1,6 +1,6 @@
 use std::{fs, time::Duration};
 
-use crate::{database::Database, *};
+use crate::*;
 use axum::{routing::get, routing::post, Router};
 use migration::{DbErr, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, ConnectionTrait, DatabaseBackend, ExecResult, Statement};
@@ -9,12 +9,12 @@ use tower_http::trace::TraceLayer;
 
 pub async fn app() -> Router {
     let db = new_seaorm_db().await.unwrap();
-    seed_test_db(&db.pool).await.unwrap();
+    seed_test_db(&db).await.unwrap();
     let (tasks_send, _tasks_receiver) = tokio::sync::mpsc::channel::<task_service::TaskType>(10);
 
     //scan.start_scan();
     let state = AppState {
-        database: db.pool,
+        database: db,
         task_service: tasks_send,
     };
     Router::new()
@@ -35,7 +35,7 @@ pub async fn app() -> Router {
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
-pub async fn new_seaorm_db() -> Result<Database, anyhow::Error> {
+pub async fn new_seaorm_db() -> Result<DatabaseConnection, anyhow::Error> {
     let mut opt: ConnectOptions = ConnectOptions::new(String::from("sqlite::memory:"));
     opt.max_connections(100)
         .min_connections(5)
@@ -46,8 +46,7 @@ pub async fn new_seaorm_db() -> Result<Database, anyhow::Error> {
 
     let pool: DatabaseConnection = sea_orm::Database::connect(opt).await?;
     Migrator::up(&pool, None).await?;
-    let db = Database { pool };
-    Ok(db)
+    Ok(pool)
 }
 pub async fn seed_test_db(db: &DatabaseConnection) -> Result<ExecResult, DbErr> {
     let seed: String = fs::read_to_string("tests/test_seed.sql")

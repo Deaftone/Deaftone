@@ -2,7 +2,6 @@ use anyhow::Result;
 use axum::{extract::State, response::Html, routing::get, routing::post, Router};
 use core::panic;
 use deaftone::{
-    database::Database,
     handlers,
     task_service::{self, TaskType},
     AppState, SETTINGS,
@@ -36,7 +35,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         SETTINGS.db_path.as_str()
     );
 
-    let db = Database::new().await?;
+    let db = deaftone::database::new().await?;
     // Create task service
     let (tasks_send, tasks_receiver) = tokio::sync::mpsc::channel::<task_service::TaskType>(10);
     let mut task_manager = task_service::TaskService::new(tasks_receiver);
@@ -44,7 +43,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     let _task_manager_thread = tokio::spawn(async move { task_manager.run().await });
     // Build app state
     let state = AppState {
-        database: db.pool,
+        database: db,
         task_service: tasks_send.clone(),
     };
 
