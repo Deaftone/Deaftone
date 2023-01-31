@@ -75,7 +75,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     // Send shutdown signal to tasks service
     match tasks_send.send(TaskType::Shutdown).await {
         Ok(_e) => {
-            tracing::info!("Shutting Down TaskService. Please wait for Task queue completion")
+            tracing::info!("Shutting down TaskService. Please wait for task queue completion")
         }
         Err(err) => {
             tracing::error!("Failed to send shutdown command to TaskService {:}", err);
@@ -121,5 +121,5 @@ async fn shutdown_signal() {
         _ = ctrl_c => {},
         _ = terminate => {},
     }
-    tracing::info!("Shutting Down Http service");
+    tracing::info!("Shutting down HTTP service");
 }

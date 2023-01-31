@@ -136,10 +136,10 @@ pub async fn get_albums_paginate(
     let db_albums = match order {
         entity::album::Column::CreatedAt => entity::album::Entity::find()
             .order_by_desc(order)
-            .paginate(db, size.unwrap_or(u64::MAX)),
+            .paginate(db, size.unwrap_or(100)),
         _ => entity::album::Entity::find()
             .order_by_asc(order)
-            .paginate(db, size.unwrap_or(u64::MAX)),
+            .paginate(db, size.unwrap_or(100)),
     };
     Ok(db_albums.fetch_page(page.unwrap_or(0)).await?)
 }
