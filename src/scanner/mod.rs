@@ -288,9 +288,8 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
             }
             // Check if album has been created before inside this folder
             if create_album {
-                let album_exists = sqlx::query("SELECT * FROM albums WHERE name = ? AND path = ?")
+                let album_exists = sqlx::query("SELECT * FROM albums WHERE name = ?")
                     .bind(&metadata.album_name)
-                    .bind(&path_parent)
                     .persistent(true)
                     .fetch_one(sqlite_pool)
                     .await;

@@ -39,7 +39,7 @@ pub async fn get_album(
                     id: album_model.id,
                     name: album_model.name,
                     artist: album_model.artist_name,
-                    album_description: album_model.album_description.unwrap_or_default(),
+                    album_description: /* album_model.album_description.unwrap_or_default() */ String::from("TODO"),
                     artist_id: album_model.artist_id.unwrap_or_default(),
                     year: album_model.year,
                     song_count: songs.len() as i32,

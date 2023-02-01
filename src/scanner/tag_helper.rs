@@ -32,7 +32,7 @@ pub struct AudioMetadata {
     pub mb_artist_id: Option<String>,
     pub mb_albumartist_id: Option<String>,
     pub mb_releasetrack_id: Option<String>,
-    pub mb_releasegroupid: Option<String>,
+    pub mb_releasegroup_id: Option<String>,
     pub trackdisambig: Option<String>,
     pub album_type: Option<String>,
     pub acoustid_fingerprint: Option<String>,
@@ -44,8 +44,8 @@ pub struct AudioMetadata {
     pub country: Option<String>,
     pub albumstatus: Option<String>,
     pub media: Option<String>,
-    pub albumdisambig: Option<String>,
-    pub releasegroupdisambig: Option<String>,
+    pub album_disambig: Option<String>,
+    pub release_group_disambig: Option<String>,
     pub encodedby: Option<String>,
     pub original_year: Option<String>,
     pub initial_key: Option<String>,
@@ -149,7 +149,7 @@ pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
         mb_releasetrack_id: vorbis
             .get("MUSICBRAINZ_RELEASETRACKID")
             .and_then(|d| d[0].parse::<String>().ok()),
-        mb_releasegroupid: vorbis
+        mb_releasegroup_id: vorbis
             .get("MUSICBRAINZ_RELEASEGROUPID")
             .and_then(|d| d[0].parse::<String>().ok()),
         trackdisambig: vorbis
@@ -157,7 +157,7 @@ pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
             .and_then(|d| d[0].parse::<String>().ok()),
         album_type: vorbis
             .get("RELEASETYPE")
-            .and_then(|d| d[0].parse::<String>().ok()),
+            .and_then(|d| d[0].parse::<String>().ok()), // TODO return array
         acoustid_fingerprint: vorbis
             .get("ACOUSTID_FINGERPRINT")
             .and_then(|d| d[0].parse::<String>().ok()),
@@ -181,11 +181,11 @@ pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
         media: vorbis
             .get("MEDIA")
             .and_then(|d| d[0].parse::<String>().ok()),
-        albumdisambig: vorbis
-            .get("ALBUMDISAMBIG")
+        album_disambig: vorbis
+            .get("album_disambig")
             .and_then(|d| d[0].parse::<String>().ok()),
-        releasegroupdisambig: vorbis
-            .get("RELEASEGROUPDISAMBIG")
+        release_group_disambig: vorbis
+            .get("release_group_disambig")
             .and_then(|d| d[0].parse::<String>().ok()),
         // TODO disctitle
         encodedby: vorbis

@@ -90,20 +90,20 @@ pub async fn create_song(
             mb_artist_id,
             mb_albumartist_id,
             mb_releasetrack_id,
-            mb_releasegroupid,
-            trackdisambig,
-            albumtype,
+            mb_releasegroup_id,
+            track_disambig,
+            album_type,
             acoustid_fingerprint,
             acoustid_id,
             asin,
             isrc,
-            catalognum,
+            catalog_num,
             script,
             country,
-            albumstatus,
+            album_status,
             media,
-            albumdisambig,
-            releasegroupdisambig,
+            album_disambig,
+            release_group_disambig,
             encoder,
             original_year,
             initial_key,
@@ -158,7 +158,7 @@ pub async fn create_song(
     .bind(&metadata.mb_artist_id)
     .bind(&metadata.mb_albumartist_id)
     .bind(&metadata.mb_releasetrack_id)
-    .bind(&metadata.mb_releasegroupid)
+    .bind(&metadata.mb_releasegroup_id)
     .bind(&metadata.trackdisambig)
     .bind(&metadata.album_type)
     /*     .bind(&metadata.albumtypes)
@@ -174,8 +174,8 @@ pub async fn create_song(
     .bind(&metadata.country)
     .bind(&metadata.albumstatus)
     .bind(&metadata.media)
-    .bind(&metadata.albumdisambig)
-    .bind(&metadata.releasegroupdisambig)
+    .bind(&metadata.album_disambig)
+    .bind(&metadata.release_group_disambig)
     /*     .bind(&metadata.disctitle)
      */
     .bind(&metadata.encodedby)
