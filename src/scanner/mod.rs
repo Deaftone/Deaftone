@@ -282,7 +282,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
         let path_parent = path.parent().unwrap().to_string_lossy().to_string();
 
         if path.extension() == Some(std::ffi::OsStr::new("flac")) {
-            let metadata = skip_fail!(tag_helper::get_metadata(path));
+            let metadata = skip_fail!(tag_helper::get_metadata_flac(path));
             // Check if album has been created. This is a nice speedup since we can assume that when we are in a folder of tracks the they are all from the same album
             if create_artist {
                 let artists_exists = sqlx::query("SELECT * FROM artists WHERE name = ?")

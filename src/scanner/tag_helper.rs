@@ -17,8 +17,8 @@ pub struct AudioMetadata {
     pub duration: u32,
     pub mb_artist_id: Option<String>,
 }
-
-pub fn get_metadata(path: PathBuf) -> Result<AudioMetadata> {
+// Retreives the metadata from a flac file. Returning generic AudioMetadata struct
+pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
     let tag = Tag::read_from_path(&path)?;
     let vorbis: &VorbisComment = tag
         .vorbis_comments()
