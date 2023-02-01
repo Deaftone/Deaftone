@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::scanner::tag_helper::AudioMetadata;
 
+// Creates a album entry with belonging to provided artist_id
 pub async fn create_album(
     tx: &mut Transaction<'_, Sqlite>,
     cover: Option<String>,
@@ -47,6 +48,7 @@ pub async fn create_album(
     Ok(id)
 }
 
+// Returns a album by the album_id
 pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
@@ -84,6 +86,8 @@ pub async fn _update_cover_for_path(
     Ok(())
 }
 
+// Returns vec of albums taking into account sorting options and size
+// Sort options: name artist_name year latest
 pub async fn get_albums(
     db: &DatabaseConnection,
     size: Option<u64>,
@@ -119,6 +123,7 @@ pub async fn get_albums(
     Ok(result)
 }
 
+// Returns a vec of albums but paginated according to page and size params default page size 100 will also taking into account sorting options
 pub async fn get_albums_paginate(
     db: &DatabaseConnection,
     page: Option<u64>,

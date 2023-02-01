@@ -13,6 +13,7 @@ pub struct TaskService {
     pub task_queue: Vec<TaskType>,
     receiver: Receiver<TaskType>,
 }
+// TaskServices listens for TaskType:: on the Receiver only runnig 1 task at a time
 impl TaskService {
     pub fn new(receiver: Receiver<TaskType>) -> TaskService {
         TaskService {

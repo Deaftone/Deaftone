@@ -1,22 +1,15 @@
-use crate::{services, SCAN_STATUS, SETTINGS};
+use crate::{database, services, SCAN_STATUS, SETTINGS};
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, NaiveDateTime, Utc};
-use sqlx::{
-    sqlite::{
-        SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteQueryResult,
-        SqliteSynchronous,
-    },
-    ConnectOptions, Pool, Row, Sqlite,
-};
+use sqlx::sqlite::SqliteQueryResult;
+use sqlx::{Pool, Row};
 use std::result::Result::Ok;
 use std::sync::atomic::Ordering;
-
 use std::time::SystemTime;
 use std::{
     fs::{self},
     path::PathBuf,
-    str::FromStr,
-    time::{Duration, Instant},
+    time::Instant,
 };
 use tokio_stream::StreamExt;
 use uuid::Uuid;
@@ -35,37 +28,18 @@ macro_rules! skip_fail {
         }
     };
 }
-async fn connect_db() -> Result<Pool<Sqlite>, sqlx::Error> {
-    let database_file = "deaftone.sqlite";
-    let database_url = format!("sqlite://{database_file}");
-    let pool_timeout = Duration::from_secs(30);
-    let connection_options = SqliteConnectOptions::from_str(&database_url)
-        .unwrap()
-        .create_if_missing(true)
-        .journal_mode(SqliteJournalMode::Wal)
-        .synchronous(SqliteSynchronous::Normal)
-        .foreign_keys(false)
-        .busy_timeout(pool_timeout)
-        .disable_statement_logging()
-        .clone();
-
-    SqlitePoolOptions::new()
-        .min_connections(5)
-        .max_connections(10)
-        .connect_with(connection_options)
-        .await
-}
 
 pub async fn start_scan() {
+    // Set global SCAN_STATUS to true
     SCAN_STATUS.store(true, Ordering::Release);
 
     tracing::info!("Starting scan");
     // This is a hack because sometimes when starting Deaftone running migrations then instantly running the scanner.
     // The database is locked so we just try and connect again on error
     tracing::debug!("Connecting to DB");
-    let sqlite_pool = match connect_db().await {
+    let sqlite_pool = match database::connect_db_sqlx().await {
         Ok(pool) => pool,
-        Err(_) => connect_db().await.unwrap(),
+        Err(_) => database::connect_db_sqlx().await.unwrap(),
     };
     tracing::debug!("Connected DB");
 
@@ -100,8 +74,9 @@ pub async fn start_scan() {
     let current_dir = SETTINGS.media_path.clone();
     walk_full(&sqlite_pool, current_dir).await.unwrap();
     tracing::info!("Scan completed in: {:.2?}", before.elapsed());
-    //Self::walk_partial(&sqlite_pool).await.unwrap();
-    SCAN_STATUS.store(true, Ordering::Release);
+
+    // Set global SCAN_STATUS to false
+    SCAN_STATUS.store(false, Ordering::Release);
 }
 
 pub async fn walk_partial(pool: &Pool<sqlx::Sqlite>) -> Result<()> {
@@ -290,6 +265,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
                     .persistent(true)
                     .fetch_one(sqlite_pool)
                     .await;
+                // Check if artist exists on this loop
                 match artists_exists {
                     Err(sqlx::Error::RowNotFound) => {
                         artist_id = skip_fail!(
@@ -310,6 +286,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
                     }
                 }
             }
+            // Check if album has been created before inside this folder
             if create_album {
                 let album_exists = sqlx::query("SELECT * FROM albums WHERE name = ? AND path = ?")
                     .bind(&metadata.album)
@@ -344,12 +321,15 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
                 }
             }
             tracing::info!("Creating song \"{:}\"", metadata.name);
+            // Create song. Skip loop iteration of failed
             skip_fail!(services::song::create_song(&mut tx, &album_id, &metadata).await);
         }
     }
     tx.commit().await.unwrap();
     Ok(())
 }
+
+// Inserts a directory into the database with provided path and mtime
 async fn insert_directory(
     path: &str,
     mtime: &DateTime<Utc>,

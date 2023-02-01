@@ -32,7 +32,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     );
 
     let db = deaftone::database::connect_to_db().await?;
-    // Create task service
+    // Create task service with channel length of 10
     let (tasks_send, tasks_receiver) =
         tokio::sync::mpsc::channel::<deaftone::services::task::TaskType>(10);
     let mut task_manager = deaftone::services::task::TaskService::new(tasks_receiver);
@@ -43,7 +43,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         database: db,
         task_service: tasks_send.clone(),
     };
-
+    // Build app router
     let app = Router::new()
         .route("/", get(handler))
         .route("/stream/:id", get(handlers::stream::stream_handler))
@@ -63,7 +63,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 
-    // run it
+    // Starting listening
     let addr: SocketAddr = SocketAddr::from(([0, 0, 0, 0], 3030));
     tracing::debug!("Binding to socket");
     tracing::info!("listening on {}", addr);

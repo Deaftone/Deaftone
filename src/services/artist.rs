@@ -8,6 +8,7 @@ use sea_orm::{
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
 
+// Creates a artist entry with artist name passed and MusicBrainzArtistId
 pub async fn create_artist(
     tx: &mut Transaction<'_, Sqlite>,
     artist_name: &str,
@@ -34,6 +35,8 @@ pub async fn create_artist(
     .await?;
     Ok(id)
 }
+
+// Return a artist by there artist_id. Also merges there connected MusicBrainArtistId albums
 pub async fn get_artist_by_id(
     db: &DatabaseConnection,
     artist_id: String,
@@ -60,6 +63,7 @@ pub async fn get_artist_by_id(
     }
 }
 
+// Returns a vec of artist with size and sort options
 pub async fn get_artists(
     db: &DatabaseConnection,
     size: Option<u64>,
@@ -91,6 +95,7 @@ pub async fn get_artists(
     Ok(result)
 }
 
+// Returns a vec of artists but paginated according to page and size params default page size 100 will also taking into account sorting options
 pub async fn get_artists_paginate(
     db: &DatabaseConnection,
     page: Option<u64>,
@@ -114,6 +119,7 @@ pub async fn get_artists_paginate(
     Ok(db_artist.fetch_page(page.unwrap_or(0)).await?)
 }
 
+// Returns a vec of the latest artists added to the database
 pub async fn get_latest_artist(
     db: &DatabaseConnection,
     size: Option<u64>,

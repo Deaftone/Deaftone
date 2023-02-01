@@ -16,7 +16,7 @@ pub struct AppState {
     pub database: DatabaseConnection,
     pub task_service: Sender<TaskType>,
 }
-
+// Inject global settings static ref
 lazy_static! {
     pub static ref SETTINGS: Settings = Settings::default();
 }

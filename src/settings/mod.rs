@@ -9,6 +9,7 @@ pub struct Settings {
 }
 
 impl Settings {
+    // Returns settings block
     pub fn new() -> Self {
         let s = Config::builder()
             .add_source(config::File::with_name("settings.toml"))
@@ -27,7 +28,7 @@ impl Settings {
             }
         }
     }
-
+    // Returns default settings useful for testing
     pub fn new_default() -> Result<Self, ConfigError> {
         tracing::info!("Failed to load settings.toml. Loaded default config");
         let s = Config::builder()

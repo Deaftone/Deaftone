@@ -66,6 +66,8 @@ pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
     Ok(metadata)
 }
 // This is ugly. But why is there 3 different tags for date?
+// Returns year tag from VorbisComment block
+// YEAR -> DATE -> ORIGINALYEAR
 fn get_year(vorbis: &VorbisComment) -> Result<i32> {
     let original_year: String = vorbis
         .comments
@@ -95,6 +97,7 @@ fn get_year(vorbis: &VorbisComment) -> Result<i32> {
     }
 }
 
+// Parses string year into i32 year
 fn parse_year(mut year: String) -> Result<i32> {
     if year.chars().count() == 10 {
         year.truncate(4);

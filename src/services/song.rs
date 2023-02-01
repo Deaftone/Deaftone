@@ -51,6 +51,8 @@ pub async fn _get_song_by_path(
         .map_err(|e| anyhow::anyhow!(e))?;
     Ok(song)
 }
+
+// // Creates a song entry with with the passed album_id and AudioMetadata block
 pub async fn create_song(
     tx: &mut Transaction<'_, Sqlite>,
     album_id: &str,

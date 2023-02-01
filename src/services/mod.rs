@@ -24,4 +24,5 @@ where
     }
 }
 
+// Rewrite DbArtist to ArtistResponse
 pub type DbArtist = ArtistResponse;
