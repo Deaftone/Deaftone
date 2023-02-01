@@ -34,7 +34,7 @@ pub async fn create_album(
     VALUES (?,?,?,?,?,?,?,?,?,?)",
     )
     .bind(&id)
-    .bind(&metadata.album)
+    .bind(&metadata.album_name)
     .bind(&metadata.album_artist)
     .bind(cover)
     .bind(&metadata.parent_path)

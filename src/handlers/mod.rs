@@ -52,7 +52,7 @@ pub struct SongResponse {
     disk: i32,
     artist: String,
     album_name: String,
-    duration: u32,
+    length: u32,
     year: i32,
     album_id: String,
     liked: bool,

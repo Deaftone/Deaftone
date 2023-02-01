@@ -37,7 +37,7 @@ pub async fn get_song(
                 disk: f.disk.unwrap_or_default(),
                 artist: f.artist,
                 album_name: f.album_name,
-                duration: f.duration,
+                length: f.length,
                 year: f.year.unwrap_or_default(),
                 album_id: f.album_id.unwrap_or_default(),
                 liked: f.liked,

@@ -62,34 +62,144 @@ pub async fn create_song(
     let init_time: String = Utc::now().naive_local().to_string();
     Ok(sqlx::query(
         "INSERT OR REPLACE INTO songs (
-            id, 
+            id,
             path,
             title,
-            disk,
             artist,
+            artist_sort,
             album_name,
-            track,
+            album_artist,
+            album_sort,
+            discogs_albumid,
+            discogs_artistid,
+            discogs_labelid,
+            lyricist,
+            composer,
+            composer_sort,
+            work,
+            mb_workid,
+            arranger,
+            grouping,
             year,
+            lyrics,
+            comments,
+            bpm,
+            comp,
+            mb_track_id,
+            mb_album_id,
+            mb_artist_id,
+            mb_albumartist_id,
+            mb_releasetrack_id,
+            mb_releasegroupid,
+            trackdisambig,
+            albumtype,
+            acoustid_fingerprint,
+            acoustid_id,
+            asin,
+            isrc,
+            catalognum,
+            script,
+            country,
+            albumstatus,
+            media,
+            albumdisambig,
+            releasegroupdisambig,
+            encoder,
+            original_year,
+            initial_key,
+            encoder_settings,
+            track,
+            disk,
+            length,
+            label,
             created_at,
             updated_at,
-            duration,
             album_id,
             liked
          )
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     )
     .bind(id.to_string())
     .bind(&metadata.path)
     .bind(&metadata.name)
-    .bind(metadata.disc)
+    .bind(&metadata.artist)
+    .bind(&metadata.artist_sort)
+    .bind(&metadata.album_name)
     .bind(&metadata.album_artist)
-    .bind(&metadata.album)
-    .bind(metadata.track)
-    .bind(metadata.year)
+    .bind(&metadata.album_sort)
+    /*     .bind(
+            &metadata
+                .genre
+                .into_iter()
+                .map(|i| String::from("{:?}", i))
+                .collect::<String>(),
+        ) */
+    /*     .bind(&metadata.style)
+     */
+    .bind(&metadata.discogs_albumid)
+    .bind(&metadata.discogs_artistid)
+    .bind(&metadata.discogs_labelid)
+    .bind(&metadata.lyricist)
+    .bind(&metadata.composer)
+    .bind(&metadata.composer_sort)
+    .bind(&metadata.work)
+    .bind(&metadata.mb_workid)
+    /*     .bind(&metadata.work_disambig)
+     */
+    .bind(&metadata.arranger)
+    .bind(&metadata.grouping)
+    .bind(&metadata.year)
+    .bind(&metadata.lyrics)
+    .bind(&metadata.comments)
+    .bind(&metadata.bpm)
+    .bind(&metadata.compilation)
+    .bind(&metadata.mb_track_id)
+    .bind(&metadata.mb_album_id)
+    .bind(&metadata.mb_artist_id)
+    .bind(&metadata.mb_albumartist_id)
+    .bind(&metadata.mb_releasetrack_id)
+    .bind(&metadata.mb_releasegroupid)
+    .bind(&metadata.trackdisambig)
+    .bind(&metadata.album_type)
+    /*     .bind(&metadata.albumtypes)
+     */
+    .bind(&metadata.acoustid_fingerprint)
+    .bind(&metadata.acoustid_id)
+    .bind(&metadata.asin)
+    .bind(&metadata.isrc)
+    .bind(&metadata.catalog_num)
+    .bind(&metadata.script)
+    /*     .bind(&metadata.language)
+     */
+    .bind(&metadata.country)
+    .bind(&metadata.albumstatus)
+    .bind(&metadata.media)
+    .bind(&metadata.albumdisambig)
+    .bind(&metadata.releasegroupdisambig)
+    /*     .bind(&metadata.disctitle)
+     */
+    .bind(&metadata.encodedby)
+    .bind(&metadata.original_year)
+    .bind(&metadata.initial_key)
+    /*     .bind(&metadata.bitrate)
+        .bind(&metadata.bitrate_mode) */
+    /*     .bind(&metadata.encoder_info)
+     */
+    .bind(&metadata.encoder_settings)
+    /*     .bind(&metadata.format)
+    .bind(&metadata.bitdepth)
+    .bind(&metadata.channels) */
+    .bind(&metadata.track)
+    .bind(&metadata.disc)
+    /*     .bind(&metadata.codec)
+     */
+    .bind(&metadata.length)
+    .bind(&metadata.label)
+    /*     .bind(&metadata.sample_rate)
+    .bind(&metadata.bits_per_sample) */
     .bind(&init_time)
     .bind(&init_time)
-    .bind(metadata.duration)
-    .bind(album_id)
+    .bind(&album_id)
     .bind(false)
     .execute(&mut *tx)
     .await?)
