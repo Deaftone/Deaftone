@@ -107,17 +107,20 @@ pub async fn create_song(
             encoder,
             original_year,
             initial_key,
+            bit_rate,
             encoder_settings,
             track,
             disk,
             length,
             label,
+            sample_rate,
+            bits_per_sample,
             created_at,
             updated_at,
             album_id,
             liked
          )
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
     )
     .bind(id.to_string())
     .bind(&metadata.path)
@@ -181,6 +184,7 @@ pub async fn create_song(
     .bind(&metadata.encodedby)
     .bind(&metadata.original_year)
     .bind(&metadata.initial_key)
+    .bind(&metadata.bit_rate)
     /*     .bind(&metadata.bitrate)
         .bind(&metadata.bitrate_mode) */
     /*     .bind(&metadata.encoder_info)
@@ -195,6 +199,9 @@ pub async fn create_song(
      */
     .bind(metadata.length)
     .bind(&metadata.label)
+    .bind(&metadata.sample_rate)
+    .bind(&metadata.bit_depth)
+
     /*     .bind(&metadata.sample_rate)
     .bind(&metadata.bits_per_sample) */
     .bind(&init_time)

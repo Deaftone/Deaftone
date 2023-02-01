@@ -62,7 +62,7 @@ pub struct Model {
     pub encoder: Option<String>,
     pub original_year: Option<i32>,
     pub initial_key: Option<String>,
-    pub bitrate: Option<i32>,
+    pub bit_rate: Option<i64>,
     pub bitrate_mode: Option<i32>,
     pub encoder_info: Option<String>,
     pub encoder_settings: Option<String>,

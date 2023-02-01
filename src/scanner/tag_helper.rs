@@ -49,7 +49,11 @@ pub struct AudioMetadata {
     pub encodedby: Option<String>,
     pub original_year: Option<String>,
     pub initial_key: Option<String>,
+    pub bit_rate: Option<i64>,
     pub encoder_settings: Option<String>,
+    pub channels: Option<u8>,
+    pub bit_depth: Option<u8>,
+    pub sample_rate: Option<u32>,
     pub track: u32,
     pub disc: u32,
     pub length: u32,
@@ -57,18 +61,38 @@ pub struct AudioMetadata {
     pub path: String,
     pub parent_path: String,
 }
+
+pub struct StreamInfo {
+    length: Option<u32>,
+    _total_samples: Option<u64>,
+    sample_rate: Option<u32>,
+    bits_per_sample: Option<u8>,
+    /*     bit_rate: Option<i64>,
+     */ num_channels: Option<u8>,
+}
 // Retreives the metadata from a flac file. Returning generic AudioMetadata struct
 pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
     let tag = Tag::read_from_path(&path)?;
     let vorbis: &VorbisComment = tag
         .vorbis_comments()
         .with_context(|| format!("Failed to read tags for {}", path.to_str().unwrap()))?;
+    //let meta = fs::metadata(&path)?;
 
-    let mut stream_info = tag.get_blocks(metaflac::BlockType::StreamInfo);
-    let length = match stream_info.next() {
-        Some(metaflac::Block::StreamInfo(s)) => Some(s.total_samples as u32 / s.sample_rate),
-        _ => None,
+    let mut file_stream_info = tag.get_blocks(metaflac::BlockType::StreamInfo);
+    let stream_info = match file_stream_info.next() {
+        Some(metaflac::Block::StreamInfo(s)) => StreamInfo {
+            length: Some(s.total_samples as u32 / s.sample_rate),
+            _total_samples: Some(s.total_samples),
+            sample_rate: Some(s.sample_rate),
+            bits_per_sample: Some(s.bits_per_sample),
+            /*             bit_rate: Some((meta.len() * (s.total_samples as u64 / s.sample_rate as u64)) as i64),
+             */            /*             $kbps = floor((filesize($file) * 8) / (1024 * $seconds));
+             */            /* bit_rate: Some(s.bits_per_sample * s.num_channels), */
+            num_channels: Some(s.num_channels),
+        },
+        _ => anyhow::bail!("Failed to read stream info"),
     };
+
     let metadata: AudioMetadata = AudioMetadata {
         name: vorbis
             .title()
@@ -195,9 +219,8 @@ pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
             .get("ORIGINALYEAR")
             .and_then(|d| d[0].parse::<String>().ok()),
         initial_key: vorbis.get("KEY").and_then(|d| d[0].parse::<String>().ok()),
-        /*         bitrate: vorbis
-                    .get("CATALOGNUMBER")
-                    .and_then(|d| d[0].parse::<String>().ok()), */
+        bit_rate: Some(0),
+        sample_rate: stream_info.sample_rate,
         /*             bitrate_mode: vorbis
                     .get("CATALOGNUMBER")
                     .and_then(|d| d[0].parse::<String>().ok()), */
@@ -210,13 +233,15 @@ pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
         // TODO format
         // TODO bitdepth
         // TODO channels
+        channels: stream_info.num_channels,
+        bit_depth: stream_info.bits_per_sample,
         track: vorbis.track().unwrap_or(0),
         disc: vorbis
             .get("DISCNUMBER")
             .and_then(|d| d[0].parse::<u32>().ok())
             .unwrap_or_default(),
         // TODO codec
-        length: length.unwrap_or_default(),
+        length: stream_info.length.unwrap_or_default(),
         label: vorbis
             .get("LABEL")
             .and_then(|d| d[0].parse::<String>().ok()),
