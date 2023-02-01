@@ -148,7 +148,7 @@ pub async fn create_song(
      */
     .bind(&metadata.arranger)
     .bind(&metadata.grouping)
-    .bind(&metadata.year)
+    .bind(metadata.year)
     .bind(&metadata.lyrics)
     .bind(&metadata.comments)
     .bind(&metadata.bpm)
@@ -189,17 +189,17 @@ pub async fn create_song(
     /*     .bind(&metadata.format)
     .bind(&metadata.bitdepth)
     .bind(&metadata.channels) */
-    .bind(&metadata.track)
-    .bind(&metadata.disc)
+    .bind(metadata.track)
+    .bind(metadata.disc)
     /*     .bind(&metadata.codec)
      */
-    .bind(&metadata.length)
+    .bind(metadata.length)
     .bind(&metadata.label)
     /*     .bind(&metadata.sample_rate)
     .bind(&metadata.bits_per_sample) */
     .bind(&init_time)
     .bind(&init_time)
-    .bind(&album_id)
+    .bind(album_id)
     .bind(false)
     .execute(&mut *tx)
     .await?)
