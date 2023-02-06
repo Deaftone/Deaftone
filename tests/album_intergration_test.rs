@@ -25,7 +25,7 @@ mod tests {
             .request(
                 Request::builder()
                     .uri(format!(
-                        "http://{}/albums/da120a26-d886-4995-a9ee-4b558ed5fcf9",
+                        "http://{}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642",
                         addr
                     ))
                     .body(Body::empty())
@@ -37,9 +37,9 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::OK);
         let body = to_bytes(resp.into_body()).await.unwrap();
         let album: AlbumResponse = from_slice(&body).unwrap();
-        assert!(album.id == r#"da120a26-d886-4995-a9ee-4b558ed5fcf9"#);
-        assert!(album.name == String::from("Keeper Of The Seven Keys Part II"));
-        assert!(album.songs.len() == 10);
+        assert!(album.id == r#"46ffbb9a-8c98-45d6-a561-0cb80214a642"#);
+        assert!(album.name == String::from("Ain't No Peace"));
+        assert!(album.songs.len() == 7);
     }
     #[tokio::test]
     async fn test_get_albums_sort_by_name() {
