@@ -32,9 +32,9 @@ fn gen_my_openapi() -> std::string::String {
                 deaftone::handlers::ArtistResponse,
                 deaftone::handlers::SongResponse,
                 deaftone::handlers::GetAllArtists,
-                entity::album::Model as AlbumModel,
-                entity::song::Model as SongModel,
-                entity::artist::Model as ArtistModel,
+                entity::album::Model,
+                entity::song::Model,
+                entity::artist::Model,
             )
         ),
         tags(

@@ -97,7 +97,7 @@ pub async fn get_cover(
         GetAllAlbums
     ),
     responses(
-        (status = 200, description = "List containing albums", body = [AlbumModel]),
+        (status = 200, description = "List containing albums", body = [entity::album::Model]),
         (status = 500, description = "Failed to get albums", body = String)
     )
 )]

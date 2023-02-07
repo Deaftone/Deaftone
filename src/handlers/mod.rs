@@ -2,8 +2,6 @@ use std::{fmt, str::FromStr};
 
 use ::serde::{Deserialize, Serialize};
 use axum::response::{IntoResponse, Response};
-use entity::album::Model as AlbumModel;
-use entity::song::Model as SongModel;
 use hyper::StatusCode;
 use serde::{de, Deserializer};
 use utoipa::{IntoParams, ToSchema};
@@ -23,7 +21,7 @@ pub struct AlbumResponse {
     pub album_description: String,
     pub year: i32,
     pub song_count: i32,
-    pub songs: Vec<SongModel>,
+    pub songs: Vec<entity::song::Model>,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -32,7 +30,7 @@ pub struct ArtistResponse {
     pub name: String,
     pub image: String,
     pub bio: String,
-    pub albums: Vec<AlbumModel>,
+    pub albums: Vec<entity::album::Model>,
 }
 
 #[derive(Serialize)]

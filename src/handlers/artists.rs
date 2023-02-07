@@ -42,7 +42,7 @@ pub async fn get_artist(
         GetAllArtists
     ),
     responses(
-        (status = 200, description = "List containing artists", body = [ArtistModel]),
+        (status = 200, description = "List containing artists", body = [entity::artist::Model]),
         (status = 500, description = "Database error occured", body = String)
     )
 )]
