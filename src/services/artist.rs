@@ -1,5 +1,6 @@
-use super::{DbArtist, DeaftoneSelect};
-use anyhow::anyhow;
+use crate::handlers::ApiError;
+
+use super::DeaftoneSelect;
 use chrono::Utc;
 use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder,
@@ -40,26 +41,22 @@ pub async fn create_artist(
 pub async fn get_artist_by_id(
     db: &DatabaseConnection,
     artist_id: String,
-) -> anyhow::Result<DbArtist, anyhow::Error> {
-    let artist_db = entity::artist::Entity::find_by_id(artist_id.clone())
+) -> anyhow::Result<(entity::artist::Model, Vec<entity::album::Model>), ApiError> {
+    match entity::artist::Entity::find_by_id(artist_id.clone())
         .order_by_desc(entity::album::Column::Year)
         .find_with_related(entity::album::Entity)
         .all(db)
-        .await?;
-
-    match artist_db.first() {
-        Some(artist) => {
-            let artist_model = artist.0.to_owned();
-            let albums = artist.1.to_owned();
-            Ok(DbArtist {
-                id: artist_model.id,
-                name: artist_model.name,
-                image: artist_model.image.unwrap_or_default(),
-                bio: artist_model.bio.unwrap_or_default(),
-                albums,
-            })
-        }
-        None => anyhow::bail!("No artist found with ID {:}", artist_id),
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            e
+        })?
+        .first()
+    {
+        Some(artist) => Ok(artist.to_owned()),
+        None => Err(ApiError::RecordNotFound(format!(
+            "Artist \"{artist_id}\" not found"
+        ))),
     }
 }
 
@@ -68,7 +65,7 @@ pub async fn get_artists(
     db: &DatabaseConnection,
     size: Option<u64>,
     sort: Option<String>,
-) -> anyhow::Result<Vec<entity::artist::Model>> {
+) -> anyhow::Result<Vec<entity::artist::Model>, ApiError> {
     let order = match sort.as_deref() {
         Some("name") => entity::artist::Column::Name,
         Some("latest") => entity::artist::Column::CreatedAt,
@@ -80,18 +77,16 @@ pub async fn get_artists(
                 .order_by_desc(order)
                 .limit_option(size)
                 .all(db)
-                .await
+                .await?
         }
         _ => {
             entity::artist::Entity::find()
                 .order_by_asc(order)
                 .limit_option(size)
                 .all(db)
-                .await
+                .await?
         }
-    }
-    .map_err(|e| anyhow!("Failed to get artists: {}", e))?;
-
+    };
     Ok(result)
 }
 
@@ -101,7 +96,7 @@ pub async fn get_artists_paginate(
     page: Option<u64>,
     size: Option<u64>,
     sort: Option<String>,
-) -> anyhow::Result<Vec<entity::artist::Model>> {
+) -> anyhow::Result<Vec<entity::artist::Model>, ApiError> {
     let order = match sort.unwrap_or_default().as_str() {
         "name" => entity::artist::Column::Name,
         "latest" => entity::artist::Column::CreatedAt,

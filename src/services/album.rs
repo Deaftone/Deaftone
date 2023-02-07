@@ -1,4 +1,5 @@
-use anyhow::anyhow;
+use crate::handlers::ApiError;
+use crate::scanner::tag_helper::AudioMetadata;
 use chrono::Utc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
@@ -6,8 +7,6 @@ use sea_orm::{
 use sea_orm::{PaginatorTrait, QuerySelect};
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
-
-use crate::scanner::tag_helper::AudioMetadata;
 
 // Creates a album entry with belonging to provided artist_id
 pub async fn create_album(
@@ -88,15 +87,37 @@ pub async fn create_album(
     Ok(id)
 }
 
-// Returns a album by the album_id
+// Returns a album by the album_id with songs
 pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
-) -> anyhow::Result<Vec<(entity::album::Model, Vec<entity::song::Model>)>> {
-    Ok(entity::album::Entity::find_by_id(album_id)
+) -> Result<(entity::album::Model, Vec<entity::song::Model>), ApiError> {
+    match entity::album::Entity::find_by_id(album_id.clone())
         .find_with_related(entity::song::Entity)
         .all(db)
-        .await?)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            e
+        })?
+        .first()
+    {
+        Some(album) => Ok(album.to_owned()),
+        None => Err(ApiError::RecordNotFound(format!(
+            "Album \"{album_id}\" not found"
+        ))),
+    }
+}
+
+// Returns a album by the album_id
+pub async fn get_album_by_id_single(
+    db: &DatabaseConnection,
+    album_id: String,
+) -> anyhow::Result<entity::album::Model> {
+    Ok(entity::album::Entity::find_by_id(album_id)
+        .one(db)
+        .await?
+        .expect("Failed to get album"))
 }
 pub async fn _find_by_name(
     db: &DatabaseConnection,
@@ -132,7 +153,7 @@ pub async fn get_albums(
     db: &DatabaseConnection,
     size: Option<u64>,
     sort: Option<String>,
-) -> anyhow::Result<Vec<entity::album::Model>> {
+) -> anyhow::Result<Vec<entity::album::Model>, ApiError> {
     let order = match sort.as_deref() {
         Some("name") => entity::album::Column::Name,
         Some("artist_name") => entity::album::Column::ArtistName,
@@ -142,25 +163,22 @@ pub async fn get_albums(
     };
 
     let limit = size.unwrap_or(100);
-    let result = match order {
+    Ok(match order {
         entity::album::Column::CreatedAt => {
             entity::album::Entity::find()
                 .order_by_desc(order)
                 .limit(limit)
                 .all(db)
-                .await
+                .await?
         }
         _ => {
             entity::album::Entity::find()
                 .order_by_asc(order)
                 .limit(limit)
                 .all(db)
-                .await
+                .await?
         }
-    }
-    .map_err(|e| anyhow!("Failed to get albums: {}", e))?;
-
-    Ok(result)
+    })
 }
 
 // Returns a vec of albums but paginated according to page and size params default page size 100 will also taking into account sorting options
@@ -169,7 +187,7 @@ pub async fn get_albums_paginate(
     page: Option<u64>,
     size: Option<u64>,
     sort: Option<String>,
-) -> anyhow::Result<Vec<entity::album::Model>> {
+) -> anyhow::Result<Vec<entity::album::Model>, ApiError> {
     let order = match sort.unwrap_or_default().as_str() {
         "name" => entity::album::Column::Name,
         "artist_name" => entity::album::Column::ArtistName,

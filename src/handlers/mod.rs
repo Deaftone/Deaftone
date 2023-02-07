@@ -1,10 +1,13 @@
 use std::{fmt, str::FromStr};
 
 use ::serde::{Deserialize, Serialize};
+use axum::response::{IntoResponse, Response};
 use entity::album::Model as AlbumModel;
 use entity::song::Model as SongModel;
+use hyper::StatusCode;
 use serde::{de, Deserializer};
 use utoipa::{IntoParams, ToSchema};
+
 pub mod albums;
 pub mod artists;
 pub mod playlist;
@@ -78,6 +81,38 @@ pub struct GetAllAlbums {
     size: Option<u64>,
     #[serde(default, deserialize_with = "empty_string_as_none")]
     page: Option<u64>,
+}
+#[derive(Debug)]
+pub enum ApiError {
+    RecordNotFound(String),
+    DatabaseError(sea_orm::DbErr),
+    CoverNotFound(std::io::Error),
+}
+// Convert sea_orm::DbErr into our custom ApiError allows ? to be called on sea_orm querys such as find_by_id().await? etc. Pushing up the error to the caller.
+// Which most of the time is a web handler. Which with impl IntoResponse for ApiError can convert these errors into errors with response codes and good messages
+impl From<sea_orm::DbErr> for ApiError {
+    fn from(error: sea_orm::DbErr) -> Self {
+        ApiError::DatabaseError(error)
+    }
+}
+
+// Converts Service into a response with a HTTP StatusCode and a string to be returned to the user
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        match self {
+            ApiError::DatabaseError(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("An unexpected exception has occured: {err}"),
+            )
+                .into_response(),
+            ApiError::RecordNotFound(err) => {
+                (StatusCode::NOT_FOUND, format!("Record not found: {err}")).into_response()
+            }
+            ApiError::CoverNotFound(err) => {
+                (StatusCode::NOT_FOUND, format!("Cover not found: {err}")).into_response()
+            }
+        }
+    }
 }
 
 fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>

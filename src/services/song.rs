@@ -5,21 +5,22 @@ use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
 
 use uuid::Uuid;
 
-use crate::scanner::tag_helper::AudioMetadata;
-pub async fn get_song(
+use crate::{handlers::ApiError, scanner::tag_helper::AudioMetadata};
+
+pub async fn get_song_by_id(
     db: &DatabaseConnection,
     id: String,
-) -> anyhow::Result<Option<entity::song::Model>, anyhow::Error> {
+) -> anyhow::Result<entity::song::Model, ApiError> {
     match entity::song::Entity::find_by_id(id.to_owned())
         .one(db)
-        .await
+        .await?
     {
-        Ok(model) => Ok(model),
-        Err(err) => anyhow::bail!("Failed to get song: {:}", err),
+        Some(model) => Ok(model),
+        None => Err(ApiError::RecordNotFound(format!("Song \"{id}\" not found"))),
     }
 }
 
-pub async fn like_song(db: &DatabaseConnection, id: String) -> Result<bool, anyhow::Error> {
+pub async fn like_song(db: &DatabaseConnection, id: String) -> Result<bool, ApiError> {
     /*     Ok(sqlx::query(
         "UPDATE songs
     SET liked = ?
@@ -184,7 +185,7 @@ pub async fn create_song(
     .bind(&metadata.encodedby)
     .bind(&metadata.original_year)
     .bind(&metadata.initial_key)
-    .bind(&metadata.bit_rate)
+    .bind(metadata.bit_rate)
     /*     .bind(&metadata.bitrate)
         .bind(&metadata.bitrate_mode) */
     /*     .bind(&metadata.encoder_info)
@@ -199,8 +200,8 @@ pub async fn create_song(
      */
     .bind(metadata.length)
     .bind(&metadata.label)
-    .bind(&metadata.sample_rate)
-    .bind(&metadata.bit_depth)
+    .bind(metadata.sample_rate)
+    .bind(metadata.bit_depth)
 
     /*     .bind(&metadata.sample_rate)
     .bind(&metadata.bits_per_sample) */
