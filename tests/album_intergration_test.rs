@@ -41,6 +41,36 @@ mod tests {
         assert!(album.name == String::from("Ain't No Peace"));
         assert!(album.songs.len() == 7);
     }
+
+    #[tokio::test]
+    async fn test_get_album_not_found() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
+        let addr = listener.local_addr().unwrap();
+        tokio::spawn(async move {
+            axum::Server::from_tcp(listener)
+                .unwrap()
+                .serve(app().await.into_make_service())
+                .await
+                .unwrap();
+        });
+
+        let client = Client::new();
+
+        let resp = client
+            .request(
+                Request::builder()
+                    .uri(format!(
+                        "http://{}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642a",
+                        addr
+                    ))
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
     #[tokio::test]
     async fn test_get_albums_sort_by_name() {
         let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
