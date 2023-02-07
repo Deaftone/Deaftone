@@ -4,7 +4,8 @@
     "title": "deaftone",
     "description": "",
     "contact": {
-      "name": ""
+      "name": "",
+      "email": ""
     },
     "license": {
       "name": ""
@@ -17,7 +18,6 @@
         "tags": [
           "deaftone::handlers::albums"
         ],
-        "description": "",
         "operationId": "get_albums",
         "parameters": [
           {
@@ -55,7 +55,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AlbumModel"
+                    "$ref": "#/components/schemas/entity.album.Model"
                   }
                 }
               }
@@ -80,7 +80,6 @@
         "tags": [
           "deaftone::handlers::albums"
         ],
-        "description": "",
         "operationId": "get_album",
         "parameters": [
           {
@@ -88,7 +87,14 @@
             "in": "path",
             "description": "Album Id",
             "required": true,
-            "deprecated": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "album_id",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
             }
@@ -114,6 +120,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Database error occured",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "deprecated": false
@@ -124,7 +140,6 @@
         "tags": [
           "deaftone::handlers::albums"
         ],
-        "description": "",
         "operationId": "get_cover",
         "parameters": [
           {
@@ -132,7 +147,14 @@
             "in": "path",
             "description": "Album Id",
             "required": true,
-            "deprecated": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "album_id",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
             }
@@ -161,7 +183,6 @@
         "tags": [
           "deaftone::handlers::artists"
         ],
-        "description": "",
         "operationId": "get_artists",
         "parameters": [
           {
@@ -199,14 +220,14 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ArtistModel"
+                    "$ref": "#/components/schemas/entity.artist.Model"
                   }
                 }
               }
             }
           },
           "500": {
-            "description": "Failed to get albums ",
+            "description": "Database error occured",
             "content": {
               "text/plain": {
                 "schema": {
@@ -224,7 +245,6 @@
         "tags": [
           "deaftone::handlers::artists"
         ],
-        "description": "",
         "operationId": "get_artist",
         "parameters": [
           {
@@ -232,7 +252,14 @@
             "in": "path",
             "description": "Artist Id",
             "required": true,
-            "deprecated": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artist_id",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
             }
@@ -258,6 +285,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Database error occured",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "deprecated": false
@@ -268,7 +305,6 @@
         "tags": [
           "deaftone::handlers::songs"
         ],
-        "description": "",
         "operationId": "get_song",
         "parameters": [
           {
@@ -276,7 +312,14 @@
             "in": "path",
             "description": "Song Id",
             "required": true,
-            "deprecated": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "song_id",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
             }
@@ -306,61 +349,60 @@
         },
         "deprecated": false
       }
+    },
+    "/stream/{id}": {
+      "get": {
+        "tags": [
+          "deaftone::handlers::streams"
+        ],
+        "operationId": "stream_handler",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Song Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "song_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a song stream",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoxBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Song not found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": false
+      }
     }
   },
   "components": {
     "schemas": {
-      "AlbumModel": {
-        "type": "object",
-        "required": [
-          "id",
-          "path",
-          "name",
-          "artist_name",
-          "year",
-          "created_at",
-          "updated_at"
-        ],
-        "properties": {
-          "album_description": {
-            "type": "string"
-          },
-          "artist_id": {
-            "type": "string"
-          },
-          "artist_name": {
-            "type": "string"
-          },
-          "cover": {
-            "type": "string"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "id": {
-            "type": "string",
-            "example": "Album"
-          },
-          "mb_artist_id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "path": {
-            "type": "string"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "year": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
       "AlbumResponse": {
         "type": "object",
         "required": [
@@ -396,47 +438,12 @@
           "songs": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/SongModel"
+              "$ref": "#/components/schemas/entity.song.Model"
             }
           },
           "year": {
             "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "ArtistModel": {
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "created_at",
-          "updated_at"
-        ],
-        "properties": {
-          "bio": {
-            "type": "string"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "id": {
-            "type": "string",
-            "example": "Artist"
-          },
-          "image": {
-            "type": "string"
-          },
-          "mb_artist_id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -453,7 +460,7 @@
           "albums": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/AlbumModel"
+              "$ref": "#/components/schemas/entity.album.Model"
             }
           },
           "bio": {
@@ -504,89 +511,6 @@
           }
         }
       },
-      "SongModel": {
-        "type": "object",
-        "required": [
-          "id",
-          "path",
-          "title",
-          "artist",
-          "album_name",
-          "duration",
-          "created_at",
-          "updated_at",
-          "liked"
-        ],
-        "properties": {
-          "album_id": {
-            "type": "string"
-          },
-          "album_name": {
-            "type": "string"
-          },
-          "artist": {
-            "type": "string"
-          },
-          "bits_per_sample": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "codec": {
-            "type": "string"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "disk": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "duration": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "id": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "liked": {
-            "type": "boolean"
-          },
-          "mb_artist_id": {
-            "type": "string"
-          },
-          "mb_recording_id": {
-            "type": "string"
-          },
-          "mb_track_id": {
-            "type": "string"
-          },
-          "path": {
-            "type": "string"
-          },
-          "sample_rate": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "track": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "year": {
-            "type": "integer",
-            "format": "int32"
-          }
-        }
-      },
       "SongResponse": {
         "type": "object",
         "required": [
@@ -596,7 +520,7 @@
           "disk",
           "artist",
           "album_name",
-          "duration",
+          "length",
           "year",
           "album_id",
           "liked"
@@ -615,12 +539,12 @@
             "type": "integer",
             "format": "int32"
           },
-          "duration": {
-            "type": "integer",
-            "format": "int32"
-          },
           "id": {
             "type": "string"
+          },
+          "length": {
+            "type": "integer",
+            "format": "int32"
           },
           "liked": {
             "type": "boolean"
@@ -629,6 +553,393 @@
             "type": "string"
           },
           "title": {
+            "type": "string"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "entity.album.Model": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "name",
+          "year",
+          "artist_name",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "album_artist": {
+            "type": "string"
+          },
+          "album_artist_credit": {
+            "type": "string"
+          },
+          "album_artist_sort": {
+            "type": "string"
+          },
+          "album_disambig": {
+            "type": "string"
+          },
+          "album_status": {
+            "type": "string"
+          },
+          "album_type": {
+            "type": "string"
+          },
+          "artist_id": {
+            "type": "string"
+          },
+          "artist_name": {
+            "type": "string"
+          },
+          "asin": {
+            "type": "string"
+          },
+          "catalog_num": {
+            "type": "string"
+          },
+          "composer": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "cover": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "discogs_albumid": {
+            "type": "string"
+          },
+          "discogs_artistid": {
+            "type": "string"
+          },
+          "discogs_labelid": {
+            "type": "string"
+          },
+          "genre": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "example": "Album"
+          },
+          "label": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "mb_album_id": {
+            "type": "string"
+          },
+          "mb_artist_id": {
+            "type": "string"
+          },
+          "mb_releasegroup_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "release_group_disambig": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "style": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "entity.artist.Model": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "bio": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "example": "Artist"
+          },
+          "image": {
+            "type": "string"
+          },
+          "mb_artist_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "entity.song.Model": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "title",
+          "artist",
+          "album_name",
+          "length",
+          "created_at",
+          "updated_at",
+          "liked"
+        ],
+        "properties": {
+          "acoustid_fingerprint": {
+            "type": "string"
+          },
+          "acoustid_id": {
+            "type": "string"
+          },
+          "album_artist": {
+            "type": "string"
+          },
+          "album_artist_credit": {
+            "type": "string"
+          },
+          "album_disambig": {
+            "type": "string"
+          },
+          "album_id": {
+            "type": "string"
+          },
+          "album_name": {
+            "type": "string"
+          },
+          "album_sort": {
+            "type": "string"
+          },
+          "album_status": {
+            "type": "string"
+          },
+          "album_type": {
+            "type": "string"
+          },
+          "album_types": {
+            "type": "string"
+          },
+          "arranger": {
+            "type": "string"
+          },
+          "artist": {
+            "type": "string"
+          },
+          "artist_credit": {
+            "type": "string"
+          },
+          "artist_sort": {
+            "type": "string"
+          },
+          "asin": {
+            "type": "string"
+          },
+          "bit_rate": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bitdepth": {
+            "type": "string"
+          },
+          "bitrate_mode": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bits_per_sample": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bpm": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "catalog_num": {
+            "type": "string"
+          },
+          "channels": {
+            "type": "string"
+          },
+          "codec": {
+            "type": "string"
+          },
+          "comments": {
+            "type": "string"
+          },
+          "comp": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "composer": {
+            "type": "string"
+          },
+          "composer_sort": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "disc_title": {
+            "type": "string"
+          },
+          "discogs_albumid": {
+            "type": "string"
+          },
+          "discogs_artistid": {
+            "type": "string"
+          },
+          "discogs_labelid": {
+            "type": "string"
+          },
+          "disk": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "encoder": {
+            "type": "string"
+          },
+          "encoder_info": {
+            "type": "string"
+          },
+          "encoder_settings": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "genre": {
+            "type": "string"
+          },
+          "grouping": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "initial_key": {
+            "type": "string"
+          },
+          "isrc": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "length": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "liked": {
+            "type": "boolean"
+          },
+          "lyricist": {
+            "type": "string"
+          },
+          "lyrics": {
+            "type": "string"
+          },
+          "mb_album_id": {
+            "type": "string"
+          },
+          "mb_albumartist_id": {
+            "type": "string"
+          },
+          "mb_artist_id": {
+            "type": "string"
+          },
+          "mb_releasegroup_id": {
+            "type": "string"
+          },
+          "mb_releasetrack_id": {
+            "type": "string"
+          },
+          "mb_track_id": {
+            "type": "string"
+          },
+          "mb_workid": {
+            "type": "string"
+          },
+          "media": {
+            "type": "string"
+          },
+          "original_year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "path": {
+            "type": "string"
+          },
+          "release_group_disambig": {
+            "type": "string"
+          },
+          "sample_rate": {
+            "type": "string"
+          },
+          "script": {
+            "type": "string"
+          },
+          "style": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "track": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "track_disambig": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "work": {
+            "type": "string"
+          },
+          "work_disambig": {
             "type": "string"
           },
           "year": {
