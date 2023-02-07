@@ -8,10 +8,10 @@
 
 [![license](https://img.shields.io/github/license/Ortygia/Deaftone)](https://github.com/Ortygia/Deaftone/blob/master/LICENSE)
 [![CI](https://github.com/Ortygia/Deaftone/actions/workflows/ci.yml/badge.svg)](https://github.com/Ortygia/Deaftone/actions/workflows/build.yml)
-![codecov](https://codecov.io/gh/Ortygia/Deaftone/branch/master/graph/badge.svg?token=NWS6Q3W4FP)
+[![codecov](https://codecov.io/gh/Ortygia/Deaftone/branch/master/graph/badge.svg?token=NWS6Q3W4FP)](https://app.codecov.io/github/Deaftone/Deaftone)
 ![GitHub repo size](https://img.shields.io/github/repo-size/Ortygia/Deaftone)
 ![Lines of Code](https://aschey.tech/tokei/github/Ortygia/Deaftone)
-![Version](https://img.shields.io/github/v/release/Ortygia/Deaftone)
+[![Version](https://img.shields.io/github/v/release/Ortygia/Deaftone)](https://github.com/Deaftone/Deaftone/releases/latest)
 </div>
 
 # Overview
