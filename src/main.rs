@@ -52,7 +52,6 @@ Version: {:} | Media Directory: {:} | Database: {:}",
             get(handlers::stream::transcode_stream_handler),
         )
         .route("/songs/:id", get(handlers::songs::get_song))
-        .route("/songs/:id/cover", get(handlers::songs::get_cover))
         .route("/songs/:id/like", post(handlers::songs::like_song))
         .route("/albums", get(handlers::albums::get_albums))
         .route("/albums/:id", get(handlers::albums::get_album))
