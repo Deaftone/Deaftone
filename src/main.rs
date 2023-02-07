@@ -46,10 +46,10 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     // Build app router
     let app = Router::new()
         .route("/", get(handler))
-        .route("/stream/:id", get(handlers::stream::stream_handler))
+        .route("/stream/:id", get(handlers::streams::stream_handler))
         .route(
             "/stream/transcode/:id",
-            get(handlers::stream::transcode_stream_handler),
+            get(handlers::streams::transcode_stream_handler),
         )
         .route("/songs/:id", get(handlers::songs::get_song))
         .route("/songs/:id/like", post(handlers::songs::like_song))

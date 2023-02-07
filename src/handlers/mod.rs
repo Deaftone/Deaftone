@@ -12,7 +12,7 @@ pub mod albums;
 pub mod artists;
 pub mod playlist;
 pub mod songs;
-pub mod stream;
+pub mod streams;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct AlbumResponse {
@@ -87,6 +87,8 @@ pub enum ApiError {
     RecordNotFound(String),
     DatabaseError(sea_orm::DbErr),
     CoverNotFound(std::io::Error),
+    FileNotFound(std::io::Error),
+    IoError(std::io::Error),
 }
 // Convert sea_orm::DbErr into our custom ApiError allows ? to be called on sea_orm querys such as find_by_id().await? etc. Pushing up the error to the caller.
 // Which most of the time is a web handler. Which with impl IntoResponse for ApiError can convert these errors into errors with response codes and good messages
@@ -95,7 +97,11 @@ impl From<sea_orm::DbErr> for ApiError {
         ApiError::DatabaseError(error)
     }
 }
-
+impl From<std::io::Error> for ApiError {
+    fn from(error: std::io::Error) -> Self {
+        ApiError::IoError(error)
+    }
+}
 // Converts Service into a response with a HTTP StatusCode and a string to be returned to the user
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
@@ -111,6 +117,14 @@ impl IntoResponse for ApiError {
             ApiError::CoverNotFound(err) => {
                 (StatusCode::NOT_FOUND, format!("Cover not found: {err}")).into_response()
             }
+            ApiError::FileNotFound(err) => {
+                (StatusCode::NOT_FOUND, format!("Song not found: {err}")).into_response()
+            }
+            ApiError::IoError(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("IO Error: {err}"),
+            )
+                .into_response(),
         }
     }
 }

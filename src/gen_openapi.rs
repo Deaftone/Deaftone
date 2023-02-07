@@ -23,6 +23,7 @@ fn gen_my_openapi() -> std::string::String {
             deaftone::handlers::artists::get_artists,
             deaftone::handlers::artists::get_artist,
             deaftone::handlers::songs::get_song,
+            deaftone::handlers::streams::stream_handler,
         ),
         components(
             schemas(

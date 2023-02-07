@@ -18,10 +18,10 @@ pub async fn app() -> Router {
         task_service: tasks_send,
     };
     Router::new()
-        .route("/stream/:id", get(handlers::stream::stream_handler))
+        .route("/stream/:id", get(handlers::streams::stream_handler))
         .route(
             "/stream/transcode/:id",
-            get(handlers::stream::transcode_stream_handler),
+            get(handlers::streams::transcode_stream_handler),
         )
         .route("/albums/:id", get(handlers::albums::get_album))
         .route("/songs/:id", get(handlers::songs::get_song))

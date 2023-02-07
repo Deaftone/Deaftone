@@ -19,6 +19,18 @@ use tower::ServiceExt;
 use tower_http::services::ServeFile;
 
 use super::ApiError;
+#[utoipa::path(
+    get,
+    path = "/stream/{id}",
+    params(
+        ("id" = String, Path, description = "Song Id")
+    ),
+    responses(
+        (status = 200, description = "Returns a song stream", body = BoxBody),
+        (status = 404, description = "Song not found", body = String)
+
+    )
+)]
 pub async fn stream_handler(
     Path(song_id): Path<String>,
     State(state): State<AppState>,
