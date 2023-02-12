@@ -13,7 +13,7 @@ pub async fn get_song_by_id(
 ) -> anyhow::Result<entity::song::Model, ApiError> {
     match entity::song::Entity::find_by_id(&id).one(db).await? {
         Some(model) => Ok(model),
-        None => Err(ApiError::RecordNotFound(format!("Song \"{id}\" not found"))),
+        None => Err(ApiError::RecordNotFound),
     }
 }
 

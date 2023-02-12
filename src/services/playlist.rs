@@ -40,8 +40,6 @@ pub async fn get_playlist_by_id_single(
             e
         })? {
         Some(playlist) => Ok(playlist),
-        None => Err(ApiError::RecordNotFound(format!(
-            "Playlist \"{playlist_id}\" not found"
-        ))),
+        None => Err(ApiError::RecordNotFound),
     }
 }

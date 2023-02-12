@@ -9,6 +9,7 @@ use axum::{
     http::{header, Request, Response},
     Json,
 };
+use hyper::StatusCode;
 use include_dir::{include_dir, Dir};
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
@@ -67,9 +68,16 @@ pub async fn get_cover(
 
     if album.cover.is_some() {
         // Serve image from FS
-        match ServeFile::new(album.cover.unwrap()).oneshot(res).await {
-            Ok(res) => Ok(res.map(boxed)),
-            Err(err) => Err(ApiError::FileNotFound(err)),
+        let cover = album.cover.unwrap();
+        match ServeFile::new(&cover).oneshot(res).await {
+            Ok(res) => {
+                if res.status() == StatusCode::NOT_FOUND {
+                    Err(ApiError::FileNotFound(cover))
+                } else {
+                    Ok(res.map(boxed))
+                }
+            }
+            Err(err) => Err(ApiError::UnknownError(err.to_string())),
         }
     } else {
         // Serve unknown album image

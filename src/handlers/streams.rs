@@ -13,6 +13,7 @@ use axum::{
 };
 
 use futures::StreamExt;
+use hyper::StatusCode;
 use tokio::process::Command;
 use tokio_util::io::ReaderStream;
 use tower::ServiceExt;
@@ -36,9 +37,16 @@ pub async fn stream_handler(
 ) -> Result<Response<BoxBody>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
     let song = services::song::get_song_by_id(&state.database, song_id).await?;
-    match ServeFile::new(song.path).oneshot(res).await {
-        Ok(res) => Ok(res.map(boxed)),
-        Err(err) => Err(ApiError::FileNotFound(err)),
+
+    match ServeFile::new(&song.path).oneshot(res).await {
+        Ok(res) => {
+            if res.status() == StatusCode::NOT_FOUND {
+                Err(ApiError::FileNotFound(song.path))
+            } else {
+                Ok(res.map(boxed))
+            }
+        }
+        Err(err) => Err(ApiError::UnknownError(err.to_string())),
     }
 }
 

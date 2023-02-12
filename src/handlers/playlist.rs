@@ -24,8 +24,6 @@ pub async fn get_playlist(
                 songs,
             }))
         }
-        None => Err(ApiError::RecordNotFound(format!(
-            "Playlist \"{playlist_id}\" not found"
-        ))),
+        None => Err(ApiError::RecordNotFound),
     }
 }

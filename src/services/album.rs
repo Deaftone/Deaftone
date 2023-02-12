@@ -104,9 +104,7 @@ pub async fn get_album_by_id(
         .first()
     {
         Some(album) => Ok(album.clone()),
-        None => Err(ApiError::RecordNotFound(format!(
-            "Album \"{album_id}\" not found"
-        ))),
+        None => Err(ApiError::RecordNotFound),
     }
 }
 
@@ -123,9 +121,7 @@ pub async fn get_album_by_id_single(
             e
         })? {
         Some(album) => Ok(album),
-        None => Err(ApiError::RecordNotFound(format!(
-            "Album \"{album_id}\" not found"
-        ))),
+        None => Err(ApiError::RecordNotFound),
     }
 }
 pub async fn _find_by_name(

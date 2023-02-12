@@ -53,9 +53,7 @@ pub async fn get_artist_by_id(
         .first()
     {
         Some(artist) => Ok(artist.to_owned()),
-        None => Err(ApiError::RecordNotFound(format!(
-            "Artist \"{artist_id}\" not found"
-        ))),
+        None => Err(ApiError::RecordNotFound),
     }
 }
 

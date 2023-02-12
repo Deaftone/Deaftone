@@ -27,10 +27,11 @@ static SCAN_STATUS: AtomicBool = AtomicBool::new(false);
 
 #[derive(Debug)]
 pub enum ApiError {
-    RecordNotFound(String),
+    RecordNotFound,
     DatabaseError(sea_orm::DbErr),
-    FileNotFound(std::io::Error),
+    FileNotFound(String),
     IoError(std::io::Error),
+    UnknownError(String),
 }
 // Convert sea_orm::DbErr into our custom ApiError allows ? to be called on sea_orm querys such as find_by_id().await? etc. Pushing up the error to the caller.
 // Which most of the time is a web handler. Which with impl IntoResponse for ApiError can convert these errors into errors with response codes and good messages
@@ -53,15 +54,20 @@ impl IntoResponse for ApiError {
                 format!("An unexpected exception has occured: {err}"),
             )
                 .into_response(),
-            ApiError::RecordNotFound(err) => {
-                (StatusCode::NOT_FOUND, format!("Record not found: {err}")).into_response()
+            ApiError::RecordNotFound => {
+                (StatusCode::NOT_FOUND, r#"Record not found"#).into_response()
             }
             ApiError::FileNotFound(err) => {
-                (StatusCode::NOT_FOUND, format!("Song not found: {err}")).into_response()
+                (StatusCode::NOT_FOUND, format!("File not found: {err}")).into_response()
             }
             ApiError::IoError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("IO Error: {err}"),
+            )
+                .into_response(),
+            ApiError::UnknownError(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Unknown error: {err}"),
             )
                 .into_response(),
         }
