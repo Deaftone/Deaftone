@@ -4,7 +4,8 @@ use core::panic;
 use deaftone::{handlers, services::task::TaskType, AppState, SETTINGS};
 use std::net::SocketAddr;
 use tokio::signal;
-use tower_http::trace::TraceLayer;
+use tower_http::trace::{self, TraceLayer};
+use tracing::Level;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
@@ -59,7 +60,11 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         .route("/artists", get(handlers::artists::get_artists))
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
-        .layer(TraceLayer::new_for_http())
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
+        )
         .with_state(state);
 
     // Starting listening
