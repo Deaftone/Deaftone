@@ -52,13 +52,8 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          target: ${{ matrix.target }}
-          profile: minimal
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
       - name: Install macOS dependencies
         if: matrix.os == 'macos-latest'
         run: brew install portaudio pkg-config
@@ -74,10 +69,7 @@ jobs:
           apt update
           apt install -y ${{ matrix.dependencies }}
       - name: Running Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --locked --release --target ${{ matrix.target }}
+        run: cargo build --locked --release --target ${{ matrix.target }}
       - name: Build archive
         shell: bash
         run: |
