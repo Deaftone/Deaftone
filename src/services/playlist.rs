@@ -1,7 +1,8 @@
-use anyhow::Ok;
 use chrono::{NaiveDateTime, Utc};
 use sea_orm::{DatabaseConnection, EntityTrait, Set};
 use uuid::Uuid;
+
+use crate::handlers::ApiError;
 
 pub async fn _create_playlist(db: &DatabaseConnection) -> anyhow::Result<()> {
     let id: Uuid = Uuid::new_v4();
@@ -26,4 +27,21 @@ pub async fn _create_playlist(db: &DatabaseConnection) -> anyhow::Result<()> {
         .exec(db)
         .await?;
     Ok(())
+}
+pub async fn get_playlist_by_id_single(
+    db: &DatabaseConnection,
+    playlist_id: String,
+) -> Result<entity::playlist::Model, ApiError> {
+    match entity::playlist::Entity::find_by_id(&playlist_id)
+        .one(db)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            e
+        })? {
+        Some(playlist) => Ok(playlist),
+        None => Err(ApiError::RecordNotFound(format!(
+            "Playlist \"{playlist_id}\" not found"
+        ))),
+    }
 }

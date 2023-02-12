@@ -84,7 +84,6 @@ pub struct GetAllAlbums {
 pub enum ApiError {
     RecordNotFound(String),
     DatabaseError(sea_orm::DbErr),
-    CoverNotFound(std::io::Error),
     FileNotFound(std::io::Error),
     IoError(std::io::Error),
 }
@@ -111,9 +110,6 @@ impl IntoResponse for ApiError {
                 .into_response(),
             ApiError::RecordNotFound(err) => {
                 (StatusCode::NOT_FOUND, format!("Record not found: {err}")).into_response()
-            }
-            ApiError::CoverNotFound(err) => {
-                (StatusCode::NOT_FOUND, format!("Cover not found: {err}")).into_response()
             }
             ApiError::FileNotFound(err) => {
                 (StatusCode::NOT_FOUND, format!("Song not found: {err}")).into_response()

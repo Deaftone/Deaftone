@@ -41,7 +41,7 @@ pub async fn get_artist_by_id(
     db: &DatabaseConnection,
     artist_id: String,
 ) -> anyhow::Result<(entity::artist::Model, Vec<entity::album::Model>), ApiError> {
-    match entity::artist::Entity::find_by_id(artist_id.clone())
+    match entity::artist::Entity::find_by_id(&artist_id)
         .order_by_desc(entity::album::Column::Year)
         .find_with_related(entity::album::Entity)
         .all(db)

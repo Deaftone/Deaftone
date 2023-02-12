@@ -92,7 +92,7 @@ pub async fn get_album_by_id(
     db: &DatabaseConnection,
     album_id: String,
 ) -> Result<(entity::album::Model, Vec<entity::song::Model>), ApiError> {
-    match entity::album::Entity::find_by_id(album_id.clone())
+    match entity::album::Entity::find_by_id(&album_id)
         .find_with_related(entity::song::Entity)
         .all(db)
         .await
@@ -102,7 +102,7 @@ pub async fn get_album_by_id(
         })?
         .first()
     {
-        Some(album) => Ok(album.to_owned()),
+        Some(album) => Ok(album.clone()),
         None => Err(ApiError::RecordNotFound(format!(
             "Album \"{album_id}\" not found"
         ))),
@@ -113,11 +113,19 @@ pub async fn get_album_by_id(
 pub async fn get_album_by_id_single(
     db: &DatabaseConnection,
     album_id: String,
-) -> anyhow::Result<entity::album::Model> {
-    Ok(entity::album::Entity::find_by_id(album_id)
+) -> Result<entity::album::Model, ApiError> {
+    match entity::album::Entity::find_by_id(&album_id)
         .one(db)
-        .await?
-        .expect("Failed to get album"))
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            e
+        })? {
+        Some(album) => Ok(album),
+        None => Err(ApiError::RecordNotFound(format!(
+            "Album \"{album_id}\" not found"
+        ))),
+    }
 }
 pub async fn _find_by_name(
     db: &DatabaseConnection,

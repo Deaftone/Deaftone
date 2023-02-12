@@ -39,7 +39,7 @@ pub async fn stream_handler(
     let song = services::song::get_song_by_id(&state.database, song_id).await?;
     match ServeFile::new(song.path).oneshot(res).await {
         Ok(res) => Ok(res.map(boxed)),
-        Err(err) => Err(ApiError::CoverNotFound(err)),
+        Err(err) => Err(ApiError::FileNotFound(err)),
     }
 }
 

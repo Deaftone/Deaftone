@@ -6,7 +6,7 @@ use crate::{
 use axum::{
     body::{boxed, Body, BoxBody, Full},
     extract::{Path, State},
-    http::{header, Request, Response, StatusCode},
+    http::{header, Request, Response},
     Json,
 };
 use include_dir::{include_dir, Dir};
@@ -61,32 +61,24 @@ pub async fn get_album(
 pub async fn get_cover(
     State(state): State<AppState>,
     Path(album_id): Path<String>,
-) -> Result<Response<BoxBody>, (StatusCode, String)> {
+) -> Result<Response<BoxBody>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let album = services::album::get_album_by_id_single(&state.database, album_id).await;
+    let album = services::album::get_album_by_id_single(&state.database, album_id).await?;
 
-    match album {
-        Ok(f) => {
-            if f.cover.is_some() {
-                // Serve image from FS
-                match ServeFile::new(f.cover.unwrap()).oneshot(res).await {
-                    Ok(res) => Ok(res.map(boxed)),
-                    Err(err) => Err((
-                        StatusCode::NOT_FOUND,
-                        format!("Something went wrong: {err}"),
-                    )),
-                }
-            } else {
-                // Serve unknown album image
-                let unknown_album = ASSETS.get_file("unknown_album.jpg").unwrap();
-                let body = boxed(Full::from(unknown_album.contents()));
-                Ok(Response::builder()
-                    .header(header::CONTENT_TYPE, "image/jpg")
-                    .body(body)
-                    .unwrap())
-            }
+    if album.cover.is_some() {
+        // Serve image from FS
+        match ServeFile::new(album.cover.unwrap()).oneshot(res).await {
+            Ok(res) => Ok(res.map(boxed)),
+            Err(err) => Err(ApiError::FileNotFound(err)),
         }
-        Err(err) => Err((StatusCode::NOT_FOUND, format!("Failed to get album {err}"))),
+    } else {
+        // Serve unknown album image
+        let unknown_album = ASSETS.get_file("unknown_album.jpg").unwrap();
+        let body = boxed(Full::from(unknown_album.contents()));
+        Ok(Response::builder()
+            .header(header::CONTENT_TYPE, "image/jpg")
+            .body(body)
+            .unwrap())
     }
 }
 

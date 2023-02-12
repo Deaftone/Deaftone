@@ -11,10 +11,7 @@ pub async fn get_song_by_id(
     db: &DatabaseConnection,
     id: String,
 ) -> anyhow::Result<entity::song::Model, ApiError> {
-    match entity::song::Entity::find_by_id(id.to_owned())
-        .one(db)
-        .await?
-    {
+    match entity::song::Entity::find_by_id(&id).one(db).await? {
         Some(model) => Ok(model),
         None => Err(ApiError::RecordNotFound(format!("Song \"{id}\" not found"))),
     }

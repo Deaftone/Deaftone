@@ -1,8 +1,7 @@
-use super::PlayListResponse;
+use super::{ApiError, PlayListResponse};
 use crate::AppState;
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     Json,
 };
 use sea_orm::EntityTrait;
@@ -10,13 +9,11 @@ use sea_orm::EntityTrait;
 pub async fn get_playlist(
     Path(playlist_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Json<PlayListResponse>, (StatusCode, String)> {
-    let playlist = entity::playlist::Entity::find_by_id(playlist_id)
+) -> Result<Json<PlayListResponse>, ApiError> {
+    let playlist = entity::playlist::Entity::find_by_id(&playlist_id)
         .find_with_related(entity::song::Entity)
         .all(&state.database)
-        .await
-        .expect("Failed to get album");
-
+        .await?;
     match playlist.first() {
         Some(f) => {
             let _playlist_model: entity::playlist::Model = f.0.to_owned();
@@ -27,6 +24,8 @@ pub async fn get_playlist(
                 songs,
             }))
         }
-        None => Err((StatusCode::ACCEPTED, "Failed to find album".to_owned())),
+        None => Err(ApiError::RecordNotFound(format!(
+            "Playlist \"{playlist_id}\" not found"
+        ))),
     }
 }
