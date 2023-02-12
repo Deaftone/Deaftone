@@ -2,6 +2,7 @@ use crate::handlers::ArtistResponse;
 
 pub mod album;
 pub mod artist;
+pub mod metadata;
 pub mod playlist;
 pub mod scanner;
 pub mod song;

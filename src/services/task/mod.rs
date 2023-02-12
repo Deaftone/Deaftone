@@ -7,6 +7,7 @@ use crate::database;
 pub enum TaskType {
     ScanLibrary,
     Shutdown,
+    PopulateMetadata,
 }
 
 pub struct TaskService {
@@ -32,10 +33,12 @@ impl TaskService {
         loop {
             if let Ok(task) = self.receiver.try_recv() {
                 tracing::info!("Running task: {:?}", TaskType::ScanLibrary);
-
                 match task {
                     TaskType::ScanLibrary => {
                         crate::services::scanner::start_scan(&sqlite_pool).await
+                    }
+                    TaskType::PopulateMetadata => {
+                        crate::services::metadata::scrap_metadata(&sqlite_pool).await
                     }
                     TaskType::Shutdown => break,
                 }
