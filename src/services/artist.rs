@@ -1,6 +1,5 @@
 use crate::handlers::ApiError;
 
-use super::DeaftoneSelect;
 use chrono::Utc;
 use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder,
@@ -75,14 +74,14 @@ pub async fn get_artists(
         entity::artist::Column::CreatedAt => {
             entity::artist::Entity::find()
                 .order_by_desc(order)
-                .limit_option(size)
+                .limit(size)
                 .all(db)
                 .await?
         }
         _ => {
             entity::artist::Entity::find()
                 .order_by_asc(order)
-                .limit_option(size)
+                .limit(size)
                 .all(db)
                 .await?
         }

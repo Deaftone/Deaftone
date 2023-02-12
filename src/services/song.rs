@@ -5,7 +5,7 @@ use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
 
 use uuid::Uuid;
 
-use crate::{handlers::ApiError, scanner::tag_helper::AudioMetadata};
+use crate::{handlers::ApiError, services::scanner::tag_helper::AudioMetadata};
 
 pub async fn get_song_by_id(
     db: &DatabaseConnection,

@@ -1,5 +1,5 @@
-use crate::handlers::ApiError;
-use crate::scanner::tag_helper::AudioMetadata;
+use crate::{handlers::ApiError, services::scanner::tag_helper::AudioMetadata};
+
 use chrono::Utc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
@@ -162,7 +162,7 @@ pub async fn get_albums(
         _ => entity::album::Column::Name,
     };
 
-    let limit = size.unwrap_or(100);
+    let limit = size.unwrap_or(500);
     Ok(match order {
         entity::album::Column::CreatedAt => {
             entity::album::Entity::find()
