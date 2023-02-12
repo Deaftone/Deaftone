@@ -1,6 +1,5 @@
 pub mod database;
 pub mod handlers;
-pub mod scanner;
 pub mod services;
 pub mod settings;
 pub mod test_util;

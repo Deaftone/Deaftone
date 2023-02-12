@@ -1,8 +1,8 @@
-use crate::{database, services, SCAN_STATUS, SETTINGS};
+use crate::{services, SCAN_STATUS, SETTINGS};
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::sqlite::SqliteQueryResult;
-use sqlx::{Pool, Row};
+use sqlx::{Pool, Row, Sqlite};
 use std::result::Result::Ok;
 use std::sync::atomic::Ordering;
 use std::time::SystemTime;
@@ -29,19 +29,13 @@ macro_rules! skip_fail {
     };
 }
 
-pub async fn start_scan() {
+pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
     // Set global SCAN_STATUS to true
     SCAN_STATUS.store(true, Ordering::Release);
 
     tracing::info!("Starting scan");
     // This is a hack because sometimes when starting Deaftone running migrations then instantly running the scanner.
     // The database is locked so we just try and connect again on error
-    tracing::debug!("Connecting to DB");
-    let sqlite_pool = match database::connect_db_sqlx().await {
-        Ok(pool) => pool,
-        Err(_) => database::connect_db_sqlx().await.unwrap(),
-    };
-    tracing::debug!("Connected DB");
 
     /*             let has_scanned_full =
         sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
@@ -59,15 +53,15 @@ pub async fn start_scan() {
     } */
 
     sqlx::query("pragma temp_store = memory;")
-        .execute(&sqlite_pool)
+        .execute(sqlite_pool)
         .await
         .unwrap();
     sqlx::query("pragma mmap_size = 30000000000;")
-        .execute(&sqlite_pool)
+        .execute(sqlite_pool)
         .await
         .unwrap();
     sqlx::query("pragma page_size = 4096;")
-        .execute(&sqlite_pool)
+        .execute(sqlite_pool)
         .await
         .unwrap();
     let before: Instant = Instant::now();
