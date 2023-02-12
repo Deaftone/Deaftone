@@ -36,7 +36,12 @@ pub async fn stream_handler(
     State(state): State<AppState>,
 ) -> Result<Response<BoxBody>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let song = services::song::get_song_by_id(&state.database, song_id).await?;
+    let song = services::song::get_song_by_id(&state.database, &song_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to stream: \"{:?}\" for {:}", e, song_id);
+            e
+        })?;
 
     match ServeFile::new(&song.path).oneshot(res).await {
         Ok(res) => {
@@ -55,7 +60,12 @@ pub async fn transcode_stream_handler(
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, ApiError> {
     //"G:\\aa\\B\\Billie Eilish\\Billie Eilish - Happier Than Ever [2021] - WEB FLAC\\07. Lost Cause.flac"
-    let song = services::song::get_song_by_id(&state.database, song_id).await?;
+    let song = services::song::get_song_by_id(&state.database, &song_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to stream: \"{:?}\" for {:}", e, song_id);
+            e
+        })?;
     let mut child = Command::new("ffmpeg")
         .stdout(Stdio::piped())
         .stdin(Stdio::piped())

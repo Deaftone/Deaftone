@@ -39,9 +39,9 @@ pub async fn create_artist(
 // Return a artist by there artist_id. Also merges there connected MusicBrainArtistId albums
 pub async fn get_artist_by_id(
     db: &DatabaseConnection,
-    artist_id: String,
+    artist_id: &String,
 ) -> anyhow::Result<(entity::artist::Model, Vec<entity::album::Model>), ApiError> {
-    match entity::artist::Entity::find_by_id(&artist_id)
+    match entity::artist::Entity::find_by_id(artist_id)
         .order_by_desc(entity::album::Column::Year)
         .find_with_related(entity::album::Entity)
         .all(db)

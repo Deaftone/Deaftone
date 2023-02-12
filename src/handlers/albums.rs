@@ -32,7 +32,12 @@ pub async fn get_album(
     Path(album_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<AlbumResponse>, ApiError> {
-    let (album_model, songs) = services::album::get_album_by_id(&state.database, album_id).await?;
+    let (album_model, songs) = services::album::get_album_by_id(&state.database, &album_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get album \"{:?}\" for {album_id}", e);
+            e
+        })?;
     Ok(Json(AlbumResponse {
         id: album_model.id,
         name: album_model.name,
@@ -43,6 +48,43 @@ pub async fn get_album(
         song_count: songs.len() as i32,
         songs,
     }))
+}
+
+#[utoipa::path(
+    get,
+    path = "/albums",
+    params(
+        GetAllAlbums
+    ),
+    responses(
+        (status = 200, description = "List containing albums", body = [entity::album::Model]),
+        (status = 500, description = "Failed to get albums", body = String)
+    )
+)]
+pub async fn get_albums(
+    State(state): State<AppState>,
+    axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,
+) -> Result<Json<Vec<entity::album::Model>>, ApiError> {
+    let albums = match params.page.is_some() {
+        true => services::album::get_albums_paginate(
+            &state.database,
+            params.page,
+            params.size,
+            params.sort,
+        )
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get albums: {:?}", e);
+            e
+        })?,
+        _ => services::album::get_albums(&state.database, params.size, params.sort)
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get albums: {:?}", e);
+                e
+            })?,
+    };
+    Ok(Json(albums))
 }
 
 #[utoipa::path(
@@ -64,7 +106,12 @@ pub async fn get_cover(
     Path(album_id): Path<String>,
 ) -> Result<Response<BoxBody>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let album = services::album::get_album_by_id_single(&state.database, album_id).await?;
+    let album = services::album::get_album_by_id_single(&state.database, &album_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get cover: \"{:?}\" for {:}", e, album_id);
+            e
+        })?;
 
     if album.cover.is_some() {
         // Serve image from FS
@@ -88,34 +135,4 @@ pub async fn get_cover(
             .body(body)
             .unwrap())
     }
-}
-
-#[utoipa::path(
-    get,
-    path = "/albums",
-    params(
-        GetAllAlbums
-    ),
-    responses(
-        (status = 200, description = "List containing albums", body = [entity::album::Model]),
-        (status = 500, description = "Failed to get albums", body = String)
-    )
-)]
-pub async fn get_albums(
-    State(state): State<AppState>,
-    axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,
-) -> Result<Json<Vec<entity::album::Model>>, ApiError> {
-    let albums = match params.page.is_some() {
-        true => {
-            services::album::get_albums_paginate(
-                &state.database,
-                params.page,
-                params.size,
-                params.sort,
-            )
-            .await?
-        }
-        _ => services::album::get_albums(&state.database, params.size, params.sort).await?,
-    };
-    Ok(Json(albums))
 }

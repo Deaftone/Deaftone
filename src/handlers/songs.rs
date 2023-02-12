@@ -26,7 +26,12 @@ pub async fn get_song(
     Path(song_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<SongResponse>, ApiError> {
-    let song = services::song::get_song_by_id(&state.database, song_id).await?;
+    let song = services::song::get_song_by_id(&state.database, &song_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get song: \"{:?}\" for {:}", e, song_id);
+            e
+        })?;
     Ok(Json(SongResponse {
         id: song.id,
         path: song.path,

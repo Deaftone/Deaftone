@@ -9,15 +9,15 @@ use crate::{services::scanner::tag_helper::AudioMetadata, ApiError};
 
 pub async fn get_song_by_id(
     db: &DatabaseConnection,
-    id: String,
+    song_id: &String,
 ) -> anyhow::Result<entity::song::Model, ApiError> {
-    match entity::song::Entity::find_by_id(&id).one(db).await? {
+    match entity::song::Entity::find_by_id(song_id).one(db).await? {
         Some(model) => Ok(model),
         None => Err(ApiError::RecordNotFound),
     }
 }
 
-pub async fn like_song(db: &DatabaseConnection, id: String) -> Result<bool, ApiError> {
+pub async fn like_song(db: &DatabaseConnection, song_id: String) -> Result<bool, ApiError> {
     /*     Ok(sqlx::query(
         "UPDATE songs
     SET liked = ?
@@ -26,7 +26,8 @@ pub async fn like_song(db: &DatabaseConnection, id: String) -> Result<bool, ApiE
     .bind(id)
     .bind(like)
     .await?) */
-    let song: Option<entity::song::Model> = entity::song::Entity::find_by_id(id).one(db).await?;
+    let song: Option<entity::song::Model> =
+        entity::song::Entity::find_by_id(song_id).one(db).await?;
     let mut song: entity::song::ActiveModel = song.unwrap().into();
     match song.liked.unwrap() {
         true => {

@@ -24,8 +24,12 @@ pub async fn get_artist(
     Path(artist_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<ArtistResponse>, ApiError> {
-    let (artist_model, albums) =
-        services::artist::get_artist_by_id(&state.database, artist_id).await?;
+    let (artist_model, albums) = services::artist::get_artist_by_id(&state.database, &artist_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get artist: \"{:?}\" for {:}", e, artist_id);
+            e
+        })?;
     Ok(Json(DbArtist {
         id: artist_model.id,
         name: artist_model.name,
