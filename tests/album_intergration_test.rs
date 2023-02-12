@@ -25,8 +25,7 @@ mod tests {
             .request(
                 Request::builder()
                     .uri(format!(
-                        "http://{}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642",
-                        addr
+                        "http://{addr}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642"
                     ))
                     .body(Body::empty())
                     .unwrap(),
@@ -38,7 +37,7 @@ mod tests {
         let body = to_bytes(resp.into_body()).await.unwrap();
         let album: AlbumResponse = from_slice(&body).unwrap();
         assert!(album.id == r#"46ffbb9a-8c98-45d6-a561-0cb80214a642"#);
-        assert!(album.name == String::from("Ain't No Peace"));
+        assert!(album.name == *"Ain't No Peace");
         assert!(album.songs.len() == 7);
     }
 
@@ -60,8 +59,7 @@ mod tests {
             .request(
                 Request::builder()
                     .uri(format!(
-                        "http://{}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642a",
-                        addr
+                        "http://{addr}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642a"
                     ))
                     .body(Body::empty())
                     .unwrap(),
@@ -88,7 +86,7 @@ mod tests {
         let resp = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/albums", addr))
+                    .uri(format!("http://{addr}/albums"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -123,7 +121,7 @@ mod tests {
         let resp = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/albums?sort=latest", addr))
+                    .uri(format!("http://{addr}/albums?sort=latest"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -138,7 +136,7 @@ mod tests {
         for album in &albums {
             let now_parsed: NaiveDateTime = album.created_at;
             assert!(now_parsed <= created_at);
-            created_at = now_parsed.clone();
+            created_at = now_parsed;
         }
     }
     #[tokio::test]
@@ -158,7 +156,7 @@ mod tests {
         let page = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/albums?page=0&size=4", addr))
+                    .uri(format!("http://{addr}/albums?page=0&size=4"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -167,7 +165,7 @@ mod tests {
         let page_one = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/albums?page=0&size=2", addr))
+                    .uri(format!("http://{addr}/albums?page=0&size=2"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -176,7 +174,7 @@ mod tests {
         let page_two = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/albums?page=1&size=2", addr))
+                    .uri(format!("http://{addr}/albums?page=1&size=2"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -196,8 +194,6 @@ mod tests {
         let page_two_body = to_bytes(page_two.into_body()).await.unwrap();
         let page_two_albums: Vec<entity::album::Model> =
             serde_json::from_slice(&page_two_body).unwrap();
-        println!("{:?}\n\n", page_albums);
-        println!("{:?}\n\n", page_one_albums);
 
         assert_eq!(page_albums.len(), 4);
         assert_eq!(page_one_albums.len(), 2);

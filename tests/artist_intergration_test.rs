@@ -25,8 +25,7 @@ mod tests {
             .request(
                 Request::builder()
                     .uri(format!(
-                        "http://{}/artists/7d110590-c4ed-4250-973b-f8fa5d60260e",
-                        addr
+                        "http://{addr}/artists/7d110590-c4ed-4250-973b-f8fa5d60260e"
                     ))
                     .body(Body::empty())
                     .unwrap(),
@@ -38,7 +37,7 @@ mod tests {
         let body = to_bytes(resp.into_body()).await.unwrap();
         let artist: ArtistResponse = from_slice(&body).unwrap();
         assert!(artist.id == r#"7d110590-c4ed-4250-973b-f8fa5d60260e"#);
-        assert!(artist.name == String::from("Akon"));
+        assert!(artist.name == *"Akon");
         assert!(artist.albums.len() == 6);
     }
     #[tokio::test]
@@ -59,8 +58,7 @@ mod tests {
             .request(
                 Request::builder()
                     .uri(format!(
-                        "http://{}/artists/7d110590-c4ed-4250-973b-f8fa5d60260ea",
-                        addr
+                        "http://{addr}/artists/7d110590-c4ed-4250-973b-f8fa5d60260ea"
                     ))
                     .body(Body::empty())
                     .unwrap(),
@@ -87,7 +85,7 @@ mod tests {
         let resp = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/artists", addr))
+                    .uri(format!("http://{addr}/artists"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -122,7 +120,7 @@ mod tests {
         let resp = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/artists?sort=latest", addr))
+                    .uri(format!("http://{addr}/artists?sort=latest"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -138,7 +136,7 @@ mod tests {
         for artist in &artists {
             let now_parsed: NaiveDateTime = artist.created_at;
             assert!(now_parsed <= created_at);
-            created_at = now_parsed.clone();
+            created_at = now_parsed;
         }
     }
     #[tokio::test]
@@ -158,7 +156,7 @@ mod tests {
         let page = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/artists?page=0&size=4", addr))
+                    .uri(format!("http://{addr}/artists?page=0&size=4"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -167,7 +165,7 @@ mod tests {
         let page_one = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/artists?page=0&size=2", addr))
+                    .uri(format!("http://{addr}/artists?page=0&size=2"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -176,7 +174,7 @@ mod tests {
         let page_two = client
             .request(
                 Request::builder()
-                    .uri(format!("http://{}/artists?page=1&size=2", addr))
+                    .uri(format!("http://{addr}/artists?page=1&size=2"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -196,8 +194,6 @@ mod tests {
         let page_two_body = to_bytes(page_two.into_body()).await.unwrap();
         let page_two_artists: Vec<entity::artist::Model> =
             serde_json::from_slice(&page_two_body).unwrap();
-        println!("{:?}\n\n", page_artists);
-        println!("{:?}\n\n", page_one_artists);
 
         assert_eq!(page_artists.len(), 4);
         assert_eq!(page_one_artists.len(), 2);
