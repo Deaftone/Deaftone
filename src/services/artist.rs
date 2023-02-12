@@ -1,5 +1,3 @@
-use crate::handlers::ApiError;
-
 use chrono::Utc;
 use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder,
@@ -7,6 +5,8 @@ use sea_orm::{
 };
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
+
+use crate::ApiError;
 
 // Creates a artist entry with artist name passed and MusicBrainzArtistId
 pub async fn create_artist(

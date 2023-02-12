@@ -1,7 +1,7 @@
-use super::{ApiError, ArtistResponse, GetAllArtists};
+use super::{ArtistResponse, GetAllArtists};
 use crate::{
     services::{self, DbArtist},
-    AppState,
+    ApiError, AppState,
 };
 use axum::{
     extract::{Path, State},

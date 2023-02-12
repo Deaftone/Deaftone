@@ -1,7 +1,7 @@
-use super::{AlbumResponse, ApiError, GetAllAlbums};
+use super::{AlbumResponse, GetAllAlbums};
 use crate::{
     services::{self},
-    AppState,
+    ApiError, AppState,
 };
 use axum::{
     body::{boxed, Body, BoxBody, Full},

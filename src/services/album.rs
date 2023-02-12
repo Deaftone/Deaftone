@@ -1,4 +1,5 @@
-use crate::{handlers::ApiError, services::scanner::tag_helper::AudioMetadata};
+use crate::services::scanner::tag_helper::AudioMetadata;
+use crate::ApiError;
 
 use chrono::Utc;
 use sea_orm::{

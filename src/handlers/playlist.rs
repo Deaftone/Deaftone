@@ -1,5 +1,5 @@
-use super::{ApiError, PlayListResponse};
-use crate::AppState;
+use super::PlayListResponse;
+use crate::{ApiError, AppState};
 use axum::{
     extract::{Path, State},
     Json,

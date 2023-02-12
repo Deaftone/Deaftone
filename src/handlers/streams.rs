@@ -2,7 +2,7 @@ use std::process::Stdio;
 
 use crate::{
     services::{self},
-    AppState,
+    ApiError, AppState,
 };
 
 use axum::{
@@ -18,7 +18,6 @@ use tokio_util::io::ReaderStream;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
 
-use super::ApiError;
 #[utoipa::path(
     get,
     path = "/stream/{id}",

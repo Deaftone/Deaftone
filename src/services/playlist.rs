@@ -2,7 +2,7 @@ use chrono::{NaiveDateTime, Utc};
 use sea_orm::{DatabaseConnection, EntityTrait, Set};
 use uuid::Uuid;
 
-use crate::handlers::ApiError;
+use crate::ApiError;
 
 pub async fn _create_playlist(db: &DatabaseConnection) -> anyhow::Result<()> {
     let id: Uuid = Uuid::new_v4();
