@@ -66,7 +66,7 @@ pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
         .unwrap();
     let before: Instant = Instant::now();
     let current_dir = SETTINGS.media_path.clone();
-    walk_full(&sqlite_pool, current_dir).await.unwrap();
+    walk_full(sqlite_pool, current_dir).await.unwrap();
     tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
     // Set global SCAN_STATUS to false
