@@ -59,26 +59,28 @@ impl ArtistMetadata {
     ) -> &mut Self {
         for val in relations.as_ref().unwrap().iter() {
             match val.relation_type.as_str() {
-                "youtube" => match &val.content {
-                    RelationContent::Url(a) => self.youtube = Some(a.resource.clone()),
-                    _ => (),
-                },
-                "allmusic" => match &val.content {
-                    RelationContent::Url(a) => {
+                "youtube" => {
+                    if let RelationContent::Url(a) = &val.content {
+                        self.youtube = Some(a.resource.clone())
+                    }
+                }
+                "allmusic" => {
+                    if let RelationContent::Url(a) = &val.content {
                         if self.all_music.is_none() {
                             self.all_music = Some(a.resource.clone())
                         }
                     }
-                    _ => (),
-                },
-                "wikidata" => match &val.content {
-                    RelationContent::Url(a) => self.wiki = Some(a.resource.clone()),
-                    _ => (),
-                },
-                "discogs" => match &val.content {
-                    RelationContent::Url(a) => self.discogs = Some(a.resource.clone()),
-                    _ => (),
-                },
+                }
+                "wikidata" => {
+                    if let RelationContent::Url(a) = &val.content {
+                        self.wiki = Some(a.resource.clone())
+                    }
+                }
+                "discogs" => {
+                    if let RelationContent::Url(a) = &val.content {
+                        self.discogs = Some(a.resource.clone())
+                    }
+                }
                 _ => (),
             }
         }
@@ -128,6 +130,11 @@ impl ArtistMetadata {
         Ok(self)
     }
 }
+impl Default for ArtistMetadata {
+    fn default() -> Self {
+        ArtistMetadata::new()
+    }
+}
 pub async fn scrap_metadata(sqlite_pool: &Pool<Sqlite>) {
     // Get all artists that have a mb_artist_id and DONT have a entry in the artist_metadata table
     let mut rows =
@@ -145,7 +152,7 @@ pub async fn scrap_metadata(sqlite_pool: &Pool<Sqlite>) {
             .unwrap()
             .relations;
         let artist_id: &str = row.try_get("id").unwrap();
-        let artist_metadata = ArtistMetadata::new()
+        let artist_metadata = ArtistMetadata::default()
             .get_links(&mb_artist_relations)
             .get_allmusic_bio()
             .await
