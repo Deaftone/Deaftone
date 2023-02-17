@@ -31,6 +31,7 @@ pub async fn create_tables(db: &SchemaManagerConnection<'_>) {
     create_table(db, &schema, entity::song::Entity).await;
     create_table(db, &schema, entity::album::Entity).await;
     create_table(db, &schema, entity::artist::Entity).await;
+    create_table(db, &schema, entity::artist_metadata::Entity).await;
     create_table(db, &schema, entity::directory::Entity).await;
     create_table(db, &schema, entity::playlist::Entity).await;
     create_table(db, &schema, entity::playlist_song::Entity).await;

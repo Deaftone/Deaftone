@@ -5,34 +5,31 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Deserialize, Serialize, ToSchema)]
-#[sea_orm(table_name = "artists")]
-#[schema(as = entity::artist::Model)]
+#[sea_orm(table_name = "artists_metadata")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    #[schema(example = "Artist")]
     pub id: String,
-    #[sea_orm(unique)]
-    pub name: String,
+    pub artist_id: Option<String>,
     pub mb_artist_id: Option<String>,
+    pub image: Option<String>,
+    pub bio: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::album::Entity")]
-    Album,
-    #[sea_orm(has_one = "super::artist_metadata::Entity")]
-    ArtistMetadata,
+    #[sea_orm(
+        belongs_to = "super::artist::Entity",
+        from = "Column::ArtistId",
+        to = "super::artist::Column::Id"
+    )]
+    Artist,
 }
-impl Related<super::album::Entity> for Entity {
+impl Related<super::artist::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Album.def()
+        Relation::Artist.def()
     }
 }
-impl Related<super::artist_metadata::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ArtistMetadata.def()
-    }
-}
+
 impl ActiveModelBehavior for ActiveModel {}
