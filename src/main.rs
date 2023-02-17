@@ -46,7 +46,6 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     };
     // Build app router
     let app = Router::new()
-        .route("/", get(handler))
         .route("/stream/:id", get(handlers::streams::stream_handler))
         .route(
             "/stream/transcode/:id",
@@ -60,6 +59,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         .route("/artists", get(handlers::artists::get_artists))
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
+        .route("/tasks", get(handlers::tasks::handle_task))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
@@ -90,15 +90,23 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     Ok(())
 }
 
-async fn handler(State(state): State<AppState>) -> Html<&'static str> {
-    match state.task_service.send(TaskType::ScanLibrary).await {
+async fn _handler(State(_state): State<AppState>) -> Html<&'static str> {
+    /*     match state.task_service.send(TaskType::ScanLibrary).await {
         Ok(_) => {
             tracing::info!("Command sent to TaskService");
         }
         Err(err) => {
             tracing::error!("Failed to send command to TaskService {:}", err);
         }
-    }
+    } */
+    /*     match state.task_service.send(TaskType::PopulateMetadata).await {
+        Ok(_) => {
+            tracing::info!("Command sent to TaskService");
+        }
+        Err(err) => {
+            tracing::error!("Failed to send command to TaskService {:}", err);
+        }
+    } */
     //println!("{:?}", SCAN_STATUS.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
 }

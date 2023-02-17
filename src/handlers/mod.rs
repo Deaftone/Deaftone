@@ -7,7 +7,7 @@ pub mod artists;
 pub mod playlist;
 pub mod songs;
 pub mod streams;
-
+pub mod tasks;
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct AlbumResponse {
     pub id: String,
@@ -65,7 +65,17 @@ pub struct GetAllArtists {
     #[serde(default, deserialize_with = "empty_string_as_none")]
     page: Option<u64>,
 }
+#[derive(Deserialize, Clone, IntoParams, ToSchema)]
+pub struct TaskQuery {
+    #[serde(default, deserialize_with = "empty_string_as_none")]
+    // #[schema(example = "sort = name | latest")]
+    task: Option<String>,
+}
 
+#[derive(Serialize, ToSchema)]
+pub struct TaskResponse {
+    status: String,
+}
 #[derive(Deserialize, Clone, IntoParams, ToSchema)]
 pub struct GetAllAlbums {
     #[serde(default, deserialize_with = "empty_string_as_none")]

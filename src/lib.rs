@@ -11,7 +11,7 @@ use lazy_static::lazy_static;
 use sea_orm::DatabaseConnection;
 use serde::{de, Deserialize, Deserializer};
 use std::{str::FromStr, sync::atomic::AtomicBool};
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{error::SendError, Sender};
 
 use crate::settings::Settings;
 #[derive(Clone)]
@@ -28,6 +28,8 @@ static SCAN_STATUS: AtomicBool = AtomicBool::new(false);
 #[derive(Debug)]
 pub enum ApiError {
     RecordNotFound,
+    ParamError(String),
+    TaskError(SendError<TaskType>),
     DatabaseError(sea_orm::DbErr),
     FileNotFound(String),
     IoError(std::io::Error),
@@ -70,6 +72,14 @@ impl IntoResponse for ApiError {
                 format!("Unknown error: {err}"),
             )
                 .into_response(),
+            ApiError::TaskError(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Task has failed to be sent: {err}"),
+            )
+                .into_response(),
+            ApiError::ParamError(err) => {
+                (StatusCode::INTERNAL_SERVER_ERROR, format!("Missing: {err}")).into_response()
+            }
         }
     }
 }
