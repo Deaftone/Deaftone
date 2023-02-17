@@ -13,8 +13,6 @@ pub struct Model {
     pub id: String,
     #[sea_orm(unique)]
     pub name: String,
-    pub image: Option<String>,
-    pub bio: Option<String>,
     pub mb_artist_id: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
