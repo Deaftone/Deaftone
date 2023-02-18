@@ -13,7 +13,7 @@ path = "src/gen_openapi.rs"
 lto = true
 codegen-units = 1
 [workspace]
-members = [".", "entity", "migration"]
+members = [".", "entity", "migration", "frontend"]
 [dependencies]
 entity = { path = "entity" }
 migration = { path = "migration" } 

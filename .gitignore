@@ -13,7 +13,8 @@ Cargo.lock
 
 deaftone.sqlite*
 settings.toml
-
+**/node_modules
+dist/
 
 # Dev files
 Deaftone_test

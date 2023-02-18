@@ -1,0 +1,17 @@
+{
+    "name": "tailwindcss-yew-template",
+    "version": "0.1.0",
+    "description": "",
+    "scripts": {
+        "dev": "concurrently \"npm run dev:css\" \"npm run dev:serve\"",
+        "dev:css": "tailwindcss -c tailwind.config.js -o tailwind.css --watch",
+        "dev:serve": "trunk serve",
+        "prod": "npm run prod:css && trunk build --release",
+        "prod:css": "tailwindcss -c tailwind.config.js -o tailwind.css --minify"
+    },
+    "dependencies": {
+        "concurrently": "^7.6.0",
+        "daisyui": "^2.50.1",
+        "tailwindcss": "^3.2.7"
+    }
+}

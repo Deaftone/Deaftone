@@ -1,7 +1,8 @@
 use anyhow::Result;
-use axum::{extract::State, response::Html, routing::get, routing::post, Router};
+use axum::{extract::State, http, response::Html, routing::get, routing::post, Router};
 use core::panic;
-use deaftone::{handlers, services::task::TaskType, AppState, SETTINGS};
+use deaftone::{handlers, services::task::TaskType, AppState, SETTINGS, UI_DIR};
+use hyper::{header, StatusCode};
 use std::net::SocketAddr;
 use tokio::signal;
 use tower_http::trace::{self, TraceLayer};
@@ -60,6 +61,57 @@ Version: {:} | Media Directory: {:} | Database: {:}",
         .route("/artists/:id", get(handlers::artists::get_artist))
         .route("/playlists/:id", get(handlers::playlist::get_playlist))
         .route("/tasks", get(handlers::tasks::handle_task))
+        .fallback_service(get(|req: http::Request<hyper::body::Body>| async move {
+            println!("{:}", req.uri().path());
+            match req.uri().path() {
+                "/ui" => (
+                    StatusCode::OK,
+                    [(header::CONTENT_TYPE, "text/html")],
+                    UI_DIR
+                        .get_file(String::from("index.html"))
+                        .unwrap()
+                        .contents_utf8()
+                        .unwrap(),
+                ),
+                _ => match req.uri().path().split('.').last().unwrap() {
+                    "css" => (
+                        StatusCode::OK,
+                        [(header::CONTENT_TYPE, "text/css")],
+                        UI_DIR
+                            .get_file(req.uri().path().replace('/', ""))
+                            .unwrap()
+                            .contents_utf8()
+                            .unwrap(),
+                    ),
+                    "js" => (
+                        StatusCode::OK,
+                        [(header::CONTENT_TYPE, "application/javascript")],
+                        UI_DIR
+                            .get_file(req.uri().path().replace('/', ""))
+                            .unwrap()
+                            .contents_utf8()
+                            .unwrap(),
+                    ),
+                    "wasm" => (
+                        StatusCode::OK,
+                        [(header::CONTENT_TYPE, "application/wasm")],
+                        unsafe {
+                            std::str::from_utf8_unchecked(
+                                UI_DIR
+                                    .get_file(req.uri().path().replace('/', ""))
+                                    .unwrap()
+                                    .contents(),
+                            )
+                        },
+                    ),
+                    _ => (
+                        StatusCode::NOT_FOUND,
+                        [(header::CONTENT_TYPE, "text/plain")],
+                        "",
+                    ),
+                },
+            }
+        }))
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
