@@ -1,7 +1,7 @@
 use super::{AlbumResponse, GetAllAlbums};
 use crate::{
     services::{self},
-    ApiError, AppState,
+    ApiError, AppState, ASSETS,
 };
 use axum::{
     body::{boxed, Body, BoxBody, Full},
@@ -10,10 +10,8 @@ use axum::{
     Json,
 };
 use hyper::StatusCode;
-use include_dir::{include_dir, Dir};
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
-static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/resources");
 
 #[utoipa::path(
     get,

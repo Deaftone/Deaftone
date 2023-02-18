@@ -7,6 +7,7 @@ use self::services::task::TaskType;
 use axum::response::{IntoResponse, Response};
 use core::fmt;
 use hyper::StatusCode;
+use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
 use sea_orm::DatabaseConnection;
 use serde::{de, Deserialize, Deserializer};
@@ -24,6 +25,7 @@ lazy_static! {
     pub static ref SETTINGS: Settings = Settings::default();
 }
 static SCAN_STATUS: AtomicBool = AtomicBool::new(false);
+static ASSETS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/resources");
 
 #[derive(Debug)]
 pub enum ApiError {
