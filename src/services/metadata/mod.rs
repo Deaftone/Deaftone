@@ -108,7 +108,7 @@ impl ArtistMetadata {
             String::from("/biography")
         ))
         .await
-        .unwrap()
+        .with_context(|| "Failed to load page")?
         .text()
         .await
         .with_context(|| "Failed to request bio page")?;
