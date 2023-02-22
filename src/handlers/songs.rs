@@ -14,7 +14,7 @@ use super::{LikeResponse, SongResponse};
     get,
     path = "/song/{id}",
     params(
-        ("id" = String, Path, description = "Song Id")
+        ("song_id" = String, Path, description = "Song Id")
     ),
     responses(
         (status = 200, description = "Returns a song", body = SongResponse),

@@ -11,7 +11,7 @@ use axum::{
     get,
     path = "/artists/{id}",
     params(
-        ("id" = String, Path, description = "Artist Id")
+        ("artist_id" = String, Path, description = "Artist Id")
     ),
     responses(
         (status = 200, description = "Returns a Artist", body = ArtistResponse),

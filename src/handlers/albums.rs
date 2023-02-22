@@ -17,7 +17,7 @@ use tower_http::services::ServeFile;
     get,
     path = "/albums/{id}",
     params(
-        ("id" = String, Path, description = "Album Id")
+        ("album_id" = String, Path, description = "Album Id")
     ),
     responses(
         (status = 200, description = "Returns a album", body = AlbumResponse),
@@ -89,7 +89,7 @@ pub async fn get_albums(
     get,
     path = "/albums/{id}/cover",
     params(
-        ("id" = String, Path, description = "Album Id")
+        ("album_id" = String, Path, description = "Album Id")
     ),
     responses(
         (status = 200, description = "Returns a album cover"),
