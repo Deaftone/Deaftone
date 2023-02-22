@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use chrono::Utc;
 use futures::TryStreamExt;
 use musicbrainz_rs::{
@@ -7,7 +7,6 @@ use musicbrainz_rs::{
 };
 
 use sqlx::{Pool, Row, Sqlite};
-use uuid::Uuid;
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ArtistMetadata {
@@ -98,36 +97,34 @@ impl ArtistMetadata {
     }
     // FIXME whitespace
     pub async fn get_allmusic_bio(&mut self) -> Result<&mut Self> {
-        tracing::debug!(
-            "Requesting allmusic page {:}",
-            &self.all_music.as_ref().unwrap()
-        );
-        let response = reqwest::get(format!(
-            "{}{}",
-            self.all_music.as_ref().unwrap(),
-            String::from("/biography")
-        ))
-        .await
-        .with_context(|| "Failed to load page")?
-        .text()
-        .await
-        .with_context(|| "Failed to request bio page")?;
+        match &self.all_music {
+            Some(all_music) => {
+                tracing::debug!("Requesting allmusic page {:}", &all_music);
+                let response = reqwest::get(format!("{}{}", all_music, String::from("/biography")))
+                    .await
+                    .with_context(|| "Failed to load page")?
+                    .text()
+                    .await
+                    .with_context(|| "Failed to request bio page")?;
 
-        let document = scraper::Html::parse_document(&response);
-        let bio_select = scraper::Selector::parse("div.text").unwrap();
-        let bio = document
-            .select(&bio_select)
-            .next()
-            .with_context(|| "Failed to select bio")?;
-        let formated_bio = ArtistMetadata::trim_whitespace(
-            bio.text()
-                .collect::<String>()
-                .trim()
-                .replace('\n', "")
-                .as_str(),
-        );
-        self.bio = Some(formated_bio);
-        Ok(self)
+                let document = scraper::Html::parse_document(&response);
+                let bio_select = scraper::Selector::parse("div.text").unwrap();
+                let bio = document
+                    .select(&bio_select)
+                    .next()
+                    .with_context(|| "Failed to select bio")?;
+                let formated_bio = ArtistMetadata::trim_whitespace(
+                    bio.text()
+                        .collect::<String>()
+                        .trim()
+                        .replace('\n', "")
+                        .as_str(),
+                );
+                self.bio = Some(formated_bio);
+                Ok(self)
+            }
+            None => Err(anyhow!("No link provided")),
+        }
     }
 }
 impl Default for ArtistMetadata {
@@ -160,75 +157,15 @@ pub async fn scrap_metadata(sqlite_pool: &Pool<Sqlite>) {
 
         match artist_metadata {
             Ok(metadata) => {
-                let id: String = Uuid::new_v4().to_string();
                 let init_time: String = Utc::now().naive_local().to_string();
-                let metadata_exists =
-                    sqlx::query("SELECT * FROM artists_metadata WHERE artist_id = ?")
-                        .bind(artist_id)
-                        .persistent(true)
-                        .fetch_one(sqlite_pool)
-                        .await;
 
-                match metadata_exists {
-                    Err(sqlx::Error::RowNotFound) => {
-                        tracing::debug!(
-                            "Creating artists_metadata entry {:} for artist {:}",
-                            &id,
-                            artist_id
-                        );
-                        sqlx::query(
-                            "INSERT OR REPLACE INTO artists_metadata (
-                                        id, 
-                                        artist_id,
-                                        mb_artist_id,
-                                        bio,
-                                        created_at,
-                                        updated_at
-                                     )
-                                VALUES (?,?,?,?,?,?)",
-                        )
-                        .bind(&id)
-                        .bind(artist_id)
-                        .bind(mb_artist_id)
-                        .bind(&metadata.bio)
-                        .bind(&init_time)
-                        .bind(&init_time)
-                        .execute(sqlite_pool)
-                        .await
-                        .unwrap();
-                    }
-                    Ok(value) => {
-                        let am_id: &str = value.get("id");
-                        tracing::debug!(
-                            "Updating artists_metadata entry {:} for artist {:}",
-                            &am_id,
-                            artist_id
-                        );
-                        sqlx::query(
-                            "INSERT OR REPLACE INTO artists_metadata (
-                                        id, 
-                                        artist_id,
-                                        mb_artist_id,
-                                        bio,
-                                        created_at,
-                                        updated_at
-                                     )
-                                VALUES (?,?,?,?,?,?)",
-                        )
-                        .bind(am_id)
-                        .bind(artist_id)
-                        .bind(mb_artist_id)
-                        .bind(&metadata.bio)
-                        .bind(&init_time)
-                        .bind(&init_time)
-                        .execute(sqlite_pool)
-                        .await
-                        .unwrap();
-                    }
-                    Err(err) => {
-                        tracing::error!("Error in query {:}", err);
-                    }
-                }
+                sqlx::query("UPDATE artists SET bio=?,updated_at=? WHERE id=?")
+                    .bind(&metadata.bio)
+                    .bind(&init_time)
+                    .bind(artist_id)
+                    .execute(sqlite_pool)
+                    .await
+                    .unwrap();
             }
             Err(err) => {
                 tracing::error!(
