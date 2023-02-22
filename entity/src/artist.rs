@@ -13,6 +13,8 @@ pub struct Model {
     pub id: String,
     #[sea_orm(unique)]
     pub name: String,
+    pub image: Option<String>,
+    pub bio: Option<String>,
     pub mb_artist_id: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
@@ -22,17 +24,11 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::album::Entity")]
     Album,
-    #[sea_orm(has_one = "super::artist_metadata::Entity")]
-    ArtistMetadata,
 }
 impl Related<super::album::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Album.def()
     }
 }
-impl Related<super::artist_metadata::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::ArtistMetadata.def()
-    }
-}
+
 impl ActiveModelBehavior for ActiveModel {}

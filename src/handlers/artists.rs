@@ -33,8 +33,8 @@ pub async fn get_artist(
     Ok(Json(DbArtist {
         id: artist_model.id,
         name: artist_model.name,
-        image: String::from(""),
-        bio: String::from("test"),
+        image: artist_model.image.unwrap_or_default(),
+        bio: artist_model.bio.unwrap_or_default(),
         albums,
     }))
 }
