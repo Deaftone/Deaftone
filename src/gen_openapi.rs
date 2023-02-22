@@ -16,6 +16,24 @@ fn main() {
 fn gen_my_openapi() -> std::string::String {
     #[derive(OpenApi)]
     #[openapi(
+        info(description = "## About 
+This api is inspired by https://auraspec.readthedocs.io/en/latest/api.html
+### Response Format and Errors
+
+The MIME type for all responses MUST be ``application/vnd.api+json``. Every response is a JSON object. When a request is successful, the document has a top-level key data corresponding to the response’s “primary data.” When it fails, the document has an errors key, which maps to an array of JSON API error objects. Other keys may also be present, as described below.
+
+On a successfuly query
+``
+{
+    data: {RESPONSE}
+}
+``
+On a failure
+``
+{
+    error: {ERROR_MESSAGE}
+}``
+        "),
         paths(
             deaftone::handlers::albums::get_albums,
             deaftone::handlers::albums::get_album,
