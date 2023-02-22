@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "deaftone",
-    "description": "",
+    "description": "## About \nThis api is inspired by https://auraspec.readthedocs.io/en/latest/api.html\n### Response Format and Errors\n\nThe MIME type for all responses MUST be ``application/vnd.api+json``. Every response is a JSON object. When a request is successful, the document has a top-level key data corresponding to the response’s “primary data.” When it fails, the document has an errors key, which maps to an array of JSON API error objects. Other keys may also be present, as described below.\n\nOn a successfuly query\n``\n{\n    data: {RESPONSE}\n}\n``\nOn a failure\n``\n{\n    error: {ERROR_MESSAGE}\n}``\n        ",
     "contact": {
       "name": "",
       "email": ""
@@ -10,7 +10,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.0.2"
+    "version": "0.0.3"
   },
   "paths": {
     "/albums": {
@@ -83,17 +83,9 @@
         "operationId": "get_album",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "Album Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "album_id",
             "in": "path",
+            "description": "Album Id",
             "required": true,
             "schema": {
               "type": "string"
@@ -143,17 +135,9 @@
         "operationId": "get_cover",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "Album Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "album_id",
             "in": "path",
+            "description": "Album Id",
             "required": true,
             "schema": {
               "type": "string"
@@ -248,17 +232,9 @@
         "operationId": "get_artist",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "Artist Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "artist_id",
             "in": "path",
+            "description": "Artist Id",
             "required": true,
             "schema": {
               "type": "string"
@@ -308,17 +284,9 @@
         "operationId": "get_song",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "Song Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "song_id",
             "in": "path",
+            "description": "Song Id",
             "required": true,
             "schema": {
               "type": "string"
@@ -358,17 +326,9 @@
         "operationId": "stream_handler",
         "parameters": [
           {
-            "name": "id",
-            "in": "path",
-            "description": "Song Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "song_id",
             "in": "path",
+            "description": "Song Id",
             "required": true,
             "schema": {
               "type": "string"
