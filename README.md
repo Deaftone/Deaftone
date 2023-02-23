@@ -14,6 +14,7 @@
 [![Version](https://img.shields.io/github/v/release/Deaftone/Deaftone)](https://github.com/Deaftone/Deaftone/releases/latest)
 [![MSRV](https://img.shields.io/badge/MSRV-1.65-informational)](https://github.com/Deaftone/Deaftone/edit/master/README.md#building-from-source)
 </div>
+
 # Overview
 A cross-platform open source music collection server and streamer. Leaving Subsonic in the past and starting fresh with a new design and new API
 Currently in active development
