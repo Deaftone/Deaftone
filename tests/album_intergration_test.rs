@@ -2,7 +2,10 @@
 mod tests {
     use axum::{body::Body, http::Request, Server};
     use chrono::{NaiveDateTime, Utc};
-    use deaftone::{handlers::AlbumResponse, test_util::app};
+    use deaftone::{
+        handlers::{AlbumResponse, GetResposne},
+        test_util::app,
+    };
     use hyper::{body::to_bytes, Client, StatusCode};
     use serde_json::from_slice;
     use std::net::TcpListener;
@@ -35,10 +38,10 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::OK);
         let body = to_bytes(resp.into_body()).await.unwrap();
-        let album: AlbumResponse = from_slice(&body).unwrap();
-        assert!(album.id == r#"46ffbb9a-8c98-45d6-a561-0cb80214a642"#);
-        assert!(album.name == *"Ain't No Peace");
-        assert!(album.songs.len() == 7);
+        let album: GetResposne<AlbumResponse> = from_slice(&body).unwrap();
+        assert!(album.data.id == r#"46ffbb9a-8c98-45d6-a561-0cb80214a642"#);
+        assert!(album.data.name == *"Ain't No Peace");
+        assert!(album.data.songs.len() == 7);
     }
 
     #[tokio::test]
@@ -95,11 +98,11 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::OK);
         let body = to_bytes(resp.into_body()).await.unwrap();
-        let albums: Vec<entity::album::Model> = serde_json::from_slice(&body).unwrap();
+        let albums: GetResposne<Vec<entity::album::Model>> = serde_json::from_slice(&body).unwrap();
 
         // Assert that the returned artists are sorted by name
         let mut prev_name = String::new();
-        for album in &albums {
+        for album in &albums.data {
             assert!(album.name >= prev_name);
             prev_name = album.name.clone();
         }
@@ -130,10 +133,10 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::OK);
         let body = to_bytes(resp.into_body()).await.unwrap();
-        let albums: Vec<entity::album::Model> = serde_json::from_slice(&body).unwrap();
+        let albums: GetResposne<Vec<entity::album::Model>> = serde_json::from_slice(&body).unwrap();
         // Assert that the returned artists are sorted by name
         let mut created_at: NaiveDateTime = Utc::now().naive_local();
-        for album in &albums {
+        for album in &albums.data {
             let now_parsed: NaiveDateTime = album.created_at;
             assert!(now_parsed <= created_at);
             created_at = now_parsed;
@@ -183,26 +186,27 @@ mod tests {
 
         assert_eq!(page.status(), StatusCode::OK);
         let page_body = to_bytes(page.into_body()).await.unwrap();
-        let page_albums: Vec<entity::album::Model> = serde_json::from_slice(&page_body).unwrap();
+        let page_albums: GetResposne<Vec<entity::album::Model>> =
+            serde_json::from_slice(&page_body).unwrap();
 
         assert_eq!(page_one.status(), StatusCode::OK);
         let page_one_body = to_bytes(page_one.into_body()).await.unwrap();
-        let page_one_albums: Vec<entity::album::Model> =
+        let page_one_albums: GetResposne<Vec<entity::album::Model>> =
             serde_json::from_slice(&page_one_body).unwrap();
 
         assert_eq!(page_two.status(), StatusCode::OK);
         let page_two_body = to_bytes(page_two.into_body()).await.unwrap();
-        let page_two_albums: Vec<entity::album::Model> =
+        let page_two_albums: GetResposne<Vec<entity::album::Model>> =
             serde_json::from_slice(&page_two_body).unwrap();
 
-        assert_eq!(page_albums.len(), 4);
-        assert_eq!(page_one_albums.len(), 2);
-        assert_eq!(page_two_albums.len(), 2);
+        assert_eq!(page_albums.data.len(), 4);
+        assert_eq!(page_one_albums.data.len(), 2);
+        assert_eq!(page_two_albums.data.len(), 2);
 
-        assert_eq!(page_one_albums[0], page_albums[0]);
-        assert_eq!(page_one_albums[1], page_albums[1]);
-        assert_eq!(page_two_albums[0], page_albums[2]);
-        assert_eq!(page_two_albums[1], page_albums[3]);
+        assert_eq!(page_one_albums.data[0], page_albums.data[0]);
+        assert_eq!(page_one_albums.data[1], page_albums.data[1]);
+        assert_eq!(page_two_albums.data[0], page_albums.data[2]);
+        assert_eq!(page_two_albums.data[1], page_albums.data[3]);
 
         // Assert that the returned artists are sorted by name
         /*         let mut prev_name = String::new();

@@ -4,8 +4,12 @@ pub mod services;
 pub mod settings;
 pub mod test_util;
 use self::services::task::TaskType;
-use axum::response::{IntoResponse, Response};
+use axum::{
+    response::{IntoResponse, Response},
+    Json,
+};
 use core::fmt;
+use handlers::ErrorResposne;
 use hyper::StatusCode;
 use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
@@ -55,33 +59,53 @@ impl IntoResponse for ApiError {
         match self {
             ApiError::DatabaseError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("An unexpected exception has occured: {err}"),
+                Json(ErrorResposne {
+                    error: format!("An unexpected exception has occured: {err}"),
+                }),
             )
                 .into_response(),
-            ApiError::RecordNotFound => {
-                (StatusCode::NOT_FOUND, r#"Record not found"#).into_response()
-            }
-            ApiError::FileNotFound(err) => {
-                (StatusCode::NOT_FOUND, format!("File not found: {err}")).into_response()
-            }
+            ApiError::RecordNotFound => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResposne {
+                    error: r#"Record not found"#,
+                }),
+            )
+                .into_response(),
+            ApiError::FileNotFound(err) => (
+                StatusCode::NOT_FOUND,
+                Json(ErrorResposne {
+                    error: format!("File not found: {err}"),
+                }),
+            )
+                .into_response(),
             ApiError::IoError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("IO Error: {err}"),
+                Json(ErrorResposne {
+                    error: format!("IO Error: {err}"),
+                }),
             )
                 .into_response(),
             ApiError::UnknownError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Unknown error: {err}"),
+                Json(ErrorResposne {
+                    error: format!("Unknown error: {err}"),
+                }),
             )
                 .into_response(),
             ApiError::TaskError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                format!("Task has failed to be sent: {err}"),
+                Json(ErrorResposne {
+                    error: format!("Task has failed to be sent: {err}"),
+                }),
             )
                 .into_response(),
-            ApiError::ParamError(err) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, format!("Missing: {err}")).into_response()
-            }
+            ApiError::ParamError(err) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResposne {
+                    error: format!("Missing: {err}"),
+                }),
+            )
+                .into_response(),
         }
     }
 }

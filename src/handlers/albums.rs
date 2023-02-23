@@ -1,4 +1,4 @@
-use super::{AlbumResponse, GetAllAlbums};
+use super::{AlbumResponse, GetAllAlbums, GetResposne};
 use crate::{
     services::{self},
     ApiError, AppState, ASSETS,
@@ -29,14 +29,15 @@ use tower_http::services::ServeFile;
 pub async fn get_album(
     Path(album_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Json<AlbumResponse>, ApiError> {
+) -> Result<Json<GetResposne<AlbumResponse>>, ApiError> {
     let (album_model, songs) = services::album::get_album_by_id(&state.database, &album_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get album \"{:?}\" for {album_id}", e);
             e
         })?;
-    Ok(Json(AlbumResponse {
+    Ok(Json(GetResposne {
+        data: AlbumResponse {
         id: album_model.id,
         name: album_model.name,
         artist: album_model.artist_name,
@@ -45,6 +46,7 @@ pub async fn get_album(
         year: album_model.year,
         song_count: songs.len() as i32,
         songs,
+    },
     }))
 }
 
@@ -62,7 +64,7 @@ pub async fn get_album(
 pub async fn get_albums(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<GetAllAlbums>,
-) -> Result<Json<Vec<entity::album::Model>>, ApiError> {
+) -> Result<Json<GetResposne<Vec<entity::album::Model>>>, ApiError> {
     let albums = match params.page.is_some() {
         true => services::album::get_albums_paginate(
             &state.database,
@@ -82,7 +84,7 @@ pub async fn get_albums(
                 e
             })?,
     };
-    Ok(Json(albums))
+    Ok(Json(GetResposne { data: albums }))
 }
 
 #[utoipa::path(

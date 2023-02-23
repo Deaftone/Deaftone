@@ -1,4 +1,4 @@
-use super::{ArtistResponse, GetAllArtists};
+use super::{ArtistResponse, GetAllArtists, GetResposne};
 use crate::{
     services::{self, DbArtist},
     ApiError, AppState,
@@ -23,19 +23,21 @@ use axum::{
 pub async fn get_artist(
     Path(artist_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Json<ArtistResponse>, ApiError> {
+) -> Result<Json<GetResposne<ArtistResponse>>, ApiError> {
     let (artist_model, albums) = services::artist::get_artist_by_id(&state.database, &artist_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to get artist: \"{:?}\" for {:}", e, artist_id);
             e
         })?;
-    Ok(Json(DbArtist {
-        id: artist_model.id,
-        name: artist_model.name,
-        image: artist_model.image.unwrap_or_default(),
-        bio: artist_model.bio.unwrap_or_default(),
-        albums,
+    Ok(Json(GetResposne {
+        data: DbArtist {
+            id: artist_model.id,
+            name: artist_model.name,
+            image: artist_model.image.unwrap_or_default(),
+            bio: artist_model.bio.unwrap_or_default(),
+            albums,
+        },
     }))
 }
 
@@ -53,7 +55,7 @@ pub async fn get_artist(
 pub async fn get_artists(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<GetAllArtists>,
-) -> Result<Json<Vec<entity::artist::Model>>, ApiError> {
+) -> Result<Json<GetResposne<Vec<entity::artist::Model>>>, ApiError> {
     let artists = match params.page.is_some() {
         true => {
             services::artist::get_artists_paginate(
@@ -66,5 +68,5 @@ pub async fn get_artists(
         }
         _ => services::artist::get_artists(&state.database, params.size, params.sort).await?,
     };
-    Ok(Json(artists))
+    Ok(Json(GetResposne { data: artists }))
 }

@@ -46,6 +46,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     };
     // Build app router
     let app = Router::new()
+        .route("/", get(_handler))
         .route("/stream/:id", get(handlers::streams::stream_handler))
         .route(
             "/stream/transcode/:id",
@@ -133,5 +134,5 @@ async fn shutdown_signal() {
         _ = ctrl_c => {},
         _ = terminate => {},
     }
-    tracing::info!("Shutting down HTTP service");
+    tracing::info!("Shutting down HttpService");
 }

@@ -8,6 +8,19 @@ pub mod playlist;
 pub mod songs;
 pub mod streams;
 pub mod tasks;
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct GetResposne<T> {
+    #[schema(example = "Response data")]
+    pub data: T,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ErrorResposne<T> {
+    #[schema(example = "Error response data")]
+    pub error: T,
+}
+
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct AlbumResponse {
     pub id: String,
