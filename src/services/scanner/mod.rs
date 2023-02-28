@@ -240,8 +240,8 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
         .await
         .map_err(|e| anyhow!("Error beginning transaction: {}", e))?;
     tracing::debug!("Scanning dir {:}", path);
-    let mut create_album = true;
-    let mut create_artist = true;
+    let mut last_album = String::new();
+    let mut last_artist = String::new();
     let mut album_id = String::new();
     let mut artist_id = String::new();
 
@@ -253,7 +253,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
         if path.extension() == Some(std::ffi::OsStr::new("flac")) {
             let metadata = skip_fail!(tag_helper::get_metadata_flac(path));
             // Check if album has been created. This is a nice speedup since we can assume that when we are in a folder of tracks the they are all from the same album
-            if create_artist {
+            if !last_artist.eq(&metadata.artist) {
                 let artists_exists = sqlx::query("SELECT * FROM artists WHERE name = ?")
                     .bind(&metadata.album_artist)
                     .persistent(true)
@@ -271,7 +271,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
                             .await
                         );
                         // Set create artist to false since we know its created now
-                        create_artist = false;
+                        last_artist = metadata.artist.clone();
                         // Set artist_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
                         tracing::info!("Creating artists \"{:}\"", metadata.album_artist)
                     }
@@ -281,7 +281,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
                 }
             }
             // Check if album has been created before inside this folder
-            if create_album {
+            if !last_album.eq(&metadata.album_name) {
                 let album_exists = sqlx::query("SELECT * FROM albums WHERE name = ?")
                     .bind(&metadata.album_name)
                     .persistent(true)
@@ -303,7 +303,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
                         );
 
                         // Set create album to false since we know its created now
-                        create_album = false;
+                        last_album = metadata.album_name.clone();
                         // Set album_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
                         album_id = id;
                         tracing::info!("Creating album \"{:}\"", metadata.album_name)
