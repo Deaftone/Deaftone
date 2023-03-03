@@ -19,7 +19,7 @@ entity = { path = "entity" }
 migration = { path = "migration" } 
 axum = "0.6.7"
 tokio = { version = "1.25.0", features = ["full"] }
-tower-http = { version = "0.3.5", features = ["trace", "fs"] }
+tower-http = { version = "0.4.0", features = ["trace", "fs"] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 tracing-appender = "0.2.2"
@@ -41,7 +41,7 @@ hyper = { version = "0.14.24", features = ["client"] }
 utoipa = { version = "3.0.3", features = ["axum_extras", "chrono", "uuid"] }
 lazy_static = "1.4.0"
 musicbrainz_rs = "0.5.0"
-scraper = "0.14.0"
+scraper = "0.15.0"
 reqwest = { version = "0.11.14", features = ["blocking"] }
 
 [dependencies.sea-orm]
