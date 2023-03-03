@@ -32,26 +32,6 @@ macro_rules! skip_fail {
 pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
     // Set global SCAN_STATUS to true
     SCAN_STATUS.store(true, Ordering::Release);
-
-    tracing::info!("Starting scan");
-    // This is a hack because sometimes when starting Deaftone running migrations then instantly running the scanner.
-    // The database is locked so we just try and connect again on error
-
-    /*             let has_scanned_full =
-        sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
-            .fetch_one(&sqlite_pool)
-            .await;
-    match has_scanned_full {
-        Err(sqlx::Error::RowNotFound) => Self::walk_full(&sqlite_pool).await.unwrap(),
-        value => match value.unwrap().value == "1" {
-            true => {
-                tracing::info!("Starting partial scan");
-                Self::walk_partial(&sqlite_pool).await.unwrap();
-            }
-            _ => Self::walk_full(&sqlite_pool).await.unwrap(),
-        },
-    } */
-
     sqlx::query("pragma temp_store = memory;")
         .execute(sqlite_pool)
         .await
@@ -66,7 +46,23 @@ pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
         .unwrap();
     let before: Instant = Instant::now();
     let current_dir = SETTINGS.media_path.clone();
-    walk_full(sqlite_pool, current_dir).await.unwrap();
+
+    match sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
+        .fetch_one(sqlite_pool)
+        .await
+    {
+        Err(sqlx::Error::RowNotFound) => walk_full_initial(sqlite_pool, current_dir).await.unwrap(),
+        value => match value.unwrap().value == "1" {
+            true => {
+                tracing::info!("Starting partial scan");
+                walk_partial(&sqlite_pool).await.unwrap();
+            }
+            _ => {
+                tracing::info!("Starting full scan");
+                walk_full_initial(sqlite_pool, current_dir).await.unwrap()
+            }
+        },
+    }
     tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
     // Set global SCAN_STATUS to false
@@ -161,7 +157,7 @@ pub async fn walk_partial(pool: &Pool<sqlx::Sqlite>) -> Result<()> {
     Ok(())
 }
 
-pub async fn walk_full(db: &Pool<sqlx::Sqlite>, current_dir: String) -> Result<()> {
+pub async fn walk_full_initial(db: &Pool<sqlx::Sqlite>, current_dir: String) -> Result<()> {
     for entry in WalkDir::new(current_dir)
         .follow_links(true)
         .into_iter()
@@ -176,8 +172,10 @@ pub async fn walk_full(db: &Pool<sqlx::Sqlite>, current_dir: String) -> Result<(
             let fmtime: SystemTime = entry.metadata().unwrap().modified().unwrap();
             let mtime: DateTime<Utc> = fmtime.into();
             let path: String = entry.path().to_string_lossy().to_string();
-
-            let directory_exists = sqlx::query("SELECT * FROM directories WHERE path = ?")
+            insert_directory(&path, &mtime, db).await?;
+            tracing::debug!("Created directory {:}", &path);
+            skip_fail!(scan_dir(&path, db).await);
+            /* let directory_exists = sqlx::query("SELECT * FROM directories WHERE path = ?")
                 .bind(&path)
                 .persistent(true)
                 .fetch_one(db)
@@ -207,7 +205,7 @@ pub async fn walk_full(db: &Pool<sqlx::Sqlite>, current_dir: String) -> Result<(
                         );
                     }
                 }
-            }
+            } */
         }
     }
 
