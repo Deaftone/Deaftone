@@ -64,3 +64,9 @@ and logging is for change the log level of the application
 # Building from Source
 When building Deaftone from source your MSRV (Minimum supported Rust version) is ``1.65 or newer``
 
+# Project supported by JetBrains
+
+Many thanks to Jetbrains for kindly providing a license for me to work on this and other open-source projects.
+
+[![](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.svg)](https://www.jetbrains.com/?from=https://github.com/overtrue)
+
