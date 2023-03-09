@@ -9,9 +9,6 @@ path = "src/main.rs"
 [[bin]]
 name = "gen-openapi"
 path = "src/gen_openapi.rs"
-[profile.release]
-lto = true
-codegen-units = 1
 [workspace]
 members = [".", "entity", "migration"]
 [dependencies]
