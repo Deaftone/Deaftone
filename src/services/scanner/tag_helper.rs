@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use metaflac::{block::VorbisComment, Tag};
+
+use super::tag_reader;
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AudioMetadata {
     pub name: String,
@@ -61,6 +63,68 @@ pub struct AudioMetadata {
     pub path: String,
     pub parent_path: String,
 }
+impl Default for AudioMetadata {
+    fn default() -> AudioMetadata {
+        AudioMetadata {
+            name: String::new(),
+            artist: String::new(),
+            artist_sort: None,
+            album_name: String::new(),
+            album_artist: String::new(),
+            album_sort: None,
+            genre: None,
+            style: None,
+            discogs_albumid: None,
+            discogs_artistid: None,
+            discogs_labelid: None,
+            lyricist: None,
+            composer: None,
+            composer_sort: None,
+            work: None,
+            mb_workid: None,
+            arranger: None,
+            grouping: None,
+            year: 0,
+            lyrics: None,
+            comments: None,
+            bpm: None,
+            compilation: None,
+            mb_track_id: None,
+            mb_album_id: None,
+            mb_artist_id: None,
+            mb_albumartist_id: None,
+            mb_releasetrack_id: None,
+            mb_releasegroup_id: None,
+            trackdisambig: None,
+            album_type: None,
+            acoustid_fingerprint: None,
+            acoustid_id: None,
+            asin: None,
+            isrc: None,
+            catalog_num: None,
+            script: None,
+            country: None,
+            albumstatus: None,
+            media: None,
+            album_disambig: None,
+            release_group_disambig: None,
+            encodedby: None,
+            original_year: None,
+            initial_key: None,
+            bit_rate: None,
+            encoder_settings: None,
+            channels: None,
+            bit_depth: None,
+            sample_rate: None,
+            track: 0,
+            disc: 0,
+            length: 0,
+            label: None,
+            path: String::new(),
+            parent_path: String::new(),
+        }
+    }
+}
 
 pub struct StreamInfo {
     length: Option<u32>,
@@ -69,6 +133,58 @@ pub struct StreamInfo {
     bits_per_sample: Option<u8>,
     /*     bit_rate: Option<i64>,
      */ num_channels: Option<u8>,
+}
+
+pub fn get_metadata_flac_new(path: PathBuf) -> Result<AudioMetadata> {
+    let mut buf = Vec::new();
+    let mut data = AudioMetadata::default();
+
+    if let Ok(mut vc) = tag_reader::read_from(path, &mut buf) {
+        while vc.next(&buf) {
+            if let Ok(Some((_, tag_name, value))) = vc.cur(&buf) {
+                match tag_name {
+                    "TRACKNUMBER" => data.track = value.to_owned().parse().unwrap_or_default(),
+                    "ARTIST" => data.artist = value.to_owned(),
+                    //"GENRE" => data.genre = value.to,
+                    "ALBUM" => data.album_name = value.to_owned(),
+                    //"DATE" => data.,
+                    "DISCNUMBER" => data.disc = value.to_owned().parse().unwrap_or_default(),
+                    "TITLE" => data.name = value.to_owned(),
+                    //"TOTALDISCS" => ,
+                    "ALBUMARTIST" => data.album_artist = value.to_owned(),
+                    "ACOUSTID_ID" => data.acoustid_id = Some(value.to_owned()),
+                    "MUSICBRAINZ_RELEASEGROUPID" => {
+                        data.mb_releasegroup_id = Some(value.to_owned())
+                    }
+                    //"ORIGINALDATE" => ,
+                    "ORIGINALYEAR" => data.original_year = Some(value.to_owned()),
+                    "RELEASETYPE" => data.album_type = Some(value.to_owned()),
+                    "MUSICBRAINZ_ALBUMID" => data.mb_releasegroup_id = Some(value.to_owned()),
+                    "LABEL" => data.label = Some(value.to_owned()),
+                    "CATALOGNUMBER" => data.catalog_num = Some(value.to_owned()),
+                    "RELEASECOUNTRY" => data.country = Some(value.to_owned()),
+                    //"BARCODE" => data.catalog_num,
+                    "MUSICBRAINZ_ALBUMARTISTID" => data.mb_albumartist_id = Some(value.to_owned()),
+                    "ALBUMARTISTSORT" => data.album_sort = Some(value.to_owned()),
+                    //"RELEASESTATUS" => data.st,
+                    //"SCRIPT" => ,
+                    "MEDIA" => data.media = Some(value.to_owned()),
+                    "MUSICBRAINZ_TRACKID" => data.mb_track_id = Some(value.to_owned()),
+                    "MUSICBRAINZ_ARTISTID" => data.mb_artist_id = Some(value.to_owned()),
+                    // "ARTISTSORT" => ,
+                    // "ARTISTS" => ,
+                    "MUSICBRAINZ_RELEASETRACKID" => {
+                        data.mb_releasetrack_id = Some(value.to_owned())
+                    }
+                    //"TRACKTOTAL" => ,
+                    //"DISCTOTAL" => ,
+                    _ => (),
+                }
+            }
+        }
+        data.path = vc.path.to_string_lossy().to_string();
+    }
+    return Ok(data);
 }
 // Retreives the metadata from a flac file. Returning generic AudioMetadata struct
 pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {

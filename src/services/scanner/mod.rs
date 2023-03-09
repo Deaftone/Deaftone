@@ -16,6 +16,7 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 
 pub mod tag_helper;
+pub mod tag_reader;
 
 macro_rules! skip_fail {
     ($res:expr) => {
@@ -239,7 +240,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
         .begin()
         .await
         .map_err(|e| anyhow!("Error beginning transaction: {}", e))?;
-    tracing::debug!("Scanning dir {:}", path);
+    tracing::info!("Scanning dir {:}", path);
     let mut create_album = true;
     let mut create_artist = true;
     let mut album_id = String::new();
@@ -251,7 +252,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
         let path_parent = path.parent().unwrap().to_string_lossy().to_string();
 
         if path.extension() == Some(std::ffi::OsStr::new("flac")) {
-            let metadata = skip_fail!(tag_helper::get_metadata_flac(path));
+            let metadata = skip_fail!(tag_helper::get_metadata_flac_new(path));
             // Check if album has been created. This is a nice speedup since we can assume that when we are in a folder of tracks the they are all from the same album
             if create_artist {
                 let artists_exists = sqlx::query("SELECT * FROM artists WHERE name = ?")
@@ -306,16 +307,17 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
                         create_album = false;
                         // Set album_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
                         album_id = id;
-                        tracing::info!("Creating album \"{:}\"", metadata.album_name)
+                        tracing::debug!("Creating album \"{:}\"", metadata.album_name)
                     }
                     value => {
                         album_id = value.unwrap().get("id");
                     }
                 }
             }
-            tracing::info!("Creating song \"{:}\"", metadata.name);
+            tracing::debug!("Creating song \"{:}\"", metadata.name);
             // Create song. Skip loop iteration of failed
             skip_fail!(services::song::create_song(&mut tx, &album_id, &metadata).await);
+            tracing::debug!("Created song \"{:}\"", metadata.name);
         }
     }
     tx.commit().await.unwrap();
