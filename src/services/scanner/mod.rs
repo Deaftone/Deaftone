@@ -46,7 +46,7 @@ pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
         .unwrap();
     let before: Instant = Instant::now();
     let current_dir = SETTINGS.media_path.clone();
-
+    /*
     match sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
         .fetch_one(sqlite_pool)
         .await
@@ -62,7 +62,7 @@ pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
                 walk_full_initial(sqlite_pool, current_dir).await.unwrap()
             }
         },
-    }
+    } */
     tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
     // Set global SCAN_STATUS to false
@@ -88,37 +88,23 @@ pub async fn walk_partial(pool: &Pool<sqlx::Sqlite>) -> Result<()> {
             let ftime: DateTime<Utc> = _ftime.into();
 
             if ftime.naive_utc() > ddirectory_mtime {
-                tracing::info!("Dir changed {:}", &path);
+                tracing::debug!("Dir changed {:}", &path);
                 //Self::walk_dir(db, item.path).await?;
             } else {
-                tracing::info!("Dir hasn't {}", &path);
+                tracing::debug!("Dir hasn't {}", &path);
             }
         } else {
             tracing::info!("Dropping all items for path {}", &path);
-            let query = sqlx::query("DELETE FROM directories WHERE path LIKE ?")
+            sqlx::query("DELETE FROM directories WHERE path LIKE ?")
                 .bind(&path)
                 .persistent(true)
                 .execute(pool)
-                .await;
-
-            println!("{:?}", query.unwrap());
-            let query = sqlx::query("DELETE FROM songs WHERE path LIKE ?")
-                .bind(&path)
-                .persistent(true)
-                .execute(pool)
-                .await;
-
-            println!("{:?}", query.unwrap());
-            // Drop all songs for missing path
-            /*             entity::song::Entity::delete_many()
-                .filter(entity::song::Column::Path.contains(&item.path))
-                .exec(db)
                 .await?;
-
-            entity::directorie::Entity::delete_many()
-                .filter(entity::directorie::Column::Path.contains(&item.path))
-                .exec(db)
-                .await?; */
+            sqlx::query("DELETE FROM songs WHERE path LIKE ?")
+                .bind(&path)
+                .persistent(true)
+                .execute(pool)
+                .await?;
         }
     }
     /*  let mut dirs_stream = entity::directorie::Entity::find().stream(db).await?;
@@ -156,7 +142,7 @@ pub async fn walk_partial(pool: &Pool<sqlx::Sqlite>) -> Result<()> {
     } */
     Ok(())
 }
-
+// This is only run on the first initital scan of Deaftone. Since we dont need to checking if the directory exists or has been modified in the database
 pub async fn walk_full_initial(db: &Pool<sqlx::Sqlite>, current_dir: String) -> Result<()> {
     for entry in WalkDir::new(current_dir)
         .follow_links(true)
@@ -175,37 +161,6 @@ pub async fn walk_full_initial(db: &Pool<sqlx::Sqlite>, current_dir: String) -> 
             insert_directory(&path, &mtime, db).await?;
             tracing::debug!("Created directory {:}", &path);
             skip_fail!(scan_dir(&path, db).await);
-            /* let directory_exists = sqlx::query("SELECT * FROM directories WHERE path = ?")
-                .bind(&path)
-                .persistent(true)
-                .fetch_one(db)
-                .await;
-            match directory_exists {
-                Err(sqlx::Error::RowNotFound) => {
-                    insert_directory(&path, &mtime, db).await?;
-                    tracing::debug!("Created directory {:}", &path);
-                    skip_fail!(scan_dir(&path, db).await);
-                }
-                value => {
-                    let directory_mtime: DateTime<Utc> = value.unwrap().get("mtime");
-                    if directory_mtime < mtime {
-                        tracing::info!(
-                            "Found modified directory {:} dtime: {:} ftime: {:}",
-                            &path,
-                            directory_mtime,
-                            mtime
-                        );
-                        skip_fail!(scan_dir(&path, db).await);
-                    } else {
-                        tracing::debug!(
-                            "Skipping directory {:} dtime: {:} ftime: {:}",
-                            &path,
-                            directory_mtime,
-                            mtime
-                        );
-                    }
-                }
-            } */
         }
     }
 
@@ -268,7 +223,7 @@ async fn scan_dir(path: &str, sqlite_pool: &Pool<sqlx::Sqlite>) -> Result<()> {
                             )
                             .await
                         );
-                        // Set create artist to false since we know its created now
+                        // Set create artist to false since we know its created now. This can later be used to to skip a db query
                         create_artist = false;
                         // Set artist_id here since on the first run of a scan it wont be found since we have the create_album inside the transaction
                         tracing::info!("Creating artists \"{:}\"", metadata.album_artist)
