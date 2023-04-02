@@ -56,57 +56,40 @@ impl From<std::io::Error> for ApiError {
 // Converts Service into a response with a HTTP StatusCode and a string to be returned to the user
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        match self {
+        let (status_code, error_message) = match self {
             ApiError::DatabaseError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResposne {
-                    error: format!("An unexpected exception has occured: {err}"),
-                }),
-            )
-                .into_response(),
-            ApiError::RecordNotFound => (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResposne {
-                    error: r#"Record not found"#,
-                }),
-            )
-                .into_response(),
-            ApiError::FileNotFound(err) => (
-                StatusCode::NOT_FOUND,
-                Json(ErrorResposne {
-                    error: format!("File not found: {err}"),
-                }),
-            )
-                .into_response(),
+                format!("An unexpected exception has occured: {}", err),
+            ),
+            ApiError::RecordNotFound => (StatusCode::NOT_FOUND, r#"Record not found"#.to_string()),
+            ApiError::FileNotFound(err) => {
+                (StatusCode::NOT_FOUND, format!("File not found: {}", err))
+            }
             ApiError::IoError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResposne {
-                    error: format!("IO Error: {err}"),
-                }),
-            )
-                .into_response(),
+                format!("IO Error: {}", err),
+            ),
             ApiError::UnknownError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResposne {
-                    error: format!("Unknown error: {err}"),
-                }),
-            )
-                .into_response(),
+                format!("Unknown error: {}", err),
+            ),
             ApiError::TaskError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResposne {
-                    error: format!("Task has failed to be sent: {err}"),
-                }),
-            )
-                .into_response(),
+                format!("Task has failed to be sent: {}", err),
+            ),
             ApiError::ParamError(err) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrorResposne {
-                    error: format!("Missing: {err}"),
-                }),
-            )
-                .into_response(),
-        }
+                format!("Missing: {}", err),
+            ),
+        };
+
+        (
+            status_code,
+            Json(ErrorResposne {
+                error: error_message,
+            }),
+        )
+            .into_response()
     }
 }
 
