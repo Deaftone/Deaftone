@@ -16,17 +16,21 @@
 </div>
 
 # Overview
-A cross-platform open source music collection server and streamer. Leaving Subsonic in the past and starting fresh with a new design and new API
-Currently in active development
+
+Deaftone is a lightweight, cross-platform, open-source music server and streamer designed to make it easy to manage and listen to your music collection. Built using Rust, Axum, and SeaORM, Deaftone offers a modern and fast alternative to older, more bloated music servers like Subsonic. With its streamlined design and user-friendly API, Deaftone makes it easy to access your music library from anywhere, on any device.
+
+Deaftone is currently in active development, with a focus on building out its core functionality and adding new features based on user feedback. Stay tuned for updates and new releases as we continue to improve and refine the platform.
 
 # Perfomance
 Currently scans 34,000 songs in ~14 mins. My testing is done on a USB Desktop HDD 3TB seagate over USB3.
 
 # Features
 * Ability to handle the largest of music collections
-* Very low system resource usage
-* Multi-platform. Currently building for macOS, Windows, Linux, Arm and Armhf 
-
+* Cross-platform compatibility, with support for Windows, macOS, and Linux
+* Simple, user-friendly API for easy integration with third-party applications
+* Efficient, low-overhead architecture designed for fast performance and low resource usage
+* Support for a wide range of audio formats, including FLAC, MP3, Ogg, and more
+* Advanced features like playlists, automatic metadata scrapping, and more
 
 # Roadmap
 * Built-in metadata scrapping of sources such as MusicBrainz, LastFM and AllMusic
