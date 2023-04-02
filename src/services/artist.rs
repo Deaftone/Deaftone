@@ -39,7 +39,7 @@ pub async fn create_artist(
 // Return a artist by there artist_id. Also merges there connected MusicBrainArtistId albums
 pub async fn get_artist_by_id(
     db: &DatabaseConnection,
-    artist_id: &String,
+    artist_id: &str,
 ) -> anyhow::Result<(entity::artist::Model, Vec<entity::album::Model>), ApiError> {
     match entity::artist::Entity::find_by_id(artist_id)
         .order_by_desc(entity::album::Column::Year)
@@ -115,7 +115,7 @@ pub async fn get_artists_paginate(
 pub async fn get_latest_artist(
     db: &DatabaseConnection,
     size: Option<u64>,
-) -> anyhow::Result<Vec<entity::artist::Model>> {
+) -> anyhow::Result<Vec<entity::artist::Model>, ApiError> {
     Ok(entity::artist::Entity::find()
         .order_by_desc(entity::artist::Column::CreatedAt)
         .limit(size.unwrap_or(50))
