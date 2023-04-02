@@ -30,9 +30,9 @@ pub async fn _create_playlist(db: &DatabaseConnection) -> anyhow::Result<()> {
 }
 pub async fn get_playlist_by_id_single(
     db: &DatabaseConnection,
-    playlist_id: String,
+    playlist_id: &str,
 ) -> Result<entity::playlist::Model, ApiError> {
-    match entity::playlist::Entity::find_by_id(&playlist_id)
+    match entity::playlist::Entity::find_by_id(playlist_id)
         .one(db)
         .await
         .map_err(|e| {
@@ -42,4 +42,17 @@ pub async fn get_playlist_by_id_single(
         Some(playlist) => Ok(playlist),
         None => Err(ApiError::RecordNotFound),
     }
+}
+pub async fn delete_playlist(
+    db: &DatabaseConnection,
+    playlist_id: &str,
+) -> anyhow::Result<(), ApiError> {
+    entity::playlist::Entity::delete_by_id(playlist_id)
+        .exec(db)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            e
+        })?;
+    Ok(())
 }
