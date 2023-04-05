@@ -11,6 +11,10 @@ on:
       - 'dev'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     name: Check
