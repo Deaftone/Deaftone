@@ -71,10 +71,8 @@ pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
     SCAN_STATUS.store(false, Ordering::Release);
 }
 
-pub async fn walk_partial(pool: &Pool<sqlx::Sqlite>) -> Result<()> {
-    let mut connection = pool.acquire().await?;
-
-    let mut rows = sqlx::query("SELECT * FROM directories").fetch(&mut connection);
+pub async fn walk_partial(connection: &Pool<sqlx::Sqlite>) -> Result<()> {
+    let mut rows = sqlx::query("SELECT * FROM directories").fetch(connection);
 
     while let Some(row) = rows.try_next().await? {
         let path: String = row.get("path");
@@ -100,12 +98,12 @@ pub async fn walk_partial(pool: &Pool<sqlx::Sqlite>) -> Result<()> {
             sqlx::query("DELETE FROM directories WHERE path LIKE ?")
                 .bind(&path)
                 .persistent(true)
-                .execute(pool)
+                .execute(connection)
                 .await?;
             sqlx::query("DELETE FROM songs WHERE path LIKE ?")
                 .bind(&path)
                 .persistent(true)
-                .execute(pool)
+                .execute(connection)
                 .await?;
         }
     }

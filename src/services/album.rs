@@ -83,7 +83,7 @@ pub async fn create_album(
     .bind(&init_time)
     .bind(&init_time)
     .bind(artist_id)
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?;
     Ok(id)
 }

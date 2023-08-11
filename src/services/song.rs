@@ -207,6 +207,6 @@ pub async fn create_song(
     .bind(&init_time)
     .bind(album_id)
     .bind(false)
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?)
 }

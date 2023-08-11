@@ -36,7 +36,7 @@ tokio-stream = "0.1.12"
 include_dir = "0.7.3"
 config = "0.13.3"
 futures = "0.3.26"
-sqlx = { version = "0.6.2", features = [ "runtime-tokio-native-tls" ] }
+sqlx = { version = "0.7.1", features = [ "runtime-tokio-native-tls" ] }
 hyper = { version = "0.14.24", features = ["client"] }
 utoipa = { version = "3.0.3", features = ["axum_extras", "chrono", "uuid"] }
 lazy_static = "1.4.0"

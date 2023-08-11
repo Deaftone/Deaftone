@@ -31,7 +31,7 @@ pub async fn create_artist(
     .bind(mb_artist_id)
     .bind(&init_time)
     .bind(&init_time)
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?;
     Ok(id)
 }
