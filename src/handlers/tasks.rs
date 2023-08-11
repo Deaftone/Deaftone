@@ -1,4 +1,7 @@
-use crate::{services::task::TaskType, ApiError, AppState};
+use crate::{
+    services::{scanner::ScanType, task::TaskType},
+    ApiError, AppState,
+};
 use axum::{extract::State, Json};
 use tokio::sync::mpsc::Sender;
 
@@ -9,7 +12,20 @@ pub async fn handle_task(
 ) -> Result<Json<TaskResponse>, ApiError> {
     match params.task {
         Some(task) => match task.as_str() {
-            "scan_library" => send_task(TaskType::ScanLibrary, state.task_service).await,
+            "scan_library_full" => {
+                send_task(
+                    TaskType::ScanLibrary(ScanType::FullScan),
+                    state.task_service,
+                )
+                .await
+            }
+            "scan_library_partial" => {
+                send_task(
+                    TaskType::ScanLibrary(ScanType::PartialScan),
+                    state.task_service,
+                )
+                .await
+            }
             "scan_metadata" => send_task(TaskType::PopulateMetadata, state.task_service).await,
 
             _ => Err(ApiError::ParamError(r#"Invalid task type"#.to_owned())),

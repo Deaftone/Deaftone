@@ -28,8 +28,13 @@ macro_rules! skip_fail {
         }
     };
 }
+#[derive(Debug)]
+pub enum ScanType {
+    FullScan,
+    PartialScan,
+}
 
-pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
+pub async fn start_scan(scan_type: ScanType, sqlite_pool: &Pool<Sqlite>) {
     // Set global SCAN_STATUS to true
     SCAN_STATUS.store(true, Ordering::Release);
     sqlx::query("pragma temp_store = memory;")
@@ -46,8 +51,18 @@ pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
         .unwrap();
     let before: Instant = Instant::now();
     let current_dir = SETTINGS.media_path.clone();
-    /*
-    match sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
+
+    match scan_type {
+        ScanType::FullScan => {
+            tracing::info!("Starting full scan");
+            walk_full_initial(sqlite_pool, current_dir).await.unwrap();
+        }
+        ScanType::PartialScan => {
+            tracing::info!("Starting partial scan");
+            walk_partial(&sqlite_pool).await.unwrap();
+        }
+    }
+    /*     match sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")
         .fetch_one(sqlite_pool)
         .await
     {
@@ -63,8 +78,6 @@ pub async fn start_scan(sqlite_pool: &Pool<Sqlite>) {
             }
         },
     } */
-    walk_full_initial(sqlite_pool, current_dir).await.unwrap();
-
     tracing::info!("Scan completed in: {:.2?}", before.elapsed());
 
     // Set global SCAN_STATUS to false
@@ -163,18 +176,7 @@ pub async fn walk_full_initial(db: &Pool<sqlx::Sqlite>, current_dir: String) -> 
             skip_fail!(scan_dir(&path, db).await);
         }
     }
-
-    sqlx::query(
-        "INSERT OR REPLACE INTO settings (
-                    name,
-                    value
-                )
-                VALUES (?,?)",
-    )
-    .bind("scanned".to_string())
-    .bind(true)
-    .execute(db)
-    .await?;
+    update_scan_state(true, db).await?;
     Ok(())
 }
 
@@ -298,5 +300,22 @@ async fn insert_directory(
     .bind(&init_time)
     .bind(&init_time)
     .execute(tx)
+    .await?)
+}
+
+async fn update_scan_state(
+    value: bool,
+    db: &Pool<sqlx::Sqlite>,
+) -> Result<SqliteQueryResult, anyhow::Error> {
+    Ok(sqlx::query(
+        "INSERT OR REPLACE INTO settings (
+                    name,
+                    value
+                )
+                VALUES (?,?)",
+    )
+    .bind("scanned".to_string())
+    .bind(value)
+    .execute(db)
     .await?)
 }

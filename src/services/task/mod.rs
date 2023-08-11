@@ -3,9 +3,11 @@ use tokio::sync::mpsc::Receiver;
 
 use crate::database;
 
+use super::scanner::ScanType;
+
 #[derive(Debug)]
 pub enum TaskType {
-    ScanLibrary,
+    ScanLibrary(ScanType),
     Shutdown,
     PopulateMetadata,
 }
@@ -32,10 +34,14 @@ impl TaskService {
         tracing::info!("Started task service");
         loop {
             if let Ok(task) = self.receiver.try_recv() {
-                tracing::info!("Running task: {:?}", TaskType::ScanLibrary);
+                tracing::info!("Running task: {:?}", task);
                 match task {
-                    TaskType::ScanLibrary => {
-                        crate::services::scanner::start_scan(&sqlite_pool).await
+                    TaskType::ScanLibrary(ScanType::FullScan) => {
+                        crate::services::scanner::start_scan(ScanType::FullScan, &sqlite_pool).await
+                    }
+                    TaskType::ScanLibrary(ScanType::PartialScan) => {
+                        crate::services::scanner::start_scan(ScanType::PartialScan, &sqlite_pool)
+                            .await
                     }
                     TaskType::PopulateMetadata => {
                         crate::services::metadata::scrap_metadata(&sqlite_pool).await
