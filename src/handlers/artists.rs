@@ -1,4 +1,4 @@
-use super::{ArtistResponse, GetAllArtists, GetResposne};
+use super::{ArtistLinks, ArtistResponse, GetAllArtists, GetResposne};
 use crate::{
     services::{self, DbArtist},
     ApiError, AppState,
@@ -35,7 +35,21 @@ pub async fn get_artist(
             id: artist_model.id,
             name: artist_model.name,
             image: artist_model.image.unwrap_or_default(),
-            bio: artist_model.bio.unwrap_or_default(),
+            biography: artist_model.biography.unwrap_or_default(),
+            links: ArtistLinks {
+                all_music: artist_model.link_all_music,
+                amazon_music: artist_model.link_amazon_music,
+                apple_music: artist_model.link_apple_music,
+                deezer: artist_model.link_deezer,
+                discogs: artist_model.link_discogs,
+                facebook: artist_model.link_facebook,
+                itunes: artist_model.link_itunes,
+                spotify: artist_model.link_spotify,
+                tidal: artist_model.link_tidal,
+                twitter: artist_model.link_twitter,
+                wiki: artist_model.link_wiki,
+                youtube: artist_model.link_youtube,
+            },
             albums,
         },
     }))

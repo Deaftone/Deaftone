@@ -38,9 +38,26 @@ pub struct ArtistResponse {
     pub id: String,
     pub name: String,
     pub image: String,
-    pub bio: String,
+    pub biography: String,
+    pub links: ArtistLinks,
     pub albums: Vec<entity::album::Model>,
 }
+#[derive(Serialize, Deserialize, ToSchema)]
+pub struct ArtistLinks {
+    all_music: Option<String>,
+    amazon_music: Option<String>,
+    apple_music: Option<String>,
+    deezer: Option<String>,
+    discogs: Option<String>,
+    facebook: Option<String>,
+    itunes: Option<String>,
+    spotify: Option<String>,
+    tidal: Option<String>,
+    twitter: Option<String>,
+    wiki: Option<String>,
+    youtube: Option<String>,
+}
+// Now you can access the link data using the struct fields, like link_data.link_all_music
 
 #[derive(Serialize)]
 pub struct PlayListResponse {

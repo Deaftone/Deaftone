@@ -11,11 +11,22 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     #[schema(example = "Artist")]
     pub id: String,
-    #[sea_orm(unique)]
     pub name: String,
     pub image: Option<String>,
-    pub bio: Option<String>,
+    pub biography: Option<String>,
     pub mb_artist_id: Option<String>,
+    pub link_twitter: Option<String>,
+    pub link_discogs: Option<String>,
+    pub link_youtube: Option<String>,
+    pub link_facebook: Option<String>,
+    pub link_spotify: Option<String>,
+    pub link_itunes: Option<String>,
+    pub link_wiki: Option<String>,
+    pub link_apple_music: Option<String>,
+    pub link_amazon_music: Option<String>,
+    pub link_all_music: Option<String>,
+    pub link_deezer: Option<String>,
+    pub link_tidal: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

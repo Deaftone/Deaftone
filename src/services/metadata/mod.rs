@@ -10,7 +10,7 @@ use sqlx::{Pool, Row, Sqlite};
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ArtistMetadata {
-    bio: Option<String>,
+    biography: Option<String>,
     image: Option<String>,
     twitter: Option<String>,
     instagram: Option<String>,
@@ -32,7 +32,7 @@ pub struct ArtistMetadata {
 impl ArtistMetadata {
     pub fn new() -> Self {
         Self {
-            bio: None,
+            biography: None,
             image: None,
             twitter: None,
             instagram: None,
@@ -96,7 +96,7 @@ impl ArtistMetadata {
         new_str
     }
     // FIXME whitespace
-    pub async fn get_allmusic_bio(&mut self) -> Result<&mut Self> {
+    pub async fn get_allmusic_biography(&mut self) -> Result<&mut Self> {
         match &self.all_music {
             Some(all_music) => {
                 tracing::debug!("Requesting allmusic page {:}", &all_music);
@@ -105,22 +105,23 @@ impl ArtistMetadata {
                     .with_context(|| "Failed to load page")?
                     .text()
                     .await
-                    .with_context(|| "Failed to request bio page")?;
+                    .with_context(|| "Failed to request biography page")?;
 
                 let document = scraper::Html::parse_document(&response);
-                let bio_select = scraper::Selector::parse("div.text").unwrap();
-                let bio = document
-                    .select(&bio_select)
+                let biography_select = scraper::Selector::parse("div.text").unwrap();
+                let biography = document
+                    .select(&biography_select)
                     .next()
-                    .with_context(|| "Failed to select bio")?;
-                let formated_bio = ArtistMetadata::trim_whitespace(
-                    bio.text()
+                    .with_context(|| "Failed to select biography")?;
+                let formated_biography = ArtistMetadata::trim_whitespace(
+                    biography
+                        .text()
                         .collect::<String>()
                         .trim()
                         .replace('\n', "")
                         .as_str(),
                 );
-                self.bio = Some(formated_bio);
+                self.biography = Some(formated_biography);
                 Ok(self)
             }
             None => Err(anyhow!("No link provided")),
@@ -151,21 +152,25 @@ pub async fn scrap_metadata(sqlite_pool: &Pool<Sqlite>) {
         let artist_id: &str = row.try_get("id").unwrap();
         let artist_metadata = ArtistMetadata::default()
             .get_links(&mb_artist_relations)
-            .get_allmusic_bio()
+            .get_allmusic_biography()
             .await
             .cloned();
-
         match artist_metadata {
             Ok(metadata) => {
                 let init_time: String = Utc::now().naive_local().to_string();
 
-                sqlx::query("UPDATE artists SET bio=?,updated_at=? WHERE id=?")
-                    .bind(&metadata.bio)
-                    .bind(&init_time)
-                    .bind(artist_id)
-                    .execute(sqlite_pool)
-                    .await
-                    .unwrap();
+                sqlx::query(
+                    "UPDATE artists SET biography=?,link_discogs=?,link_wiki=?,link_youtube=?,updated_at=? WHERE id=?",
+                )
+                .bind(&metadata.biography)
+                .bind(&metadata.discogs)
+                .bind(&metadata.wiki)
+                .bind(&metadata.youtube)
+                .bind(&init_time)
+                .bind(artist_id)
+                .execute(sqlite_pool)
+                .await
+                .unwrap();
             }
             Err(err) => {
                 tracing::error!(
