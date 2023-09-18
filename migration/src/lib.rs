@@ -1,5 +1,5 @@
 pub use sea_orm_migration::prelude::*;
-use sea_orm_migration::sea_orm::{ConnectionTrait, EntityTrait, Schema};
+use sea_orm_migration::sea_orm::{EntityTrait, Schema};
 
 mod m20220101_000001_create_table;
 
