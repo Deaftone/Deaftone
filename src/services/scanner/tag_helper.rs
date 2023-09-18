@@ -25,7 +25,7 @@ pub struct AudioMetadata {
     pub year: i32,
     pub lyrics: Option<String>,
     pub comments: Option<String>,
-    pub bpm: Option<String>,
+    pub bpm: Option<i32>,
     pub compilation: Option<String>,
     pub mb_track_id: Option<String>,
     pub mb_album_id: Option<String>,
@@ -154,7 +154,7 @@ pub fn get_metadata_flac(path: PathBuf) -> Result<AudioMetadata> {
         comments: vorbis
             .get("COMMENTS")
             .and_then(|d| d[0].parse::<String>().ok()),
-        bpm: vorbis.get("BPM").and_then(|d| d[0].parse::<String>().ok()),
+        bpm: vorbis.get("BPM").and_then(|d| d[0].parse::<i32>().ok()),
         compilation: vorbis
             .get("COMPILATION")
             .and_then(|d| d[0].parse::<String>().ok()),
