@@ -169,8 +169,8 @@ pub async fn _update_cover_for_path(
         .filter(entity::album::Column::Path.eq(album_path))
         .one(db)
         .await?;
-    if db_album.is_some() {
-        let mut album: entity::album::ActiveModel = db_album.unwrap().into();
+    if let Some(db_album) = db_album {
+        let mut album: entity::album::ActiveModel = db_album.into();
         album.cover = Set(Some(cover_path));
         album.update(db).await?;
     }

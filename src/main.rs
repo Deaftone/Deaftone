@@ -6,6 +6,7 @@ use deaftone::{
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 #[tokio::main]
+
 async fn main() -> Result<()> {
     // Setup tracing logger
     let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
@@ -43,17 +44,21 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     let state = AppState { database, services };
 
     // Spawn task service
-    let _ = tokio::spawn(async move {
+    std::mem::drop(tokio::spawn(async move {
         deaftone::services::task::TaskService::new(tasks_receiver)
             .run()
             .await
-    });
+    }));
 
     // Spawn casting service
-    let _ = tokio::spawn(async move { deaftone::services::casting::run_discover().await });
+    std::mem::drop(tokio::spawn(async move {
+        deaftone::services::casting::run_discover().await
+    }));
 
     // Spawn http service
-    let _ = tokio::spawn(async move { deaftone::services::http::Server::run(state).await }).await;
+    std::mem::drop(
+        tokio::spawn(async move { deaftone::services::http::Server::run(state).await }).await,
+    );
 
     // Send shutdown signal to tasks service
     match tasks_send.send(TaskType::Shutdown).await {

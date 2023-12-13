@@ -12,24 +12,22 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use serde::de;
 
 use super::TestResponse;
 use futures::StreamExt;
 use hyper::StatusCode;
 use rust_cast::{
     channels::{
-        heartbeat::HeartbeatResponse,
         media::{Image, Media, Metadata, MusicTrackMediaMetadata, StreamType},
         receiver::CastDeviceApp,
     },
-    CastDevice, ChannelMessage,
+    CastDevice,
 };
 use tokio::process::Command;
 use tokio_util::io::ReaderStream;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
-const SERVICE_TYPE: &str = "_googlecast._tcp.local.";
+const _SERVICE_TYPE: &str = "_googlecast._tcp.local.";
 const DEFAULT_DESTINATION_ID: &str = "receiver-0";
 #[utoipa::path(
     get,
@@ -81,7 +79,7 @@ pub async fn cast_handler(
             tracing::error!("Failed to get device: \"{:?}\" for {:}", e, device_id);
             e
         })?;
-    let song = services::song::get_song_by_id(&state.database, &song_id)
+    let song = services::song::get_song_by_id(&state.database, song_id)
         .await
         .map_err(|e| {
             tracing::error!("Failed to stream: \"{:?}\" for {:}", e, song_id);
@@ -131,7 +129,7 @@ fn play_media(
         .connect(app.transport_id.as_str())
         .unwrap();
 
-    let status = device
+    let _status = device
         .media
         .load(
             app.transport_id.as_str(),

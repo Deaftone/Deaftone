@@ -97,14 +97,18 @@ pub async fn walk_partial(connection: &Pool<sqlx::Sqlite>) -> Result<()> {
             .unwrap_or(false);
 
         if meta.is_ok() && !is_empty {
-            let _ftime: SystemTime = meta.unwrap().modified().unwrap();
-            let ftime: DateTime<Utc> = _ftime.into();
+            if let Ok(meta) = meta {
+                let _ftime: SystemTime = meta.modified().unwrap();
+                let ftime: DateTime<Utc> = _ftime.into();
 
-            if ftime.naive_utc() > ddirectory_mtime {
-                tracing::debug!("Dir changed {:}", &path);
-                //Self::walk_dir(db, item.path).await?;
+                if ftime.naive_utc() > ddirectory_mtime {
+                    tracing::debug!("Dir changed {:}", &path);
+                    //Self::walk_dir(db, item.path).await?;
+                } else {
+                    tracing::debug!("Dir hasn't {}", &path);
+                }
             } else {
-                tracing::debug!("Dir hasn't {}", &path);
+                tracing::debug!("Failed to read metadata");
             }
         } else {
             tracing::info!("Dropping all items for path {}", &path);

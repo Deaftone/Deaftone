@@ -14,11 +14,11 @@ use tokio::{sync::Mutex, time::Instant};
 use uuid::Uuid;
 
 use crate::database;
-pub const SERVICE_NAME: &'static str = "_googlecast._tcp.local.";
+pub const SERVICE_NAME: &str = "_googlecast._tcp.local.";
 
 pub fn discover(service_name: &str) -> impl Stream<Item = ServiceInfo> {
     let mdns = ServiceDaemon::new().unwrap();
-    let receiver = mdns.browse(&service_name).expect("Failed to browse");
+    let receiver = mdns.browse(service_name).expect("Failed to browse");
 
     stream! {
         while let Ok(event) = receiver.recv() {
@@ -80,12 +80,7 @@ pub async fn run_discover() {
 }
 
 fn find_first_ipv4(ip_set: &HashSet<IpAddr>) -> Option<IpAddr> {
-    for &ip_addr in ip_set {
-        if let IpAddr::V4(_) = ip_addr {
-            return Some(ip_addr);
-        }
-    }
-    None
+    ip_set.iter().find(|&&ip_addr| ip_addr.is_ipv4()).copied()
 }
 async fn insert_or_update_device(
     device_name: &str,

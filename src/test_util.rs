@@ -16,10 +16,7 @@ pub async fn app() -> Router {
         task: tasks_send.clone(),
     };
     //scan.start_scan();
-    let state = AppState {
-        database,
-        services: services,
-    };
+    let state = AppState { database, services };
     Router::new()
         .route("/stream/:id", get(handlers::streams::stream_handler))
         .route(
