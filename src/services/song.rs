@@ -9,7 +9,7 @@ use crate::{services::scanner::tag_helper::AudioMetadata, ApiError};
 
 pub async fn get_song_by_id(
     db: &DatabaseConnection,
-    song_id: &String,
+    song_id: &str,
 ) -> anyhow::Result<entity::song::Model, ApiError> {
     match entity::song::Entity::find_by_id(song_id).one(db).await? {
         Some(model) => Ok(model),
@@ -153,7 +153,7 @@ pub async fn create_song(
     .bind(metadata.year)
     .bind(&metadata.lyrics)
     .bind(&metadata.comments)
-    .bind(&metadata.bpm)
+    .bind(metadata.bpm)
     .bind(&metadata.compilation)
     .bind(&metadata.mb_track_id)
     .bind(&metadata.mb_album_id)

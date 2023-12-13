@@ -59,7 +59,7 @@ pub async fn start_scan(scan_type: ScanType, sqlite_pool: &Pool<Sqlite>) {
         }
         ScanType::PartialScan => {
             tracing::info!("Starting partial scan");
-            walk_partial(&sqlite_pool).await.unwrap();
+            walk_partial(sqlite_pool).await.unwrap();
         }
     }
     /*     match sqlx::query!("SELECT value FROM settings WHERE name = 'scanned'")

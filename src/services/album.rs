@@ -108,6 +108,31 @@ pub async fn get_album_by_id(
     }
 }
 
+/* // Returns a album by the album_id with songs
+pub async fn get_album_by_id(
+    db: &DatabaseConnection,
+    album_id: &String,
+) -> Result<(entity::album::Model, Vec<entity::song::Model>), ApiError> {
+    match entity::album::Entity::find_by_id(album_id)
+        .all(db)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to execute query: {:?}", e);
+            e
+        })?
+        .first()
+    {
+        Some(album) => {
+            let songs = album
+                .find_related(entity::song::Entity)
+                .all(db)
+                .await
+                .unwrap();
+            Ok((album.clone(), songs))
+        }
+        None => Err(ApiError::RecordNotFound),
+    }
+} */
 // Returns a album by the album_id
 pub async fn get_album_by_id_single(
     db: &DatabaseConnection,
