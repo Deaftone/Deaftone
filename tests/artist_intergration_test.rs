@@ -48,7 +48,7 @@ mod tests {
         let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
         let addr = listener.local_addr().unwrap();
         tokio::spawn(async move {
-            axum::Server::from_tcp(listener)
+            Server::from_tcp(listener)
                 .unwrap()
                 .serve(app().await.into_make_service())
                 .await
@@ -68,7 +68,6 @@ mod tests {
             )
             .await
             .unwrap();
-
         assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     }
     #[tokio::test]
