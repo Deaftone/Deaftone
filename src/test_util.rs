@@ -1,6 +1,6 @@
 use std::{fs, time::Duration};
 
-use crate::*;
+use crate::{services::device::DeviceService, *};
 use axum::{routing::get, routing::post, Router};
 use migration::{DbErr, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, ConnectionTrait, DatabaseBackend, ExecResult, Statement};
@@ -8,14 +8,17 @@ use sea_orm::{ConnectOptions, ConnectionTrait, DatabaseBackend, ExecResult, Stat
 use tower_http::trace::TraceLayer;
 
 pub async fn app() -> Router {
-    let db = new_seaorm_db().await.unwrap();
-    seed_test_db(&db).await.unwrap();
+    let database = new_seaorm_db().await.unwrap();
+    seed_test_db(&database).await.unwrap();
     let (tasks_send, _tasks_receiver) = tokio::sync::mpsc::channel::<services::task::TaskType>(10);
-
+    let services = DeaftoneService {
+        device: DeviceService::new(database.clone()),
+        task: tasks_send.clone(),
+    };
     //scan.start_scan();
     let state = AppState {
-        database: db,
-        task_service: tasks_send,
+        database,
+        services: services,
     };
     Router::new()
         .route("/stream/:id", get(handlers::streams::stream_handler))

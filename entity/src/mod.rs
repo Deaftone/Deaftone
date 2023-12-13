@@ -4,7 +4,7 @@ pub mod prelude;
 
 pub mod album;
 pub mod artist;
-pub mod directorie;
+pub mod directory;
 pub mod playlist;
 pub mod playlist_song;
 pub mod setting;

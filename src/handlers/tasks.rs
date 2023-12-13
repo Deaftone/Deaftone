@@ -15,18 +15,18 @@ pub async fn handle_task(
             "scan_library_full" => {
                 send_task(
                     TaskType::ScanLibrary(ScanType::FullScan),
-                    state.task_service,
+                    state.services.task,
                 )
                 .await
             }
             "scan_library_partial" => {
                 send_task(
                     TaskType::ScanLibrary(ScanType::PartialScan),
-                    state.task_service,
+                    state.services.task,
                 )
                 .await
             }
-            "scan_metadata" => send_task(TaskType::PopulateMetadata, state.task_service).await,
+            "scan_metadata" => send_task(TaskType::PopulateMetadata, state.services.task).await,
 
             _ => Err(ApiError::ParamError(r#"Invalid task type"#.to_owned())),
         },

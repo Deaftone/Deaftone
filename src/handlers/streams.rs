@@ -1,4 +1,4 @@
-use std::process::Stdio;
+use std::{process::Stdio, str::FromStr};
 
 use crate::{
     services::{self},
@@ -10,15 +10,27 @@ use axum::{
     extract::{Path, State},
     http::Request,
     response::{IntoResponse, Response},
+    Json,
 };
+use serde::de;
 
+use super::TestResponse;
 use futures::StreamExt;
 use hyper::StatusCode;
+use rust_cast::{
+    channels::{
+        heartbeat::HeartbeatResponse,
+        media::{Image, Media, Metadata, MusicTrackMediaMetadata, StreamType},
+        receiver::CastDeviceApp,
+    },
+    CastDevice, ChannelMessage,
+};
 use tokio::process::Command;
 use tokio_util::io::ReaderStream;
 use tower::ServiceExt;
 use tower_http::services::ServeFile;
-
+const SERVICE_TYPE: &str = "_googlecast._tcp.local.";
+const DEFAULT_DESTINATION_ID: &str = "receiver-0";
 #[utoipa::path(
     get,
     path = "/stream/{id}",
@@ -53,6 +65,100 @@ pub async fn stream_handler(
         }
         Err(err) => Err(ApiError::UnknownError(err.to_string())),
     }
+}
+
+pub async fn cast_handler(
+    Path(device_id): Path<String>,
+    State(state): State<AppState>,
+) -> Result<Json<TestResponse>, ApiError> {
+    let song_id = "931e4d26-bb71-42e4-ac1a-2fd41c16ee79";
+    let device = state
+        .services
+        .device
+        .get_cast_device_by_id(&device_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get device: \"{:?}\" for {:}", e, device_id);
+            e
+        })?;
+    let song = services::song::get_song_by_id(&state.database, &song_id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to stream: \"{:?}\" for {:}", e, song_id);
+            e
+        })?;
+    let cast_device = match CastDevice::connect_without_host_verification(device.address_v4, 8009) {
+        Ok(cast_device) => cast_device,
+        Err(err) => panic!("Could not establish connection with Cast Device: {:?}", err),
+    };
+
+    cast_device
+        .connection
+        .connect(DEFAULT_DESTINATION_ID.to_string())
+        .unwrap();
+    cast_device.heartbeat.ping().unwrap();
+
+    let media_type = "audio/flac";
+
+    let media_stream_type = StreamType::from_str("buffered").unwrap();
+
+    play_media(
+        &cast_device,
+        &CastDeviceApp::from_str("default").unwrap(),
+        "http://192.168.1.2:3030/stream/931e4d26-bb71-42e4-ac1a-2fd41c16ee79".to_owned(),
+        media_type.to_owned(),
+        media_stream_type,
+        song,
+    );
+
+    Ok(Json(TestResponse {
+        state: "test".to_owned(),
+    }))
+}
+
+fn play_media(
+    device: &CastDevice,
+    app_to_run: &CastDeviceApp,
+    media: String,
+    media_type: String,
+    media_stream_type: StreamType,
+    song: entity::song::Model,
+) {
+    let app = device.receiver.launch_app(app_to_run).unwrap();
+
+    device
+        .connection
+        .connect(app.transport_id.as_str())
+        .unwrap();
+
+    let status = device
+        .media
+        .load(
+            app.transport_id.as_str(),
+            app.session_id.as_str(),
+            &Media {
+                content_id: media,
+                content_type: media_type,
+                stream_type: media_stream_type,
+                duration: None,
+                metadata: Some(Metadata::MusicTrack(MusicTrackMediaMetadata {
+                    title: Some(song.title.clone()),
+                    artist: Some(song.artist),
+                    album_name: Some(song.album_name),
+                    album_artist: Some(song.album_artist.unwrap()),
+                    track_number: Some(1),
+                    disc_number: Some(1),
+                    images: vec![Image {
+                        url: "https://upload.wikimedia.org/wikipedia/en/8/85/AKonvicted.jpg"
+                            .to_string(),
+                        dimensions: None,
+                    }],
+                    release_date: None,
+                    composer: None,
+                })),
+            },
+        )
+        .unwrap();
 }
 
 pub async fn transcode_stream_handler(

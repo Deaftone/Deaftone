@@ -15,14 +15,15 @@ use include_dir::{include_dir, Dir};
 use lazy_static::lazy_static;
 use sea_orm::DatabaseConnection;
 use serde::{de, Deserialize, Deserializer};
+use services::DeaftoneService;
 use std::{str::FromStr, sync::atomic::AtomicBool};
-use tokio::sync::mpsc::{error::SendError, Sender};
+use tokio::sync::mpsc::error::SendError;
 
 use crate::settings::Settings;
 #[derive(Clone)]
 pub struct AppState {
     pub database: DatabaseConnection,
-    pub task_service: Sender<TaskType>,
+    pub services: DeaftoneService,
 }
 // Inject global settings static ref
 lazy_static! {

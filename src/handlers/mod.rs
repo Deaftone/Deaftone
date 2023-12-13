@@ -16,6 +16,11 @@ pub struct GetResposne<T> {
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
+pub struct TestResponse {
+    state: String,
+}
+
+#[derive(Serialize, Deserialize, ToSchema)]
 pub struct ErrorResposne<T> {
     #[schema(example = "Error response data")]
     pub error: T,

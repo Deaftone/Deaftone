@@ -43,6 +43,12 @@ lazy_static = "1.4.0"
 musicbrainz_rs = "0.5.0"
 scraper = "0.15.0"
 reqwest = { version = "0.11.14", features = ["blocking"] }
+mdns = "3.0.0"
+futures-util = "0.3.29"
+mdns-sd = "0.10.1"
+async-stream = "0.3.5"
+async-trait = "0.1.74"
+rust_cast = "0.18.1"
 
 [dependencies.sea-orm]
 version = "0.12.2" # sea-orm version
