@@ -21,7 +21,7 @@ impl Related<super::song::Entity> for Entity {
     }
 
     fn via() -> Option<RelationDef> {
-        // The original relation is CakeFilling -> Cake,
+        // The original relation is PlaylistSong -> Playlist,
         // after `rev` it becomes Playlist -> PlaylistSong
         Some(super::playlist_song::Relation::Playlist.def().rev())
     }
