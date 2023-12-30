@@ -40,7 +40,7 @@ mod tests {
             .oneshot(
                 Request::builder()
                     .uri(format!(
-                        "http://{ADDR}/artists/7d110590-c4ed-4250-973b-f8fa5d60260e"
+                        "http://{ADDR}/artists/7d110590-c4ed-4250-973b-f8fa5d60260ee"
                     ))
                     .body(Body::empty())
                     .unwrap(),
