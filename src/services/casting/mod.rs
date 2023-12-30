@@ -89,27 +89,25 @@ impl Mdns {
     ) -> Result<SqliteQueryResult, anyhow::Error> {
         let init_time: String = Utc::now().naive_local().to_string();
 
-        let existing_device: Option<Device> = sqlx::query_as!(
-            Device,
-            "SELECT * FROM cast_devices WHERE name = $1",
-            device_name
-        )
-        .fetch_optional(db)
-        .await?;
-
+        let existing_device =
+            sqlx::query_as::<_, Device>("SELECT * FROM cast_devices WHERE name = ?")
+                .bind(&device_name)
+                .persistent(true)
+                .fetch_optional(db)
+                .await?;
         if let Some(mut device) = existing_device {
             // Device exists, update address_v4
             device.address_v4 = new_address_v4.to_string();
             tracing::debug!("Updating device: {:?}", &device.name);
 
-            Ok(sqlx::query!(
-                "UPDATE cast_devices SET address_v4 = $1, updated_at = $2 WHERE id = $3",
-                device.address_v4,
-                init_time,
-                device.id
+            Ok(
+                sqlx::query("UPDATE cast_devices SET address_v4 = ?, updated_at = ? WHERE id = ?")
+                    .bind(device.address_v4)
+                    .bind(init_time)
+                    .bind(device.id)
+                    .execute(db)
+                    .await?,
             )
-            .execute(db)
-            .await?)
         } else {
             tracing::debug!("Creating device: {:?}", &device_name);
             Ok(sqlx::query(
