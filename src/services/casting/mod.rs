@@ -64,7 +64,7 @@ impl Mdns {
                 }
             }
             tracing::trace!("Sleeping dns discovery...");
-            sleep(Duration::from_secs(1 * 60)); // Sleep for 5 minutes before restarting the loop
+            sleep(Duration::from_secs(60)); // Sleep for 5 minutes before restarting the loop
         }
     }
 
