@@ -9,7 +9,7 @@ name = "entity"
 path = "src/lib.rs"
 
 [dependencies]
-sea-orm = { version = "0.12.2" }
+sea-orm = { version = "0.12.9" }
 serde = { version = "1.0.152", features = ["derive"] }
-utoipa = { version = "3.0.3", features = ["axum_extras"] }
+utoipa = { version = "4.1.0", features = ["axum_extras"] }
 serde_json = { version = "1.0.93" }

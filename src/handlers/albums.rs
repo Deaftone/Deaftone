@@ -4,9 +4,10 @@ use crate::{
     ApiError, AppState, ASSETS,
 };
 use axum::{
-    body::{boxed, Body, BoxBody, Full},
+    body::Body,
     extract::{Path, State},
     http::{header, Request, Response},
+    response::IntoResponse,
     Json,
 };
 use hyper::StatusCode;
@@ -104,7 +105,7 @@ pub async fn get_albums(
 pub async fn get_cover(
     State(state): State<AppState>,
     Path(album_id): Path<String>,
-) -> Result<Response<BoxBody>, ApiError> {
+) -> Result<Response<Body>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
     let album = services::album::get_album_by_id_single(&state.database, &album_id)
         .await
@@ -121,7 +122,7 @@ pub async fn get_cover(
                 if res.status() == StatusCode::NOT_FOUND {
                     Err(ApiError::FileNotFound(cover))
                 } else {
-                    Ok(res.map(boxed))
+                    Ok(Body::new(res).into_response())
                 }
             }
             Err(err) => Err(ApiError::UnknownError(err.to_string())),
@@ -129,7 +130,7 @@ pub async fn get_cover(
     } else {
         // Serve unknown album image
         let unknown_album = ASSETS.get_file("unknown_album.jpg").unwrap();
-        let body = boxed(Full::from(unknown_album.contents()));
+        let body = Body::new(Body::from(unknown_album.contents()));
         Ok(Response::builder()
             .header(header::CONTENT_TYPE, "image/jpg")
             .body(body)

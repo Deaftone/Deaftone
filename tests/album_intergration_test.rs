@@ -1,34 +1,24 @@
 #[cfg(test)]
 mod tests {
-    use axum::{body::Body, http::Request, Server};
+    use axum::{body::Body, http::Request};
     use chrono::{NaiveDateTime, Utc};
     use deaftone::{
         handlers::{AlbumResponse, GetResposne},
-        test_util::app,
+        test_util::{app, ADDR},
     };
-    use hyper::{body::to_bytes, Client, StatusCode};
+    use http_body_util::BodyExt;
+    use hyper::StatusCode;
     use serde_json::from_slice;
-    use std::net::TcpListener;
+    use tower::ServiceExt;
 
     #[tokio::test]
     async fn test_get_album() {
-        let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
-        let addr = listener.local_addr().unwrap();
-        tokio::spawn(async move {
-            axum::Server::from_tcp(listener)
-                .unwrap()
-                .serve(app().await.into_make_service())
-                .await
-                .unwrap();
-        });
-
-        let client = Client::new();
-
-        let resp = client
-            .request(
+        let app = app().await;
+        let resp = app
+            .oneshot(
                 Request::builder()
                     .uri(format!(
-                        "http://{addr}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642"
+                        "http://{ADDR}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642"
                     ))
                     .body(Body::empty())
                     .unwrap(),
@@ -37,7 +27,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
-        let body = to_bytes(resp.into_body()).await.unwrap();
+        let body = resp.into_body().collect().await.unwrap().to_bytes();
         let album: GetResposne<AlbumResponse> = from_slice(&body).unwrap();
         assert!(album.data.id == r#"46ffbb9a-8c98-45d6-a561-0cb80214a642"#);
         assert!(album.data.name == *"Ain't No Peace");
@@ -46,23 +36,12 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_album_not_found() {
-        let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
-        let addr = listener.local_addr().unwrap();
-        tokio::spawn(async move {
-            axum::Server::from_tcp(listener)
-                .unwrap()
-                .serve(app().await.into_make_service())
-                .await
-                .unwrap();
-        });
-
-        let client = Client::new();
-
-        let resp = client
-            .request(
+        let app = app().await;
+        let resp = app
+            .oneshot(
                 Request::builder()
                     .uri(format!(
-                        "http://{addr}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642a"
+                        "http://{ADDR}/albums/46ffbb9a-8c98-45d6-a561-0cb80214a642a"
                     ))
                     .body(Body::empty())
                     .unwrap(),
@@ -74,22 +53,11 @@ mod tests {
     }
     #[tokio::test]
     async fn test_get_albums_sort_by_name() {
-        let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
-        let addr = listener.local_addr().unwrap();
-        tokio::spawn(async move {
-            Server::from_tcp(listener)
-                .unwrap()
-                .serve(app().await.into_make_service())
-                .await
-                .unwrap();
-        });
-
-        let client = hyper::Client::new();
-
-        let resp = client
-            .request(
+        let app = app().await;
+        let resp = app
+            .oneshot(
                 Request::builder()
-                    .uri(format!("http://{addr}/albums"))
+                    .uri(format!("http://{ADDR}/albums"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -97,7 +65,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
-        let body = to_bytes(resp.into_body()).await.unwrap();
+        let body = resp.into_body().collect().await.unwrap().to_bytes();
         let albums: GetResposne<Vec<entity::album::Model>> = serde_json::from_slice(&body).unwrap();
 
         // Assert that the returned artists are sorted by name
@@ -109,22 +77,11 @@ mod tests {
     }
     #[tokio::test]
     async fn test_get_albums_sort_by_latest() {
-        let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
-        let addr = listener.local_addr().unwrap();
-        tokio::spawn(async move {
-            Server::from_tcp(listener)
-                .unwrap()
-                .serve(app().await.into_make_service())
-                .await
-                .unwrap();
-        });
-
-        let client = hyper::Client::new();
-
-        let resp = client
-            .request(
+        let app = app().await;
+        let resp = app
+            .oneshot(
                 Request::builder()
-                    .uri(format!("http://{addr}/albums?sort=latest"))
+                    .uri(format!("http://{ADDR}/albums?sort=latest"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -132,7 +89,8 @@ mod tests {
             .unwrap();
 
         assert_eq!(resp.status(), StatusCode::OK);
-        let body = to_bytes(resp.into_body()).await.unwrap();
+        let body = resp.into_body().collect().await.unwrap().to_bytes();
+
         let albums: GetResposne<Vec<entity::album::Model>> = serde_json::from_slice(&body).unwrap();
         // Assert that the returned artists are sorted by name
         let mut created_at: NaiveDateTime = Utc::now().naive_local();
@@ -144,40 +102,33 @@ mod tests {
     }
     #[tokio::test]
     async fn test_get_albums_paginate() {
-        let listener = TcpListener::bind("127.0.0.1:0").expect("Could not bind ephemeral socket");
-        let addr = listener.local_addr().unwrap();
-        tokio::spawn(async move {
-            Server::from_tcp(listener)
-                .unwrap()
-                .serve(app().await.into_make_service())
-                .await
-                .unwrap();
-        });
+        let app = app().await;
 
-        let client = hyper::Client::new();
-
-        let page = client
-            .request(
+        let page = app
+            .clone()
+            .oneshot(
                 Request::builder()
-                    .uri(format!("http://{addr}/albums?page=0&size=4"))
+                    .uri(format!("http://{ADDR}/albums?page=0&size=4"))
                     .body(Body::empty())
                     .unwrap(),
             )
             .await
             .unwrap();
-        let page_one = client
-            .request(
+        let page_one = app
+            .clone()
+            .oneshot(
                 Request::builder()
-                    .uri(format!("http://{addr}/albums?page=0&size=2"))
+                    .uri(format!("http://{ADDR}/albums?page=0&size=2"))
                     .body(Body::empty())
                     .unwrap(),
             )
             .await
             .unwrap();
-        let page_two = client
-            .request(
+        let page_two = app
+            .clone()
+            .oneshot(
                 Request::builder()
-                    .uri(format!("http://{addr}/albums?page=1&size=2"))
+                    .uri(format!("http://{ADDR}/albums?page=1&size=2"))
                     .body(Body::empty())
                     .unwrap(),
             )
@@ -185,17 +136,18 @@ mod tests {
             .unwrap();
 
         assert_eq!(page.status(), StatusCode::OK);
-        let page_body = to_bytes(page.into_body()).await.unwrap();
+        let page_body = page.into_body().collect().await.unwrap().to_bytes();
         let page_albums: GetResposne<Vec<entity::album::Model>> =
             serde_json::from_slice(&page_body).unwrap();
 
         assert_eq!(page_one.status(), StatusCode::OK);
-        let page_one_body = to_bytes(page_one.into_body()).await.unwrap();
+        let page_one_body = page_one.into_body().collect().await.unwrap().to_bytes();
         let page_one_albums: GetResposne<Vec<entity::album::Model>> =
             serde_json::from_slice(&page_one_body).unwrap();
 
         assert_eq!(page_two.status(), StatusCode::OK);
-        let page_two_body = to_bytes(page_two.into_body()).await.unwrap();
+        let page_two_body = page_two.into_body().collect().await.unwrap().to_bytes();
+
         let page_two_albums: GetResposne<Vec<entity::album::Model>> =
             serde_json::from_slice(&page_two_body).unwrap();
 

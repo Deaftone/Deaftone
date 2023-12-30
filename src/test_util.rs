@@ -1,11 +1,12 @@
 use std::{fs, time::Duration};
 
-use crate::{services::device::DeviceService, *};
+use crate::{services::casting::device::DeviceService, *};
 use axum::{routing::get, routing::post, Router};
 use migration::{DbErr, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, ConnectionTrait, DatabaseBackend, ExecResult, Statement};
 
 use tower_http::trace::TraceLayer;
+pub const ADDR: &str = "0.0.0.0:3030";
 
 pub async fn app() -> Router {
     let database = new_seaorm_db().await.unwrap();
@@ -34,6 +35,7 @@ pub async fn app() -> Router {
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
+
 pub async fn new_seaorm_db() -> Result<DatabaseConnection, anyhow::Error> {
     let mut opt: ConnectOptions = ConnectOptions::new(String::from("sqlite::memory:"));
     opt.max_connections(100)

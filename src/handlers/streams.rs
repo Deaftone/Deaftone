@@ -6,7 +6,7 @@ use crate::{
 };
 
 use axum::{
-    body::{boxed, Body, BoxBody, StreamBody},
+    body::Body,
     extract::{Path, State},
     http::Request,
     response::{IntoResponse, Response},
@@ -44,7 +44,7 @@ const DEFAULT_DESTINATION_ID: &str = "receiver-0";
 pub async fn stream_handler(
     Path(song_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Response<BoxBody>, ApiError> {
+) -> Result<Response<Body>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
     let song = services::song::get_song_by_id(&state.database, &song_id)
         .await
@@ -58,7 +58,7 @@ pub async fn stream_handler(
             if res.status() == StatusCode::NOT_FOUND {
                 Err(ApiError::FileNotFound(song.path))
             } else {
-                Ok(res.map(boxed))
+                Ok(Body::new(res).into_response())
             }
         }
         Err(err) => Err(ApiError::UnknownError(err.to_string())),
@@ -192,6 +192,6 @@ pub async fn transcode_stream_handler(
     //    let mut stdin = child.stdin.take().unwrap();
     let stdout = child.stdout.take().unwrap();
     let stream = ReaderStream::new(stdout).boxed();
-    let body = StreamBody::new(stream);
+    let body = Body::from_stream(stream);
     Ok(body.into_response())
 }

@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::time::Duration;
 
 use axum::{
     extract::State,
@@ -7,6 +7,7 @@ use axum::{
     Router,
 };
 use tokio::signal;
+use tower_http::timeout::TimeoutLayer;
 use tower_http::trace::{self, TraceLayer};
 use tracing::Level;
 
@@ -34,47 +35,24 @@ impl Server {
             .route("/artists/:id", get(handlers::artists::get_artist))
             .route("/playlists/:id", get(handlers::playlist::get_playlist))
             .route("/tasks", get(handlers::tasks::handle_task))
-            .layer(
+            .layer((
                 TraceLayer::new_for_http()
                     .make_span_with(trace::DefaultMakeSpan::new().level(Level::INFO))
                     .on_response(trace::DefaultOnResponse::new().level(Level::INFO)),
-            )
+                // Graceful shutdown will wait for outstanding requests to complete. Add a timeout so
+                // requests don't hang forever.
+                TimeoutLayer::new(Duration::from_secs(10)),
+            ))
             .with_state(state)
             .into_make_service();
 
         // Starting listening
-        let addr: SocketAddr = SocketAddr::from(([0, 0, 0, 0], 3030));
+        let listener = tokio::net::TcpListener::bind("0.0.0.0:3030").await.unwrap();
         tracing::debug!("Binding to socket");
-        tracing::info!("listening on {}", addr);
-        let _ = axum::Server::bind(&addr)
-            .serve(app)
-            .with_graceful_shutdown(http_shutdown_signal())
+        let _ = axum::serve(listener, app)
+            .with_graceful_shutdown(shutdown_signal())
             .await;
         Ok(())
-    }
-}
-
-async fn http_shutdown_signal() {
-    let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
-    };
-
-    #[cfg(unix)]
-    let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
-            .expect("failed to install signal handler")
-            .recv()
-            .await;
-    };
-
-    #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
-
-    tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
     }
 }
 
@@ -97,4 +75,28 @@ async fn _handler(State(_state): State<AppState>) -> Html<&'static str> {
     } */
     //println!("{:?}", SCAN_STATUS.lock().unwrap());
     Html("<h1>{Hello, World}!</h1>")
+}
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+    tracing::info!("Shutting down HttpService");
 }

@@ -1,12 +1,16 @@
 use anyhow::Result;
 use core::panic;
 use deaftone::{
-    services::{device::DeviceService, task::TaskType, DeaftoneService},
+    services::{
+        casting::{device::DeviceService, SERVICE_NAME},
+        task::TaskType,
+        DeaftoneService,
+    },
     AppState, SETTINGS,
 };
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-#[tokio::main]
 
+#[tokio::main]
 async fn main() -> Result<()> {
     // Setup tracing logger
     let (non_blocking, _guard) = tracing_appender::non_blocking(std::io::stdout());
@@ -52,7 +56,11 @@ Version: {:} | Media Directory: {:} | Database: {:}",
 
     // Spawn casting service
     std::mem::drop(tokio::spawn(async move {
-        deaftone::services::casting::run_discover().await
+        deaftone::services::casting::Mdns::new(SERVICE_NAME)
+            .await
+            .expect("Failed to start casting service")
+            .discover()
+            .await
     }));
 
     // Spawn http service

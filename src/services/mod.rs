@@ -2,12 +2,11 @@ use tokio::sync::mpsc::Sender;
 
 use crate::handlers::ArtistResponse;
 
-use self::{device::DeviceService, task::TaskType};
+use self::{casting::device::DeviceService, task::TaskType};
 
 pub mod album;
 pub mod artist;
 pub mod casting;
-pub mod device;
 pub mod http;
 pub mod metadata;
 pub mod playlist;

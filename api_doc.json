@@ -3,10 +3,6 @@
   "info": {
     "title": "deaftone",
     "description": "## About \nThis api is inspired by https://auraspec.readthedocs.io/en/latest/api.html\n### Response Format and Errors\n\nThe MIME type for all responses MUST be ``application/vnd.api+json``. Every response is a JSON object. When a request is successful, the document has a top-level key data corresponding to the response’s “primary data.” When it fails, the document has an errors key, which maps to an array of JSON API error objects. Other keys may also be present, as described below.\n\nOn a successfuly query\n``\n{\n    data: {RESPONSE}\n}\n``\nOn a failure\n``\n{\n    error: {ERROR_MESSAGE}\n}``\n        ",
-    "contact": {
-      "name": "",
-      "email": ""
-    },
     "license": {
       "name": ""
     },
@@ -25,7 +21,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             }
           },
           {
@@ -34,7 +31,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "nullable": true,
+              "minimum": 0
             }
           },
           {
@@ -43,7 +42,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "nullable": true,
+              "minimum": 0
             }
           }
         ],
@@ -71,8 +72,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     },
     "/albums/{id}": {
@@ -86,6 +86,14 @@
             "name": "album_id",
             "in": "path",
             "description": "Album Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -123,8 +131,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     },
     "/albums/{id}/cover": {
@@ -138,6 +145,14 @@
             "name": "album_id",
             "in": "path",
             "description": "Album Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -158,8 +173,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     },
     "/artists": {
@@ -174,7 +188,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             }
           },
           {
@@ -183,7 +198,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "nullable": true,
+              "minimum": 0
             }
           },
           {
@@ -192,7 +209,9 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "format": "int64"
+              "format": "int64",
+              "nullable": true,
+              "minimum": 0
             }
           }
         ],
@@ -220,8 +239,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     },
     "/artists/{id}": {
@@ -235,6 +253,14 @@
             "name": "artist_id",
             "in": "path",
             "description": "Artist Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -272,8 +298,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     },
     "/song/{id}": {
@@ -287,6 +312,14 @@
             "name": "song_id",
             "in": "path",
             "description": "Song Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -314,8 +347,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     },
     "/stream/{id}": {
@@ -329,6 +361,14 @@
             "name": "song_id",
             "in": "path",
             "description": "Song Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -356,8 +396,7 @@
               }
             }
           }
-        },
-        "deprecated": false
+        }
       }
     }
   },
@@ -413,7 +452,8 @@
           "id",
           "name",
           "image",
-          "bio",
+          "biography",
+          "links",
           "albums"
         ],
         "properties": {
@@ -423,7 +463,7 @@
               "$ref": "#/components/schemas/entity.album.Model"
             }
           },
-          "bio": {
+          "biography": {
             "type": "string"
           },
           "id": {
@@ -431,6 +471,9 @@
           },
           "image": {
             "type": "string"
+          },
+          "links": {
+            "$ref": "#/components/schemas/ArtistLinks"
           },
           "name": {
             "type": "string"
@@ -442,15 +485,20 @@
         "properties": {
           "page": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "minimum": 0
           },
           "size": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "minimum": 0
           },
           "sort": {
             "type": "string",
-            "example": "sort = name | artist_name | year | latest"
+            "example": "sort = name | artist_name | year | latest",
+            "nullable": true
           }
         }
       },
@@ -459,15 +507,20 @@
         "properties": {
           "page": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "minimum": 0
           },
           "size": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true,
+            "minimum": 0
           },
           "sort": {
             "type": "string",
-            "example": "sort = name | latest"
+            "example": "sort = name | latest",
+            "nullable": true
           }
         }
       },
@@ -504,7 +557,8 @@
           },
           "length": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "minimum": 0
           },
           "liked": {
             "type": "boolean"
@@ -534,78 +588,99 @@
         ],
         "properties": {
           "album_artist": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_artist_credit": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_artist_sort": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_disambig": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_status": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_type": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "artist_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "artist_name": {
             "type": "string"
           },
           "asin": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "catalog_num": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "composer": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "country": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "cover": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "created_at": {
             "type": "string",
             "format": "date-time"
           },
           "discogs_albumid": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "discogs_artistid": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "discogs_labelid": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "genre": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "id": {
             "type": "string",
             "example": "Album"
           },
           "label": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "language": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_album_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_artist_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_releasegroup_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "name": {
             "type": "string"
@@ -614,13 +689,16 @@
             "type": "string"
           },
           "release_group_disambig": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "script": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "style": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "updated_at": {
             "type": "string",
@@ -641,8 +719,9 @@
           "updated_at"
         ],
         "properties": {
-          "bio": {
-            "type": "string"
+          "biography": {
+            "type": "string",
+            "nullable": true
           },
           "created_at": {
             "type": "string",
@@ -653,10 +732,60 @@
             "example": "Artist"
           },
           "image": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "link_all_music": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_amazon_music": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_apple_music": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_deezer": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_discogs": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_facebook": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_itunes": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_spotify": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_tidal": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_twitter": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_wiki": {
+            "type": "string",
+            "nullable": true
+          },
+          "link_youtube": {
+            "type": "string",
+            "nullable": true
           },
           "mb_artist_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "name": {
             "type": "string"
@@ -682,229 +811,292 @@
         ],
         "properties": {
           "acoustid_fingerprint": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "acoustid_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_artist": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_artist_credit": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_disambig": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_name": {
             "type": "string"
           },
           "album_sort": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_status": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_type": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "album_types": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "arranger": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "artist": {
             "type": "string"
           },
           "artist_credit": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "artist_sort": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "asin": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "bit_rate": {
             "type": "integer",
-            "format": "int64"
+            "format": "int64",
+            "nullable": true
           },
           "bitdepth": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "bitrate_mode": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "bits_per_sample": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "bpm": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "catalog_num": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "channels": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "codec": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "comments": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "comp": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "composer": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "composer_sort": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "country": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "created_at": {
             "type": "string",
             "format": "date-time"
           },
           "disc_title": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "discogs_albumid": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "discogs_artistid": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "discogs_labelid": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "disk": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "encoder": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "encoder_info": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "encoder_settings": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "format": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "genre": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "grouping": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "id": {
             "type": "string"
           },
           "initial_key": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "isrc": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "label": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "language": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "length": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "minimum": 0
           },
           "liked": {
             "type": "boolean"
           },
           "lyricist": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "lyrics": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_album_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_albumartist_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_artist_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_releasegroup_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_releasetrack_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_track_id": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "mb_workid": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "media": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "original_year": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "path": {
             "type": "string"
           },
           "release_group_disambig": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "sample_rate": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "script": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "style": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "title": {
             "type": "string"
           },
           "track": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "track_disambig": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "updated_at": {
             "type": "string",
             "format": "date-time"
           },
           "work": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "work_disambig": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "year": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           }
         }
       }
