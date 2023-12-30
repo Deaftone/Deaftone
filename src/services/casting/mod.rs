@@ -14,8 +14,17 @@ pub struct Mdns {
     service_name: String,
     sqlite_pool: Pool<sqlx::Sqlite>, // This is an ugly workaround for: https://github.com/keepsimple1/mdns-sd/issues/145
 }
-pub const SERVICE_NAME: &str = "_googlecast._tcp.local.";
-
+pub const CHROMECAST_SERVICE_NAME: &str = "_googlecast._tcp.local.";
+pub const AIRPLAY_SERVICE_NAME: &str = "_raop._tcp.local.";
+#[allow(dead_code)]
+#[derive(Debug, sqlx::FromRow)]
+struct Device {
+    id: String,
+    name: String,
+    address_v4: String,
+    created_at: String,
+    updated_at: String,
+}
 impl Mdns {
     pub async fn new(application_name: &str) -> Result<Self, anyhow::Error> {
         let sqlite_pool = match database::connect_db_sqlx().await {
@@ -23,7 +32,7 @@ impl Mdns {
             Err(_) => database::connect_db_sqlx().await.unwrap(),
         };
         Ok(Self {
-            service_name: format!("_{application_name}._udp.local."),
+            service_name: format!("{application_name}"),
             sqlite_pool,
         })
     }
@@ -34,8 +43,9 @@ impl Mdns {
         let mdns = ServiceDaemon::new().expect("Failed to create daemon");
         let receiver = mdns.browse(&self.service_name).expect("Failed to browse");
         loop {
+            tracing::debug!("Starting dns discovery...");
             let start_time = Instant::now();
-            let max_duration = Duration::from_secs(30);
+            let max_duration = Duration::from_secs(60);
             while let Ok(event) = receiver.recv() {
                 match event {
                     ServiceEvent::ServiceResolved(info) => {
@@ -54,7 +64,7 @@ impl Mdns {
                         }
                     }
                     other_event => {
-                        tracing::debug!("Received other event: {:?}", &other_event);
+                        tracing::trace!("Received other event: {:?}", &other_event);
                     }
                 }
 
@@ -63,37 +73,103 @@ impl Mdns {
                     break; // Exit the loop if 30 seconds have passed
                 }
             }
-            tracing::trace!("Sleeping dns discovery...");
-            sleep(Duration::from_secs(60)); // Sleep for 5 minutes before restarting the loop
+            tracing::debug!("Sleeping dns discovery...");
+            sleep(Duration::from_secs(5 * 60)); // Sleep for 5 minutes before restarting the loop
         }
     }
 
     fn find_first_ipv4(ip_set: &HashSet<IpAddr>) -> Option<IpAddr> {
         ip_set.iter().find(|&&ip_addr| ip_addr.is_ipv4()).copied()
     }
+
     async fn insert_or_update_device(
         device_name: &str,
-        address_v4: &String,
+        new_address_v4: &str,
         db: &Pool<sqlx::Sqlite>,
     ) -> Result<SqliteQueryResult, anyhow::Error> {
         let init_time: String = Utc::now().naive_local().to_string();
 
-        Ok(sqlx::query(
-            "INSERT OR REPLACE INTO cast_devices (
-                    id,
-                    name,
-                    address_v4,
-                    created_at,
-                    updated_at
-                )
-                VALUES (?,?,?,?,?)",
+        let existing_device: Option<Device> = sqlx::query_as!(
+            Device,
+            "SELECT * FROM cast_devices WHERE name = $1",
+            device_name
         )
-        .bind(Uuid::new_v4().to_string())
-        .bind(device_name)
-        .bind(address_v4)
-        .bind(&init_time)
-        .bind(&init_time)
-        .execute(db)
-        .await?)
+        .fetch_optional(db)
+        .await?;
+
+        if let Some(mut device) = existing_device {
+            // Device exists, update address_v4
+            device.address_v4 = new_address_v4.to_string();
+            tracing::debug!("Updating device: {:?}", &device.name);
+
+            Ok(sqlx::query!(
+                "UPDATE cast_devices SET address_v4 = $1, updated_at = $2 WHERE id = $3",
+                device.address_v4,
+                init_time,
+                device.id
+            )
+            .execute(db)
+            .await?)
+        } else {
+            tracing::debug!("Creating device: {:?}", &device_name);
+            Ok(sqlx::query(
+                "INSERT INTO cast_devices (
+                        id,
+                        name,
+                        address_v4,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (?,?,?,?,?)",
+            )
+            .bind(Uuid::new_v4().to_string())
+            .bind(device_name)
+            .bind(new_address_v4)
+            .bind(&init_time)
+            .bind(&init_time)
+            .execute(db)
+            .await?)
+        }
     }
+    /*    #[derive(Debug, sqlx::FromRow)]
+    struct Device {
+        id: String,
+        name: String,
+        address_v4: String,
+        created_at: String,
+        updated_at: String,
+    }
+        async fn insert_or_update_device(
+            device_name: &str,
+            address_v4: &String,
+            db: &Pool<sqlx::Sqlite>,
+        ) -> Result<SqliteQueryResult, anyhow::Error> {
+            let init_time: String = Utc::now().naive_local().to_string();
+
+            let existing_device: Option<Device> = sqlx::query_as!(
+                Device,
+                "SELECT * FROM cast_devices WHERE name = $1",
+                device_name
+            )
+            .fetch_optional(db)
+            .await?;
+
+            Ok(sqlx::query(
+                "INSERT OR REPLACE INTO cast_devices (
+                        id,
+                        name,
+                        address_v4,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (?,?,?,?,?)",
+            )
+            .bind(Uuid::new_v4().to_string())
+            .bind(device_name)
+            .bind(address_v4)
+            .bind(&init_time)
+            .bind(&init_time)
+            .execute(db)
+            .await?)
+        } */
 }

@@ -2,7 +2,7 @@ use anyhow::Result;
 use core::panic;
 use deaftone::{
     services::{
-        casting::{device::DeviceService, SERVICE_NAME},
+        casting::{device::DeviceService, CHROMECAST_SERVICE_NAME},
         task::TaskType,
         DeaftoneService,
     },
@@ -56,7 +56,7 @@ Version: {:} | Media Directory: {:} | Database: {:}",
 
     // Spawn casting service
     std::mem::drop(tokio::spawn(async move {
-        deaftone::services::casting::Mdns::new(SERVICE_NAME)
+        deaftone::services::casting::Mdns::new(CHROMECAST_SERVICE_NAME)
             .await
             .expect("Failed to start casting service")
             .discover()
