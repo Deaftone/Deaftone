@@ -32,7 +32,7 @@ impl Mdns {
             Err(_) => database::connect_db_sqlx().await.unwrap(),
         };
         Ok(Self {
-            service_name: format!("{application_name}"),
+            service_name: application_name.to_string(),
             sqlite_pool,
         })
     }
@@ -91,7 +91,7 @@ impl Mdns {
 
         let existing_device =
             sqlx::query_as::<_, Device>("SELECT * FROM cast_devices WHERE name = ?")
-                .bind(&device_name)
+                .bind(device_name)
                 .persistent(true)
                 .fetch_optional(db)
                 .await?;
