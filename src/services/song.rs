@@ -10,62 +10,75 @@ use crate::services::scanner::tag_helper::AudioMetadata;
 
 use super::http::error::ApiError;
 
-pub async fn get_song_by_id(
-    db: &DatabaseConnection,
-    song_id: &str,
-) -> anyhow::Result<entity::song::Model, ApiError> {
-    match entity::song::Entity::find_by_id(song_id).one(db).await? {
-        Some(model) => Ok(model),
-        None => Err(ApiError(
-            StatusCode::NOT_FOUND,
-            anyhow!("Unable to find Playlist with id: {}", song_id),
-        )),
-    }
+#[derive(Clone)]
+pub struct SongService {
+    db: DatabaseConnection,
 }
-
-pub async fn like_song(db: &DatabaseConnection, song_id: String) -> Result<bool, ApiError> {
-    /*     Ok(sqlx::query(
-        "UPDATE songs
-    SET liked = ?
-    WHERE id = ?",
-    )
-    .bind(id)
-    .bind(like)
-    .await?) */
-    let song: Option<entity::song::Model> =
-        entity::song::Entity::find_by_id(song_id).one(db).await?;
-    let mut song: entity::song::ActiveModel = song.unwrap().into();
-    match song.liked.unwrap() {
-        true => {
-            song.liked = Set(false);
-        }
-        _ => {
-            song.liked = Set(true);
+impl SongService {
+    pub fn new(db: DatabaseConnection) -> SongService {
+        SongService { db }
+    }
+    pub async fn get_song_by_id(
+        &self,
+        song_id: &str,
+    ) -> anyhow::Result<entity::song::Model, ApiError> {
+        match entity::song::Entity::find_by_id(song_id)
+            .one(&self.db)
+            .await?
+        {
+            Some(model) => Ok(model),
+            None => Err(ApiError(
+                StatusCode::NOT_FOUND,
+                anyhow!("Unable to find Playlist with id: {}", song_id),
+            )),
         }
     }
-    Ok(song.update(db).await?.liked)
-}
-pub async fn _get_song_by_path(
-    db: &DatabaseConnection,
-    path: String,
-) -> anyhow::Result<Option<entity::song::Model>> {
-    let song: Option<entity::song::Model> = entity::song::Entity::find()
-        .filter(entity::song::Column::Path.eq(path))
-        .one(db)
-        .await
-        .map_err(|e| anyhow::anyhow!(e))?;
-    Ok(song)
-}
 
-// // Creates a song entry with with the passed album_id and AudioMetadata block
-pub async fn create_song(
-    tx: &mut Transaction<'_, Sqlite>,
-    album_id: &str,
-    metadata: &AudioMetadata,
-) -> Result<SqliteQueryResult, anyhow::Error> {
-    let id: Uuid = Uuid::new_v4();
-    let init_time: String = Utc::now().naive_local().to_string();
-    Ok(sqlx::query(
+    pub async fn like_song(&self, song_id: String) -> Result<bool, ApiError> {
+        /*     Ok(sqlx::query(
+            "UPDATE songs
+        SET liked = ?
+        WHERE id = ?",
+        )
+        .bind(id)
+        .bind(like)
+        .await?) */
+        let song: Option<entity::song::Model> = entity::song::Entity::find_by_id(song_id)
+            .one(&self.db)
+            .await?;
+        let mut song: entity::song::ActiveModel = song.unwrap().into();
+        match song.liked.unwrap() {
+            true => {
+                song.liked = Set(false);
+            }
+            _ => {
+                song.liked = Set(true);
+            }
+        }
+        Ok(song.update(&self.db).await?.liked)
+    }
+    pub async fn _get_song_by_path(
+        &self,
+        path: String,
+    ) -> anyhow::Result<Option<entity::song::Model>> {
+        let song: Option<entity::song::Model> = entity::song::Entity::find()
+            .filter(entity::song::Column::Path.eq(path))
+            .one(&self.db)
+            .await
+            .map_err(|e| anyhow::anyhow!(e))?;
+        Ok(song)
+    }
+
+    // // Creates a song entry with with the passed album_id and AudioMetadata block
+    pub async fn create_song(
+        &self,
+        tx: &mut Transaction<'_, Sqlite>,
+        album_id: &str,
+        metadata: &AudioMetadata,
+    ) -> Result<SqliteQueryResult, anyhow::Error> {
+        let id: Uuid = Uuid::new_v4();
+        let init_time: String = Utc::now().naive_local().to_string();
+        Ok(sqlx::query(
         "INSERT OR REPLACE INTO songs (
             id,
             path,
@@ -215,4 +228,5 @@ pub async fn create_song(
     .bind(false)
     .execute(&mut **tx)
     .await?)
+    }
 }

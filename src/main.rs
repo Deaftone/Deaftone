@@ -4,8 +4,11 @@ use deaftone::{
     database,
     services::{
         album::AlbumService,
+        artist::ArtistService,
         casting::{device::DeviceService, CHROMECAST_SERVICE_NAME},
+        playlist::PlaylistService,
         scanner::ScanService,
+        song::SongService,
         task::TaskType,
         DeaftoneService,
     },
@@ -49,13 +52,25 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     };
 
     let album_service = AlbumService::new(database.clone());
+    let artist_service = ArtistService::new(database.clone());
+    let song_service = SongService::new(database.clone());
+    let playlist_service = PlaylistService::new(database.clone(), song_service.clone());
+    let device_service = DeviceService::new(database.clone());
 
-    let scanner_service = ScanService::new(sqlite_pool, album_service.clone());
+    let scanner_service = ScanService::new(
+        sqlite_pool,
+        album_service.clone(),
+        artist_service.clone(),
+        song_service.clone(),
+    );
 
     let services = DeaftoneService {
-        album: album_service.clone(),
+        song: song_service,
+        playlist: playlist_service,
+        artist: artist_service,
+        album: album_service,
         scanner: scanner_service.clone(),
-        device: DeviceService::new(database.clone()),
+        device: device_service,
         task: tasks_send.clone(),
     };
 

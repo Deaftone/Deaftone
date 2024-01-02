@@ -1,9 +1,6 @@
 use std::{process::Stdio, str::FromStr};
 
-use crate::{
-    services::{self, http::error::ApiError},
-    AppState,
-};
+use crate::{services::http::error::ApiError, AppState};
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -46,7 +43,7 @@ pub async fn stream_handler(
     State(state): State<AppState>,
 ) -> Result<Response<Body>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let song = services::song::get_song_by_id(&state.database, &song_id).await?;
+    let song = state.services.song.get_song_by_id(&song_id).await?;
 
     match ServeFile::new(&song.path).oneshot(res).await {
         Ok(res) => {
@@ -76,7 +73,7 @@ pub async fn cast_handler(
         .device
         .get_cast_device_by_id(&device_id)
         .await?;
-    let song = services::song::get_song_by_id(&state.database, song_id).await?;
+    let song = state.services.song.get_song_by_id(song_id).await?;
     let cast_device = match CastDevice::connect_without_host_verification(device.address_v4, 8009) {
         Ok(cast_device) => cast_device,
         Err(err) => panic!("Could not establish connection with Cast Device: {:?}", err),
@@ -156,7 +153,7 @@ pub async fn transcode_stream_handler(
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, ApiError> {
     //"G:\\aa\\B\\Billie Eilish\\Billie Eilish - Happier Than Ever [2021] - WEB FLAC\\07. Lost Cause.flac"
-    let song = services::song::get_song_by_id(&state.database, &song_id).await?;
+    let song = state.services.song.get_song_by_id(&song_id).await?;
     let mut child = Command::new("ffmpeg")
         .stdout(Stdio::piped())
         .stdin(Stdio::piped())

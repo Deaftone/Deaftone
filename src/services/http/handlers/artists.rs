@@ -1,7 +1,6 @@
 use super::{ArtistLinks, ArtistResponse, GetAllArtists};
 use crate::{
     services::{
-        self,
         http::{
             error::{ApiError, Status},
             SuccessResponse,
@@ -33,8 +32,7 @@ pub async fn get_artist(
     Path(artist_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<SuccessResponse<ArtistResponse>>, ApiError> {
-    let (artist_model, albums) =
-        services::artist::get_artist_by_id(&state.database, &artist_id).await?;
+    let (artist_model, albums) = state.services.artist.get_artist_by_id(&artist_id).await?;
     Ok(Json(SuccessResponse {
         status: Status::Success,
         message: DbArtist {
@@ -78,15 +76,19 @@ pub async fn get_artists(
 ) -> Result<Json<SuccessResponse<Vec<entity::artist::Model>>>, ApiError> {
     let artists = match params.page.is_some() {
         true => {
-            services::artist::get_artists_paginate(
-                &state.database,
-                params.page,
-                params.size,
-                params.sort,
-            )
-            .await?
+            state
+                .services
+                .artist
+                .get_artists_paginate(params.page, params.size, params.sort)
+                .await?
         }
-        _ => services::artist::get_artists(&state.database, params.size, params.sort).await?,
+        _ => {
+            state
+                .services
+                .artist
+                .get_artists(params.size, params.sort)
+                .await?
+        }
     };
     Ok(Json(SuccessResponse {
         status: Status::Success,

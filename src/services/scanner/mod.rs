@@ -1,4 +1,4 @@
-use crate::{services, SCAN_STATUS, SETTINGS};
+use crate::{SCAN_STATUS, SETTINGS};
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use sqlx::sqlite::SqliteQueryResult;
@@ -16,6 +16,8 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 
 use super::album::AlbumService;
+use super::artist::ArtistService;
+use super::song::SongService;
 
 pub mod tag_helper;
 
@@ -40,10 +42,22 @@ pub enum ScanType {
 pub struct ScanService {
     db: Pool<sqlx::Sqlite>,
     album_service: AlbumService,
+    artist_service: ArtistService,
+    song_service: SongService,
 }
 impl ScanService {
-    pub fn new(db: Pool<sqlx::Sqlite>, album_service: AlbumService) -> ScanService {
-        ScanService { db, album_service }
+    pub fn new(
+        db: Pool<sqlx::Sqlite>,
+        album_service: AlbumService,
+        artist_service: ArtistService,
+        song_service: SongService,
+    ) -> ScanService {
+        ScanService {
+            db,
+            album_service,
+            artist_service,
+            song_service,
+        }
     }
 
     pub async fn start_scan(&self, scan_type: ScanType) {
@@ -219,12 +233,13 @@ impl ScanService {
                     match artists_exists {
                         Err(sqlx::Error::RowNotFound) => {
                             artist_id = skip_fail!(
-                                services::artist::create_artist(
-                                    &mut tx,
-                                    &metadata.album_artist,
-                                    &metadata.mb_artist_id
-                                )
-                                .await
+                                self.artist_service
+                                    .create_artist(
+                                        &mut tx,
+                                        &metadata.album_artist,
+                                        &metadata.mb_artist_id
+                                    )
+                                    .await
                             );
                             // Set create artist to false since we know its created now. This can later be used to to skip a db query
                             create_artist = false;
@@ -272,7 +287,11 @@ impl ScanService {
                 }
                 tracing::info!("Creating song \"{:}\"", metadata.name);
                 // Create song. Skip loop iteration of failed
-                skip_fail!(services::song::create_song(&mut tx, &album_id, &metadata).await);
+                skip_fail!(
+                    self.song_service
+                        .create_song(&mut tx, &album_id, &metadata)
+                        .await
+                );
             }
         }
         tx.commit().await.unwrap();

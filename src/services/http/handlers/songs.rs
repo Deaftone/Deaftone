@@ -1,10 +1,7 @@
 use crate::{
-    services::{
-        self,
-        http::{
-            error::{ApiError, Status},
-            SuccessResponse,
-        },
+    services::http::{
+        error::{ApiError, Status},
+        SuccessResponse,
     },
     AppState,
 };
@@ -31,7 +28,7 @@ pub async fn get_song(
     Path(song_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<SuccessResponse<SongResponse>>, ApiError> {
-    let song = services::song::get_song_by_id(&state.database, &song_id).await?;
+    let song = state.services.song.get_song_by_id(&song_id).await?;
     Ok(Json(SuccessResponse {
         status: Status::Success,
         message: SongResponse {
@@ -53,7 +50,7 @@ pub async fn like_song(
     State(state): State<AppState>,
     Path(song_id): Path<String>,
 ) -> Result<Json<SuccessResponse<LikeResponse>>, ApiError> {
-    let liked = services::song::like_song(&state.database, song_id).await?;
+    let liked = state.services.song.like_song(song_id).await?;
     Ok(Json(SuccessResponse {
         status: Status::Success,
         message: LikeResponse { liked },

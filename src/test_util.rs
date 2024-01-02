@@ -2,7 +2,8 @@ use std::{fs, time::Duration};
 
 use crate::{
     services::{
-        album::AlbumService, casting::device::DeviceService, http::handlers, scanner::ScanService,
+        album::AlbumService, artist::ArtistService, casting::device::DeviceService, http::handlers,
+        playlist::PlaylistService, scanner::ScanService, song::SongService,
     },
     *,
 };
@@ -19,14 +20,29 @@ pub async fn app() -> Router {
     let (tasks_send, _tasks_receiver) = tokio::sync::mpsc::channel::<services::task::TaskType>(10);
 
     let album_service = AlbumService::new(database.clone());
+    let artist_service = ArtistService::new(database.clone());
+    let song_service = SongService::new(database.clone());
+
+    let playlist_service = PlaylistService::new(database.clone(), song_service.clone());
 
     let sqlite_pool = match database::connect_db_sqlx().await {
         Ok(pool) => pool,
         Err(_) => database::connect_db_sqlx().await.unwrap(),
     };
+
+    let scanner_service = ScanService::new(
+        sqlite_pool,
+        album_service.clone(),
+        artist_service.clone(),
+        song_service.clone(),
+    );
+
     let services = DeaftoneService {
-        album: album_service.clone(),
-        scanner: ScanService::new(sqlite_pool, album_service),
+        song: song_service,
+        playlist: playlist_service,
+        artist: artist_service,
+        album: album_service,
+        scanner: scanner_service,
         device: DeviceService::new(database.clone()),
         task: tasks_send.clone(),
     };
