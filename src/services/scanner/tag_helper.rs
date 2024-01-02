@@ -286,11 +286,36 @@ fn get_year(vorbis: &VorbisComment) -> Result<i32> {
 }
 
 // Parses string year into i32 year
-fn parse_year(mut year: String) -> Result<i32> {
-    if year.chars().count() == 10 {
-        year.truncate(4);
-        Ok(year.parse::<i32>().unwrap_or_default())
+fn parse_year(year: String) -> Result<i32> {
+    if year.chars().count() > 4 {
+        Ok(year[0..4].parse::<i32>().unwrap())
     } else {
         Ok(year.parse::<i32>().unwrap_or_default())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_year_valid() {
+        // Test case with a valid 10-character string
+        assert_eq!(parse_year(String::from("2022-01-01")).unwrap(), 2022);
+    }
+
+    #[test]
+    fn test_parse_year_invalid() {
+        // Test case with an invalid string (less than 10 characters)
+        assert_eq!(parse_year(String::from("2022")).unwrap(), 2022);
+
+        // Test case with an invalid string (more than 10 characters)
+        assert_eq!(parse_year(String::from("2022-01-01-01")).unwrap(), 2022);
+
+        // Test case with a non-numeric string
+        assert_eq!(parse_year(String::from("abcd")).unwrap(), 0);
+
+        // Test case with an empty string
+        assert_eq!(parse_year(String::from("")).unwrap(), 0);
     }
 }

@@ -50,7 +50,7 @@ impl Mdns {
                 match event {
                     ServiceEvent::ServiceResolved(info) => {
                         tracing::debug!("Resolved a new service: {}", info.get_fullname());
-                        if let Some(first_ipv4) = Self::find_first_ipv4(info.get_addresses()) {
+                        if let Some(first_ipv4) = find_first_ipv4(info.get_addresses()) {
                             tracing::debug!("First IPv4 address: {}", first_ipv4);
                             Self::insert_or_update_device(
                                 info.get_fullname(),
@@ -76,10 +76,6 @@ impl Mdns {
             tracing::debug!("Sleeping dns discovery...");
             sleep(Duration::from_secs(5 * 60)); // Sleep for 5 minutes before restarting the loop
         }
-    }
-
-    fn find_first_ipv4(ip_set: &HashSet<IpAddr>) -> Option<IpAddr> {
-        ip_set.iter().find(|&&ip_addr| ip_addr.is_ipv4()).copied()
     }
 
     async fn insert_or_update_device(
@@ -128,5 +124,34 @@ impl Mdns {
             .execute(db)
             .await?)
         }
+    }
+}
+fn find_first_ipv4(ip_set: &HashSet<IpAddr>) -> Option<IpAddr> {
+    ip_set.iter().find(|&&ip_addr| ip_addr.is_ipv4()).copied()
+}
+#[cfg(test)]
+mod tests {
+    use std::net::{Ipv4Addr, Ipv6Addr};
+
+    use super::*;
+
+    #[test]
+    fn test_find_first_ipv4() {
+        let mut ip_set = HashSet::new();
+        ip_set.insert(IpAddr::V4(Ipv4Addr::new(192, 168, 0, 1)));
+        ip_set.insert(IpAddr::V6(Ipv6Addr::new(2001, 0, 0, 0, 0, 0, 0, 1)));
+        ip_set.insert(IpAddr::V4(Ipv4Addr::new(172, 16, 0, 1)));
+
+        let result = find_first_ipv4(&ip_set);
+
+        assert_eq!(result, Some(IpAddr::V4(Ipv4Addr::new(192, 168, 0, 1))));
+    }
+
+    #[test]
+    fn test_find_first_ipv4_empty_set() {
+        let ip_set = HashSet::new();
+        let result = find_first_ipv4(&ip_set);
+
+        assert_eq!(result, None);
     }
 }
