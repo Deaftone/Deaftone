@@ -129,45 +129,4 @@ impl Mdns {
             .await?)
         }
     }
-    /*    #[derive(Debug, sqlx::FromRow)]
-    struct Device {
-        id: String,
-        name: String,
-        address_v4: String,
-        created_at: String,
-        updated_at: String,
-    }
-        async fn insert_or_update_device(
-            device_name: &str,
-            address_v4: &String,
-            db: &Pool<sqlx::Sqlite>,
-        ) -> Result<SqliteQueryResult, anyhow::Error> {
-            let init_time: String = Utc::now().naive_local().to_string();
-
-            let existing_device: Option<Device> = sqlx::query_as!(
-                Device,
-                "SELECT * FROM cast_devices WHERE name = $1",
-                device_name
-            )
-            .fetch_optional(db)
-            .await?;
-
-            Ok(sqlx::query(
-                "INSERT OR REPLACE INTO cast_devices (
-                        id,
-                        name,
-                        address_v4,
-                        created_at,
-                        updated_at
-                    )
-                    VALUES (?,?,?,?,?)",
-            )
-            .bind(Uuid::new_v4().to_string())
-            .bind(device_name)
-            .bind(address_v4)
-            .bind(&init_time)
-            .bind(&init_time)
-            .execute(db)
-            .await?)
-        } */
 }
