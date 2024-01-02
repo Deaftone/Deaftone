@@ -25,39 +25,52 @@ The MIME type for all responses MUST be ``application/vnd.api+json``. Every resp
 On a successfuly query
 ``
 {
-    data: {RESPONSE}
+    status: \"success\"
+    data: {Response}
 }
 ``
 On a failure
 ``
 {
-    error: {ERROR_MESSAGE}
+    status: \"error\",
+    message: String,
 }``
         "),
         paths(
-            deaftone::handlers::albums::get_albums,
-            deaftone::handlers::albums::get_album,
-            deaftone::handlers::albums::get_cover,
-            deaftone::handlers::artists::get_artists,
-            deaftone::handlers::artists::get_artist,
-            deaftone::handlers::songs::get_song,
-            deaftone::handlers::streams::stream_handler,
+            deaftone::services::http::handlers::playlist::get_playlist,
+            deaftone::services::http::handlers::albums::get_albums,
+            deaftone::services::http::handlers::albums::get_album,
+            deaftone::services::http::handlers::albums::get_cover,
+            deaftone::services::http::handlers::artists::get_artists,
+            deaftone::services::http::handlers::artists::get_artist,
+            deaftone::services::http::handlers::songs::get_song,
+            deaftone::services::http::handlers::streams::stream_handler,
         ),
         components(
             schemas(
-                deaftone::handlers::GetAllAlbums,
-                deaftone::handlers::AlbumResponse,
-                deaftone::handlers::ArtistResponse,
-                deaftone::handlers::SongResponse,
-                deaftone::handlers::GetAllArtists,
+                deaftone::services::http::handlers::PlayListResponse,
+                deaftone::services::http::ArtistResponseOpenApi,
+                deaftone::services::http::ArtistsResponseOpenApi,
+                deaftone::services::http::AlbumResponseOpenApi,
+                deaftone::services::http::AlbumsResponseOpenApi,
+                deaftone::services::http::error::ErrorResponse,
+                deaftone::services::http::error::Status,
+                deaftone::services::http::handlers::GetAllAlbums,
+                deaftone::services::http::handlers::AlbumResponse,
+                deaftone::services::http::handlers::ArtistResponse,
+                deaftone::services::http::handlers::SongResponse,
+                deaftone::services::http::handlers::GetAllArtists,
+                deaftone::services::http::handlers::ArtistLinks,
                 entity::album::Model,
                 entity::song::Model,
                 entity::artist::Model,
             )
         ),
         tags(
-            (name = "deaftone::handlers::albums", description = "Deaftone Albums API"),
-            (name = "deaftone::handlers::artists", description = "Deaftone Artists API")
+            (name = "deaftone::services::http::handlers::albums", description = "Deaftone Albums API"),
+            (name = "deaftone::services::http::handlers::artists", description = "Deaftone Artists API"),
+            (name = "deaftone::services::http::handlers::playlists", description = "Deaftone Playlists API")
+
             //(name = "deaftone", description = "Deaftone API")
         )
     )]

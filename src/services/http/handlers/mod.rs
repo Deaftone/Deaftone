@@ -10,20 +10,8 @@ pub mod streams;
 pub mod tasks;
 
 #[derive(Serialize, Deserialize, ToSchema)]
-pub struct GetResposne<T> {
-    #[schema(example = "Response data")]
-    pub data: T,
-}
-
-#[derive(Serialize, Deserialize, ToSchema)]
 pub struct TestResponse {
     state: String,
-}
-
-#[derive(Serialize, Deserialize, ToSchema)]
-pub struct ErrorResposne<T> {
-    #[schema(example = "Error response data")]
-    pub error: T,
 }
 
 #[derive(Serialize, Deserialize, ToSchema)]
@@ -64,7 +52,7 @@ pub struct ArtistLinks {
 }
 // Now you can access the link data using the struct fields, like link_data.link_all_music
 
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct PlayListResponse {
     id: String,
     name: String,

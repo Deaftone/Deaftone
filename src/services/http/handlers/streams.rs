@@ -1,10 +1,10 @@
 use std::{process::Stdio, str::FromStr};
 
 use crate::{
-    services::{self},
-    ApiError, AppState,
+    services::{self, http::error::ApiError},
+    AppState,
 };
-
+use anyhow::anyhow;
 use axum::{
     body::Body,
     extract::{Path, State},
@@ -31,7 +31,7 @@ const _SERVICE_TYPE: &str = "_googlecast._tcp.local.";
 const DEFAULT_DESTINATION_ID: &str = "receiver-0";
 #[utoipa::path(
     get,
-    path = "/stream/{id}",
+    path = "/stream/{song_id}",
     params(
         ("song_id" = String, Path, description = "Song Id")
     ),
@@ -46,22 +46,23 @@ pub async fn stream_handler(
     State(state): State<AppState>,
 ) -> Result<Response<Body>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let song = services::song::get_song_by_id(&state.database, &song_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to stream: \"{:?}\" for {:}", e, song_id);
-            e
-        })?;
+    let song = services::song::get_song_by_id(&state.database, &song_id).await?;
 
     match ServeFile::new(&song.path).oneshot(res).await {
         Ok(res) => {
             if res.status() == StatusCode::NOT_FOUND {
-                Err(ApiError::FileNotFound(song.path))
+                Err(ApiError(
+                    StatusCode::NOT_FOUND,
+                    anyhow!("File not found: {}", song.path),
+                ))
             } else {
                 Ok(Body::new(res).into_response())
             }
         }
-        Err(err) => Err(ApiError::UnknownError(err.to_string())),
+        Err(err) => Err(ApiError(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            anyhow!("Unable to play song: {}. Err: {}", song.path, err),
+        )),
     }
 }
 
@@ -69,22 +70,13 @@ pub async fn cast_handler(
     Path(device_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<TestResponse>, ApiError> {
-    let song_id = "931e4d26-bb71-42e4-ac1a-2fd41c16ee79";
+    let song_id = "8e2c1c9c-9797-41de-b667-d8dc6ae40c83";
     let device = state
         .services
         .device
         .get_cast_device_by_id(&device_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get device: \"{:?}\" for {:}", e, device_id);
-            e
-        })?;
-    let song = services::song::get_song_by_id(&state.database, song_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to stream: \"{:?}\" for {:}", e, song_id);
-            e
-        })?;
+        .await?;
+    let song = services::song::get_song_by_id(&state.database, song_id).await?;
     let cast_device = match CastDevice::connect_without_host_verification(device.address_v4, 8009) {
         Ok(cast_device) => cast_device,
         Err(err) => panic!("Could not establish connection with Cast Device: {:?}", err),
@@ -103,7 +95,7 @@ pub async fn cast_handler(
     play_media(
         &cast_device,
         &CastDeviceApp::from_str("default").unwrap(),
-        "http://192.168.1.2:3030/stream/931e4d26-bb71-42e4-ac1a-2fd41c16ee79".to_owned(),
+        "http://192.168.1.2:3030/stream/8e2c1c9c-9797-41de-b667-d8dc6ae40c83".to_owned(),
         media_type.to_owned(),
         media_stream_type,
         song,
@@ -164,12 +156,7 @@ pub async fn transcode_stream_handler(
     State(state): State<AppState>,
 ) -> Result<impl IntoResponse, ApiError> {
     //"G:\\aa\\B\\Billie Eilish\\Billie Eilish - Happier Than Ever [2021] - WEB FLAC\\07. Lost Cause.flac"
-    let song = services::song::get_song_by_id(&state.database, &song_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to stream: \"{:?}\" for {:}", e, song_id);
-            e
-        })?;
+    let song = services::song::get_song_by_id(&state.database, &song_id).await?;
     let mut child = Command::new("ffmpeg")
         .stdout(Stdio::piped())
         .stdin(Stdio::piped())

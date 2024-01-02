@@ -1,8 +1,10 @@
 use crate::{
-    services::{scanner::ScanType, task::TaskType},
-    ApiError, AppState,
+    services::{http::error::ApiError, scanner::ScanType, task::TaskType},
+    AppState,
 };
+use anyhow::anyhow;
 use axum::{extract::State, Json};
+use hyper::StatusCode;
 use tokio::sync::mpsc::Sender;
 
 use super::{TaskQuery, TaskResponse};
@@ -28,9 +30,15 @@ pub async fn handle_task(
             }
             "scan_metadata" => send_task(TaskType::PopulateMetadata, state.services.task).await,
 
-            _ => Err(ApiError::ParamError(r#"Invalid task type"#.to_owned())),
+            _ => Err(ApiError(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                anyhow!("Invalid task type: {}", task),
+            )),
         },
-        None => Err(ApiError::ParamError(r#"Missing param task"#.to_owned())),
+        None => Err(ApiError(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            anyhow!("Missing param type"),
+        )),
     }
 }
 
@@ -47,7 +55,10 @@ async fn send_task(
         }
         Err(err) => {
             tracing::error!("Failed to send command to TaskService {:}", err);
-            Err(ApiError::TaskError(err))
+            Err(ApiError(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                anyhow!("Task error: {}", err),
+            ))
         }
     }
 }

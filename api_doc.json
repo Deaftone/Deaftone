@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "deaftone",
-    "description": "## About \nThis api is inspired by https://auraspec.readthedocs.io/en/latest/api.html\n### Response Format and Errors\n\nThe MIME type for all responses MUST be ``application/vnd.api+json``. Every response is a JSON object. When a request is successful, the document has a top-level key data corresponding to the response’s “primary data.” When it fails, the document has an errors key, which maps to an array of JSON API error objects. Other keys may also be present, as described below.\n\nOn a successfuly query\n``\n{\n    data: {RESPONSE}\n}\n``\nOn a failure\n``\n{\n    error: {ERROR_MESSAGE}\n}``\n        ",
+    "description": "## About \nThis api is inspired by https://auraspec.readthedocs.io/en/latest/api.html\n### Response Format and Errors\n\nThe MIME type for all responses MUST be ``application/vnd.api+json``. Every response is a JSON object. When a request is successful, the document has a top-level key data corresponding to the response’s “primary data.” When it fails, the document has an errors key, which maps to an array of JSON API error objects. Other keys may also be present, as described below.\n\nOn a successfuly query\n``\n{\n    status: \"success\"\n    data: {Response}\n}\n``\nOn a failure\n``\n{\n    status: \"error\",\n    message: String,\n}``\n        ",
     "license": {
       "name": ""
     },
@@ -12,7 +12,7 @@
     "/albums": {
       "get": {
         "tags": [
-          "deaftone::handlers::albums"
+          "deaftone::services::http::handlers::albums"
         ],
         "operationId": "get_albums",
         "parameters": [
@@ -54,10 +54,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/entity.album.Model"
-                  }
+                  "$ref": "#/components/schemas/AlbumsResponseOpenApi"
                 }
               }
             }
@@ -65,9 +62,9 @@
           "500": {
             "description": "Failed to get albums",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -75,10 +72,10 @@
         }
       }
     },
-    "/albums/{id}": {
+    "/albums/{album_id}": {
       "get": {
         "tags": [
-          "deaftone::handlers::albums"
+          "deaftone::services::http::handlers::albums"
         ],
         "operationId": "get_album",
         "parameters": [
@@ -86,14 +83,6 @@
             "name": "album_id",
             "in": "path",
             "description": "Album Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -106,7 +95,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AlbumResponse"
+                  "$ref": "#/components/schemas/AlbumResponseOpenApi"
                 }
               }
             }
@@ -114,19 +103,19 @@
           "404": {
             "description": "Album not found",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "500": {
-            "description": "Database error occured",
+            "description": "Error occured",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -134,10 +123,10 @@
         }
       }
     },
-    "/albums/{id}/cover": {
+    "/albums/{album_id}/cover": {
       "get": {
         "tags": [
-          "deaftone::handlers::albums"
+          "deaftone::services::http::handlers::albums"
         ],
         "operationId": "get_cover",
         "parameters": [
@@ -145,14 +134,6 @@
             "name": "album_id",
             "in": "path",
             "description": "Album Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -166,9 +147,9 @@
           "404": {
             "description": "Album not found",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -179,7 +160,7 @@
     "/artists": {
       "get": {
         "tags": [
-          "deaftone::handlers::artists"
+          "deaftone::services::http::handlers::artists"
         ],
         "operationId": "get_artists",
         "parameters": [
@@ -221,20 +202,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/entity.artist.Model"
-                  }
+                  "$ref": "#/components/schemas/ArtistsResponseOpenApi"
                 }
               }
             }
           },
           "500": {
-            "description": "Database error occured",
+            "description": "Error occured",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -242,10 +220,10 @@
         }
       }
     },
-    "/artists/{id}": {
+    "/artists/{artist_id}": {
       "get": {
         "tags": [
-          "deaftone::handlers::artists"
+          "deaftone::services::http::handlers::artists"
         ],
         "operationId": "get_artist",
         "parameters": [
@@ -253,14 +231,6 @@
             "name": "artist_id",
             "in": "path",
             "description": "Artist Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -273,7 +243,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ArtistResponse"
+                  "$ref": "#/components/schemas/ArtistResponseOpenApi"
                 }
               }
             }
@@ -281,9 +251,9 @@
           "404": {
             "description": "Failed to get artist ",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -291,9 +261,9 @@
           "500": {
             "description": "Database error occured",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -301,10 +271,61 @@
         }
       }
     },
-    "/song/{id}": {
+    "/playlists/{playlist_id}": {
       "get": {
         "tags": [
-          "deaftone::handlers::songs"
+          "deaftone::services::http::handlers::playlist"
+        ],
+        "operationId": "get_playlist",
+        "parameters": [
+          {
+            "name": "playlist_id",
+            "in": "path",
+            "description": "Playlist Id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a playlist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayListResponseOpenApi"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Playlist not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error occured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/song/{song_id}": {
+      "get": {
+        "tags": [
+          "deaftone::services::http::handlers::songs"
         ],
         "operationId": "get_song",
         "parameters": [
@@ -312,14 +333,6 @@
             "name": "song_id",
             "in": "path",
             "description": "Song Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -350,10 +363,10 @@
         }
       }
     },
-    "/stream/{id}": {
+    "/stream/{song_id}": {
       "get": {
         "tags": [
-          "deaftone::handlers::streams"
+          "deaftone::services::http::handlers::streams"
         ],
         "operationId": "stream_handler",
         "parameters": [
@@ -361,14 +374,6 @@
             "name": "song_id",
             "in": "path",
             "description": "Song Id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
             "required": true,
             "schema": {
               "type": "string"
@@ -446,6 +451,92 @@
           }
         }
       },
+      "AlbumResponseOpenApi": {
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/AlbumResponse"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          }
+        }
+      },
+      "AlbumsResponseOpenApi": {
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/entity.album.Model"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          }
+        }
+      },
+      "ArtistLinks": {
+        "type": "object",
+        "properties": {
+          "all_music": {
+            "type": "string",
+            "nullable": true
+          },
+          "amazon_music": {
+            "type": "string",
+            "nullable": true
+          },
+          "apple_music": {
+            "type": "string",
+            "nullable": true
+          },
+          "deezer": {
+            "type": "string",
+            "nullable": true
+          },
+          "discogs": {
+            "type": "string",
+            "nullable": true
+          },
+          "facebook": {
+            "type": "string",
+            "nullable": true
+          },
+          "itunes": {
+            "type": "string",
+            "nullable": true
+          },
+          "spotify": {
+            "type": "string",
+            "nullable": true
+          },
+          "tidal": {
+            "type": "string",
+            "nullable": true
+          },
+          "twitter": {
+            "type": "string",
+            "nullable": true
+          },
+          "wiki": {
+            "type": "string",
+            "nullable": true
+          },
+          "youtube": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
       "ArtistResponse": {
         "type": "object",
         "required": [
@@ -477,6 +568,54 @@
           },
           "name": {
             "type": "string"
+          }
+        }
+      },
+      "ArtistResponseOpenApi": {
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/ArtistResponse"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          }
+        }
+      },
+      "ArtistsResponseOpenApi": {
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/entity.artist.Model"
+            }
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
           }
         }
       },
@@ -521,6 +660,43 @@
             "type": "string",
             "example": "sort = name | latest",
             "nullable": true
+          }
+        }
+      },
+      "PlayListResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "songs"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "songs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/entity.song.Model"
+            }
+          }
+        }
+      },
+      "PlayListResponseOpenApi": {
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "$ref": "#/components/schemas/PlayListResponse"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
           }
         }
       },
@@ -574,6 +750,13 @@
             "format": "int32"
           }
         }
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "error"
+        ]
       },
       "entity.album.Model": {
         "type": "object",
@@ -1104,11 +1287,11 @@
   },
   "tags": [
     {
-      "name": "deaftone::handlers::albums",
+      "name": "deaftone::services::http::handlers::albums",
       "description": "Deaftone Albums API"
     },
     {
-      "name": "deaftone::handlers::artists",
+      "name": "deaftone::services::http::handlers::artists",
       "description": "Deaftone Artists API"
     }
   ]

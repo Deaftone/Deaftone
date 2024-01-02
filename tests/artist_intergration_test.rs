@@ -3,7 +3,7 @@ mod tests {
     use axum::{body::Body, http::Request};
     use chrono::{NaiveDateTime, Utc};
     use deaftone::{
-        handlers::{ArtistResponse, GetResposne},
+        services::http::{handlers::ArtistResponse, SuccessResponse},
         test_util::{app, ADDR},
     };
     use http_body_util::BodyExt;
@@ -28,10 +28,10 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::OK);
         let body = resp.into_body().collect().await.unwrap().to_bytes();
-        let artist: GetResposne<ArtistResponse> = from_slice(&body).unwrap();
-        assert!(artist.data.id == r#"7d110590-c4ed-4250-973b-f8fa5d60260e"#);
-        assert!(artist.data.name == *"Akon");
-        assert!(artist.data.albums.len() == 6);
+        let response: SuccessResponse<ArtistResponse> = from_slice(&body).unwrap();
+        assert!(response.message.id == r#"7d110590-c4ed-4250-973b-f8fa5d60260e"#);
+        assert!(response.message.name == *"Akon");
+        assert!(response.message.albums.len() == 6);
     }
     #[tokio::test]
     async fn test_get_artist_not_found() {
@@ -65,10 +65,10 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::OK);
         let body = resp.into_body().collect().await.unwrap().to_bytes();
-        let artists: GetResposne<Vec<entity::artist::Model>> = from_slice(&body).unwrap();
+        let artists: SuccessResponse<Vec<entity::artist::Model>> = from_slice(&body).unwrap();
         // Assert that the returned artists are sorted by name
         let mut prev_name = String::new();
-        for artist in &artists.data {
+        for artist in &artists.message {
             assert!(artist.name >= prev_name);
             prev_name = artist.name.clone();
         }
@@ -88,12 +88,12 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::OK);
         let body = resp.into_body().collect().await.unwrap().to_bytes();
-        let artists: GetResposne<Vec<entity::artist::Model>> =
+        let artists: SuccessResponse<Vec<entity::artist::Model>> =
             serde_json::from_slice(&body).unwrap();
 
         // Assert that the returned artists are sorted by name
         let mut created_at: NaiveDateTime = Utc::now().naive_local();
-        for artist in &artists.data {
+        for artist in &artists.message {
             let now_parsed: NaiveDateTime = artist.created_at;
             assert!(now_parsed <= created_at);
             created_at = now_parsed;
@@ -137,28 +137,28 @@ mod tests {
         assert_eq!(page.status(), StatusCode::OK);
         let page_body = page.into_body().collect().await.unwrap().to_bytes();
 
-        let page_artists: GetResposne<Vec<entity::artist::Model>> =
+        let page_artists: SuccessResponse<Vec<entity::artist::Model>> =
             serde_json::from_slice(&page_body).unwrap();
 
         assert_eq!(page_one.status(), StatusCode::OK);
         let page_one_body = page_one.into_body().collect().await.unwrap().to_bytes();
 
-        let page_one_artists: GetResposne<Vec<entity::artist::Model>> =
+        let page_one_artists: SuccessResponse<Vec<entity::artist::Model>> =
             serde_json::from_slice(&page_one_body).unwrap();
 
         assert_eq!(page_two.status(), StatusCode::OK);
         let page_two_body = page_two.into_body().collect().await.unwrap().to_bytes();
 
-        let page_two_artists: GetResposne<Vec<entity::artist::Model>> =
+        let page_two_artists: SuccessResponse<Vec<entity::artist::Model>> =
             serde_json::from_slice(&page_two_body).unwrap();
 
-        assert_eq!(page_artists.data.len(), 4);
-        assert_eq!(page_one_artists.data.len(), 2);
-        assert_eq!(page_two_artists.data.len(), 2);
+        assert_eq!(page_artists.message.len(), 4);
+        assert_eq!(page_one_artists.message.len(), 2);
+        assert_eq!(page_two_artists.message.len(), 2);
 
-        assert_eq!(page_one_artists.data[0], page_artists.data[0]);
-        assert_eq!(page_one_artists.data[1], page_artists.data[1]);
-        assert_eq!(page_two_artists.data[0], page_artists.data[2]);
-        assert_eq!(page_two_artists.data[1], page_artists.data[3]);
+        assert_eq!(page_one_artists.message[0], page_artists.message[0]);
+        assert_eq!(page_one_artists.message[1], page_artists.message[1]);
+        assert_eq!(page_two_artists.message[0], page_artists.message[2]);
+        assert_eq!(page_two_artists.message[1], page_artists.message[3]);
     }
 }

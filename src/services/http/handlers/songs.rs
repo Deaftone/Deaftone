@@ -1,18 +1,23 @@
+use crate::{
+    services::{
+        self,
+        http::{
+            error::{ApiError, Status},
+            SuccessResponse,
+        },
+    },
+    AppState,
+};
 use axum::{
     extract::{Path, State},
     Json,
 };
 
-use crate::{
-    services::{self},
-    ApiError, AppState,
-};
-
-use super::{GetResposne, LikeResponse, SongResponse};
+use super::{LikeResponse, SongResponse};
 
 #[utoipa::path(
     get,
-    path = "/song/{id}",
+    path = "/song/{song_id}",
     params(
         ("song_id" = String, Path, description = "Song Id")
     ),
@@ -25,15 +30,11 @@ use super::{GetResposne, LikeResponse, SongResponse};
 pub async fn get_song(
     Path(song_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Json<GetResposne<SongResponse>>, ApiError> {
-    let song = services::song::get_song_by_id(&state.database, &song_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get song: \"{:?}\" for {:}", e, song_id);
-            e
-        })?;
-    Ok(Json(GetResposne {
-        data: SongResponse {
+) -> Result<Json<SuccessResponse<SongResponse>>, ApiError> {
+    let song = services::song::get_song_by_id(&state.database, &song_id).await?;
+    Ok(Json(SuccessResponse {
+        status: Status::Success,
+        message: SongResponse {
             id: song.id,
             path: song.path,
             title: song.title,
@@ -51,9 +52,10 @@ pub async fn get_song(
 pub async fn like_song(
     State(state): State<AppState>,
     Path(song_id): Path<String>,
-) -> Result<Json<GetResposne<LikeResponse>>, ApiError> {
+) -> Result<Json<SuccessResponse<LikeResponse>>, ApiError> {
     let liked = services::song::like_song(&state.database, song_id).await?;
-    Ok(Json(GetResposne {
-        data: LikeResponse { liked },
+    Ok(Json(SuccessResponse {
+        status: Status::Success,
+        message: LikeResponse { liked },
     }))
 }

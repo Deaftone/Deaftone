@@ -1,8 +1,10 @@
+use anyhow::anyhow;
 use chrono::{NaiveDateTime, Utc};
+use hyper::StatusCode;
 use sea_orm::{DatabaseConnection, EntityTrait, Set};
 use uuid::Uuid;
 
-use crate::ApiError;
+use super::http::error::ApiError;
 
 pub async fn create_playlist(
     db: &DatabaseConnection,
@@ -19,7 +21,7 @@ pub async fn create_playlist(
     entity::playlist::Entity::insert(playlist).exec(db).await?;
     Ok(id)
 }
-pub async fn get_playlist_by_id_single(
+pub async fn get_playlist_by_id_slim(
     db: &DatabaseConnection,
     playlist_id: &str,
 ) -> Result<entity::playlist::Model, ApiError> {
@@ -31,7 +33,10 @@ pub async fn get_playlist_by_id_single(
             e
         })? {
         Some(playlist) => Ok(playlist),
-        None => Err(ApiError::RecordNotFound),
+        None => Err(ApiError(
+            StatusCode::NOT_FOUND,
+            anyhow!("Unable to find Playlist with id: {}", playlist_id),
+        )),
     }
 }
 pub async fn get_playlist_by_id(
@@ -49,7 +54,10 @@ pub async fn get_playlist_by_id(
         .first()
     {
         Some(playlist) => Ok(playlist.clone()),
-        None => Err(ApiError::RecordNotFound),
+        None => Err(ApiError(
+            StatusCode::NOT_FOUND,
+            anyhow!("Unable to find Playlist with id: {}", playlist_id),
+        )),
     }
     /*     match entity::playlist::Entity::find_by_id(playlist_id)
         .find_also_related(entity::song::Entity)
@@ -84,9 +92,16 @@ pub async fn add_song_to_playlist(
                     .last_insert_id;
                 Ok(insert)
             }
-            Err(_) => Err(ApiError::RecordNotFound),
+
+            Err(_) => Err(ApiError(
+                StatusCode::NOT_FOUND,
+                anyhow!("Unable to find Playlist with id: {}", playlist_id),
+            )),
         },
-        Err(_) => Err(ApiError::RecordNotFound),
+        Err(_) => Err(ApiError(
+            StatusCode::NOT_FOUND,
+            anyhow!("Unable to find Playlist with id: {}", playlist_id),
+        )),
     }
 }
 pub async fn get_playlists(

@@ -1,8 +1,6 @@
 use tokio::sync::mpsc::Sender;
 
-use crate::handlers::ArtistResponse;
-
-use self::{casting::device::DeviceService, task::TaskType};
+use self::{casting::device::DeviceService, http::handlers::ArtistResponse, task::TaskType};
 
 pub mod album;
 pub mod artist;

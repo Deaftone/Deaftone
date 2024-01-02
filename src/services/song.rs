@@ -1,11 +1,14 @@
+use anyhow::anyhow;
 use chrono::Utc;
-
+use hyper::StatusCode;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use sqlx::{sqlite::SqliteQueryResult, Sqlite, Transaction};
 
 use uuid::Uuid;
 
-use crate::{services::scanner::tag_helper::AudioMetadata, ApiError};
+use crate::services::scanner::tag_helper::AudioMetadata;
+
+use super::http::error::ApiError;
 
 pub async fn get_song_by_id(
     db: &DatabaseConnection,
@@ -13,7 +16,10 @@ pub async fn get_song_by_id(
 ) -> anyhow::Result<entity::song::Model, ApiError> {
     match entity::song::Entity::find_by_id(song_id).one(db).await? {
         Some(model) => Ok(model),
-        None => Err(ApiError::RecordNotFound),
+        None => Err(ApiError(
+            StatusCode::NOT_FOUND,
+            anyhow!("Unable to find Playlist with id: {}", song_id),
+        )),
     }
 }
 

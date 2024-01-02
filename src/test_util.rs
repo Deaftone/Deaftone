@@ -1,6 +1,9 @@
 use std::{fs, time::Duration};
 
-use crate::{services::casting::device::DeviceService, *};
+use crate::{
+    services::{casting::device::DeviceService, http::handlers},
+    *,
+};
 use axum::{routing::get, routing::post, Router};
 use migration::{DbErr, Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, ConnectionTrait, DatabaseBackend, ExecResult, Statement};

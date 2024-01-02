@@ -1,4 +1,6 @@
+use anyhow::anyhow;
 use chrono::Utc;
+use hyper::StatusCode;
 use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder,
     QuerySelect,
@@ -6,7 +8,7 @@ use sea_orm::{
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
 
-use crate::ApiError;
+use super::http::error::ApiError;
 
 // Creates a artist entry with artist name passed and MusicBrainzArtistId
 pub async fn create_artist(
@@ -53,7 +55,10 @@ pub async fn get_artist_by_id(
         .first()
     {
         Some(artist) => Ok(artist.to_owned()),
-        None => Err(ApiError::RecordNotFound),
+        None => Err(ApiError(
+            StatusCode::NOT_FOUND,
+            anyhow!("Unable to find Artist with id: {}", artist_id),
+        )),
     }
 }
 

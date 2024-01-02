@@ -1,13 +1,15 @@
 use crate::services::scanner::tag_helper::AudioMetadata;
-use crate::ApiError;
-
+use anyhow::anyhow;
 use chrono::Utc;
+use hyper::StatusCode;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
 };
 use sea_orm::{PaginatorTrait, QuerySelect};
 use sqlx::{Sqlite, Transaction};
 use uuid::Uuid;
+
+use super::http::error::ApiError;
 
 // Creates a album entry with belonging to provided artist_id
 pub async fn create_album(
@@ -104,7 +106,10 @@ pub async fn get_album_by_id(
         .first()
     {
         Some(album) => Ok(album.clone()),
-        None => Err(ApiError::RecordNotFound),
+        None => Err(ApiError(
+            StatusCode::NOT_FOUND,
+            anyhow!("Unable to find Album with id: {}", album_id),
+        )),
     }
 }
 
@@ -134,7 +139,8 @@ pub async fn get_album_by_id(
     }
 } */
 // Returns a album by the album_id
-pub async fn get_album_by_id_single(
+
+pub async fn get_album_by_id_slim(
     db: &DatabaseConnection,
     album_id: &String,
 ) -> Result<entity::album::Model, ApiError> {
@@ -145,8 +151,11 @@ pub async fn get_album_by_id_single(
             tracing::error!("Failed to execute query: {:?}", e);
             e
         })? {
-        Some(album) => Ok(album),
-        None => Err(ApiError::RecordNotFound),
+        Some(album) => Ok(album.clone()),
+        None => Err(ApiError(
+            StatusCode::NOT_FOUND,
+            anyhow!("Unable to find Album with id: {}", album_id),
+        )),
     }
 }
 pub async fn _find_by_name(

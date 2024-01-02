@@ -1,37 +1,43 @@
-use super::{ArtistLinks, ArtistResponse, GetAllArtists, GetResposne};
+use super::{ArtistLinks, ArtistResponse, GetAllArtists};
 use crate::{
-    services::{self, DbArtist},
-    ApiError, AppState,
+    services::{
+        self,
+        http::{
+            error::{ApiError, Status},
+            SuccessResponse,
+        },
+        DbArtist,
+    },
+    AppState,
 };
 use axum::{
     extract::{Path, State},
     Json,
 };
+use tracing::instrument;
 #[utoipa::path(
     get,
-    path = "/artists/{id}",
+    path = "/artists/{artist_id}",
     params(
         ("artist_id" = String, Path, description = "Artist Id")
     ),
     responses(
-        (status = 200, description = "Returns a Artist", body = ArtistResponse),
-        (status = 500, description = "Database error occured", body = String),
-        (status = 404, description = "Failed to get artist ", body = String)
+        (status = 200, description = "Returns a Artist", body = ArtistResponseOpenApi),
+        (status = 500, description = "Database error occured", body = ErrorResponse<String>),
+        (status = 404, description = "Failed to get artist ", body = ErrorResponse<String>)
 
     )
 )]
+#[instrument(level = "info", name = "get_artist", skip_all)]
 pub async fn get_artist(
     Path(artist_id): Path<String>,
     State(state): State<AppState>,
-) -> Result<Json<GetResposne<ArtistResponse>>, ApiError> {
-    let (artist_model, albums) = services::artist::get_artist_by_id(&state.database, &artist_id)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to get artist: \"{:?}\" for {:}", e, artist_id);
-            e
-        })?;
-    Ok(Json(GetResposne {
-        data: DbArtist {
+) -> Result<Json<SuccessResponse<ArtistResponse>>, ApiError> {
+    let (artist_model, albums) =
+        services::artist::get_artist_by_id(&state.database, &artist_id).await?;
+    Ok(Json(SuccessResponse {
+        status: Status::Success,
+        message: DbArtist {
             id: artist_model.id,
             name: artist_model.name,
             image: artist_model.image.unwrap_or_default(),
@@ -62,14 +68,14 @@ pub async fn get_artist(
         GetAllArtists
     ),
     responses(
-        (status = 200, description = "List containing artists", body = [entity::artist::Model]),
-        (status = 500, description = "Database error occured", body = String)
+        (status = 200, description = "List containing artists", body = ArtistsResponseOpenApi),
+        (status = 500, description = "Error occured", body = ErrorResponse<String>)
     )
 )]
 pub async fn get_artists(
     State(state): State<AppState>,
     axum::extract::Query(params): axum::extract::Query<GetAllArtists>,
-) -> Result<Json<GetResposne<Vec<entity::artist::Model>>>, ApiError> {
+) -> Result<Json<SuccessResponse<Vec<entity::artist::Model>>>, ApiError> {
     let artists = match params.page.is_some() {
         true => {
             services::artist::get_artists_paginate(
@@ -82,5 +88,8 @@ pub async fn get_artists(
         }
         _ => services::artist::get_artists(&state.database, params.size, params.sort).await?,
     };
-    Ok(Json(GetResposne { data: artists }))
+    Ok(Json(SuccessResponse {
+        status: Status::Success,
+        message: artists,
+    }))
 }
