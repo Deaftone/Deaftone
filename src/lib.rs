@@ -36,3 +36,38 @@ where
         Some(s) => FromStr::from_str(s).map_err(de::Error::custom).map(Some),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::Error;
+
+    #[derive(Debug, PartialEq, Deserialize)]
+    struct TestStruct {
+        #[serde(deserialize_with = "empty_string_as_none")]
+        value: Option<i32>,
+    }
+
+    #[test]
+    fn test_empty_string_as_none() {
+        // Test case 1: Non-empty string
+        let json = r#"{"value": "42"}"#;
+        let result: Result<TestStruct, Error> = serde_json::from_str(json);
+        assert_eq!(result.unwrap(), TestStruct { value: Some(42) });
+
+        // Test case 2: Empty string should be converted to None
+        let json = r#"{"value": ""}"#;
+        let result: Result<TestStruct, Error> = serde_json::from_str(json);
+        assert_eq!(result.unwrap(), TestStruct { value: None });
+
+        // Test case 3: Null should be converted to None
+        let json = r#"{"value": null}"#;
+        let result: Result<TestStruct, Error> = serde_json::from_str(json);
+        assert_eq!(result.unwrap(), TestStruct { value: None });
+
+        // Test case 4: Non-empty string that cannot be parsed should result in an error
+        let json = r#"{"value": "abc"}"#;
+        let result: Result<TestStruct, Error> = serde_json::from_str(json);
+        assert!(result.is_err());
+    }
+}
