@@ -15,14 +15,16 @@ use utoipa::ToSchema;
 
 use crate::AppState;
 
-use self::{error::Status, handlers::{AlbumResponse, ArtistResponse, PlayListResponse}};
-
+use self::{
+    error::Status,
+    handlers::{AlbumResponse, ArtistResponse, PlayListResponse},
+};
 pub mod error;
 pub mod handlers;
 pub struct Server {}
 
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
-#[aliases( AlbumResponseOpenApi = SuccessResponse<AlbumResponse>, 
+#[aliases( AlbumResponseOpenApi = SuccessResponse<AlbumResponse>,
     AlbumsResponseOpenApi = SuccessResponse<Vec<entity::album::Model>>,
     ArtistResponseOpenApi = SuccessResponse<ArtistResponse>,
     ArtistsResponseOpenApi = SuccessResponse<Vec<entity::artist::Model>>,
