@@ -1,6 +1,9 @@
 use tokio::sync::mpsc::Sender;
 
-use self::{casting::device::DeviceService, http::handlers::ArtistResponse, task::TaskType};
+use self::{
+    album::AlbumService, casting::device::DeviceService, http::handlers::ArtistResponse,
+    scanner::ScanService, task::TaskType,
+};
 
 pub mod album;
 pub mod artist;
@@ -17,6 +20,8 @@ pub type DbArtist = ArtistResponse;
 // Which most of the time is a web handler. Which with impl IntoResponse for ServiceError can convert these errors into errors with response codes and good messages
 #[derive(Clone)]
 pub struct DeaftoneService {
+    pub scanner: ScanService,
+    pub album: AlbumService,
     pub device: DeviceService,
     pub task: Sender<TaskType>,
 }

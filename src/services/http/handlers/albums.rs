@@ -1,11 +1,8 @@
 use super::{AlbumResponse, GetAllAlbums};
 use crate::{
-    services::{
-        self,
-        http::{
-            error::{ApiError, Status},
-            SuccessResponse,
-        },
+    services::http::{
+        error::{ApiError, Status},
+        SuccessResponse,
     },
     AppState, ASSETS,
 };
@@ -38,7 +35,7 @@ pub async fn get_album(
     Path(album_id): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<SuccessResponse<AlbumResponse>>, ApiError> {
-    let (album_model, songs) = services::album::get_album_by_id(&state.database, &album_id).await?;
+    let (album_model, songs) = state.services.album.get_album_by_id(&album_id).await?;
     Ok(Json(SuccessResponse {
         status: Status::Success,
         message: AlbumResponse {
@@ -71,15 +68,19 @@ pub async fn get_albums(
 ) -> Result<Json<SuccessResponse<Vec<entity::album::Model>>>, ApiError> {
     let albums = match params.page.is_some() {
         true => {
-            services::album::get_albums_paginate(
-                &state.database,
-                params.page,
-                params.size,
-                params.sort,
-            )
-            .await?
+            state
+                .services
+                .album
+                .get_albums_paginate(params.page, params.size, params.sort)
+                .await?
         }
-        _ => services::album::get_albums(&state.database, params.size, params.sort).await?,
+        _ => {
+            state
+                .services
+                .album
+                .get_albums(params.size, params.sort)
+                .await?
+        }
     };
     Ok(Json(SuccessResponse {
         status: Status::Success,
@@ -106,7 +107,7 @@ pub async fn get_cover(
     Path(album_id): Path<String>,
 ) -> Result<Response<Body>, ApiError> {
     let res: Request<Body> = Request::builder().uri("/").body(Body::empty()).unwrap();
-    let album = services::album::get_album_by_id_slim(&state.database, &album_id).await?;
+    let album = state.services.album.get_album_by_id_slim(&album_id).await?;
 
     if album.cover.is_some() {
         // Serve image from FS

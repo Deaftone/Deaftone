@@ -3,7 +3,7 @@ use tokio::sync::mpsc::Receiver;
 
 use crate::database;
 
-use super::scanner::ScanType;
+use super::scanner::{ScanService, ScanType};
 
 #[derive(Debug)]
 pub enum TaskType {
@@ -14,13 +14,15 @@ pub enum TaskType {
 
 pub struct TaskService {
     pub task_queue: Vec<TaskType>,
+    scanner: ScanService,
     receiver: Receiver<TaskType>,
 }
 // TaskServices listens for TaskType:: on the Receiver only runnig 1 task at a time
 impl TaskService {
-    pub fn new(receiver: Receiver<TaskType>) -> TaskService {
+    pub fn new(receiver: Receiver<TaskType>, scanner: ScanService) -> TaskService {
         TaskService {
             task_queue: Vec::new(),
+            scanner,
             receiver,
         }
     }
@@ -37,11 +39,10 @@ impl TaskService {
                 tracing::info!("Running task: {:?}", task);
                 match task {
                     TaskType::ScanLibrary(ScanType::FullScan) => {
-                        crate::services::scanner::start_scan(ScanType::FullScan, &sqlite_pool).await
+                        self.scanner.start_scan(ScanType::FullScan).await
                     }
                     TaskType::ScanLibrary(ScanType::PartialScan) => {
-                        crate::services::scanner::start_scan(ScanType::PartialScan, &sqlite_pool)
-                            .await
+                        self.scanner.start_scan(ScanType::PartialScan).await
                     }
                     TaskType::PopulateMetadata => {
                         crate::services::metadata::scrap_metadata(&sqlite_pool).await

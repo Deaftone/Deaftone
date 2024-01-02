@@ -1,7 +1,9 @@
 use std::{fs, time::Duration};
 
 use crate::{
-    services::{casting::device::DeviceService, http::handlers},
+    services::{
+        album::AlbumService, casting::device::DeviceService, http::handlers, scanner::ScanService,
+    },
     *,
 };
 use axum::{routing::get, routing::post, Router};
@@ -15,10 +17,20 @@ pub async fn app() -> Router {
     let database = new_seaorm_db().await.unwrap();
     seed_test_db(&database).await.unwrap();
     let (tasks_send, _tasks_receiver) = tokio::sync::mpsc::channel::<services::task::TaskType>(10);
+
+    let album_service = AlbumService::new(database.clone());
+
+    let sqlite_pool = match database::connect_db_sqlx().await {
+        Ok(pool) => pool,
+        Err(_) => database::connect_db_sqlx().await.unwrap(),
+    };
     let services = DeaftoneService {
+        album: album_service.clone(),
+        scanner: ScanService::new(sqlite_pool, album_service),
         device: DeviceService::new(database.clone()),
         task: tasks_send.clone(),
     };
+
     //scan.start_scan();
     let state = AppState { database, services };
     Router::new()

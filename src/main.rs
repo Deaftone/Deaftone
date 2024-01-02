@@ -1,8 +1,11 @@
 use anyhow::Result;
 use core::panic;
 use deaftone::{
+    database,
     services::{
+        album::AlbumService,
         casting::{device::DeviceService, CHROMECAST_SERVICE_NAME},
+        scanner::ScanService,
         task::TaskType,
         DeaftoneService,
     },
@@ -40,16 +43,31 @@ Version: {:} | Media Directory: {:} | Database: {:}",
     let (tasks_send, tasks_receiver) =
         tokio::sync::mpsc::channel::<deaftone::services::task::TaskType>(10);
 
+    let sqlite_pool = match database::connect_db_sqlx().await {
+        Ok(pool) => pool,
+        Err(_) => database::connect_db_sqlx().await.unwrap(),
+    };
+
+    let album_service = AlbumService::new(database.clone());
+
+    let scanner_service = ScanService::new(sqlite_pool, album_service.clone());
+
     let services = DeaftoneService {
+        album: album_service.clone(),
+        scanner: scanner_service.clone(),
         device: DeviceService::new(database.clone()),
         task: tasks_send.clone(),
     };
+
     // Build app state
-    let state = AppState { database, services };
+    let state = AppState {
+        database,
+        services: services,
+    };
 
     // Spawn task service
     std::mem::drop(tokio::spawn(async move {
-        deaftone::services::task::TaskService::new(tasks_receiver)
+        deaftone::services::task::TaskService::new(tasks_receiver, scanner_service)
             .run()
             .await
     }));
