@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "deaftone",
-    "description": "## About \nThis api is inspired by https://auraspec.readthedocs.io/en/latest/api.html\n### Response Format and Errors\n\nThe MIME type for all responses MUST be ``application/vnd.api+json``. Every response is a JSON object. When a request is successful, the document has a top-level key data corresponding to the response’s “primary data.” When it fails, the document has an errors key, which maps to an array of JSON API error objects. Other keys may also be present, as described below.\n\nOn a successfuly query\n``\n{\n    status: \"success\"\n    data: {Response}\n}\n``\nOn a failure\n``\n{\n    status: \"error\",\n    message: String,\n}``\n        ",
+    "description": "## About \nThis api is inspired by https://auraspec.readthedocs.io/en/latest/api.html\n### Response Format and Errors\n\nThe MIME type for all responses MUST be ``application/vnd.api+json``. Every response is a JSON object. When a request is successful, the document has a top-level key data corresponding to the response’s “primary data.” When it fails, the document has an errors key, which maps to an array of JSON API error objects. Other keys may also be present, as described below.\n\nOn a successfuly query\n```\n{\n    status: {success}\n    data: {Response}\n}\n```\nOn a failure\n```\n{\n    status: {error},\n    message: {String},\n}\n```\n",
     "license": {
       "name": ""
     },
@@ -1293,6 +1293,10 @@
     {
       "name": "deaftone::services::http::handlers::artists",
       "description": "Deaftone Artists API"
+    },
+    {
+      "name": "deaftone::services::http::handlers::playlists",
+      "description": "Deaftone Playlists API"
     }
   ]
 }

@@ -23,19 +23,20 @@ This api is inspired by https://auraspec.readthedocs.io/en/latest/api.html
 The MIME type for all responses MUST be ``application/vnd.api+json``. Every response is a JSON object. When a request is successful, the document has a top-level key data corresponding to the response’s “primary data.” When it fails, the document has an errors key, which maps to an array of JSON API error objects. Other keys may also be present, as described below.
 
 On a successfuly query
-``
+```
 {
-    status: \"success\"
+    status: {success}
     data: {Response}
 }
-``
+```
 On a failure
-``
+```
 {
-    status: \"error\",
-    message: String,
-}``
-        "),
+    status: {error},
+    message: {String},
+}
+```
+"),
         paths(
             deaftone::services::http::handlers::playlist::get_playlist,
             deaftone::services::http::handlers::albums::get_albums,
