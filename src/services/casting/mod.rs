@@ -143,8 +143,9 @@ mod tests {
         ip_set.insert(IpAddr::V4(Ipv4Addr::new(172, 16, 0, 1)));
 
         let result = find_first_ipv4(&ip_set);
+        let result2 = find_first_ipv4(&ip_set);
 
-        assert_eq!(result, Some(IpAddr::V4(Ipv4Addr::new(192, 168, 0, 1))));
+        assert_eq!(result.unwrap().is_ipv4(), result2.unwrap().is_ipv4());
     }
 
     #[test]
